@@ -78,13 +78,13 @@ class BtrfsAssistant : public QMainWindow {
     void apply();
     Result runCmd(QString cmd, bool includeStderr, int timeout = 60) const;
     Result runCmd(QStringList cmdList, bool includeStderr, int timeout = 60) const;
-    QStringList getBTRFSFilesystems();
-    QString findMountpoint(QString uuid);
+    QStringList getBTRFSFilesystems() const;
+    QString findMountpoint(QString uuid) const;
     QString findRootSubvol() const;
     QStringList findBtrfsChildren(const QString subvolid, const QString uuid) const;
     void loadBTRFS();
     void populateBtrfsUi(QString uuid);
-    QString toHumanReadable(double number);
+    QString toHumanReadable(double number) const;
     void populateSubvolList(QString uuid);
     void reloadSubvolList(QString uuid);
     void loadSnapper();
@@ -95,13 +95,16 @@ class BtrfsAssistant : public QMainWindow {
     bool isTimeshift(QString subvolume);
     bool isMounted(QString uuid, QString subvolid);
     QString mountRoot(QString uuid);
-    bool handleSnapshotBoot(bool checkOnly, bool restore);
+    void switchToSnapperRestore();
+    QMap<QString, QString> getSnapshotBoot();
+    bool askSnapshotBoot(QString subvol) const;
     void enableRestoreMode(bool enable);
     void loadSnapperRestoreMode();
-    SnapperSnapshots getSnapperMeta(QString filename);
+    SnapperSnapshots getSnapperMeta(QString filename) const;
     void snapperTimelineEnable(bool enable);
+    bool renameSubvolume(QString source, QString target);
 
-  public:
+public:
     explicit BtrfsAssistant(QWidget *parent = 0);
     ~BtrfsAssistant();
 
@@ -110,7 +113,7 @@ class BtrfsAssistant : public QMainWindow {
     QString version;
     QString output;
 
-    bool setup(bool skip_snapshot_prompt, bool snapshot_boot);
+    bool setup(bool skipSnapshotPrompt);
 
   private slots:
     void on_pushButton_balance_clicked();
