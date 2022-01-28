@@ -39,6 +39,8 @@ Result BtrfsAssistant::runCmd(QStringList cmdList, bool includeStderr, int timeo
 
 // setup various items first time program runs
 bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
+    settings = new QSettings("/etc/btrfs-assistant.conf", QSettings::NativeFormat);
+
     bool restoreSnapshotSelected = false;
 
     // We should ask if we should restore before we ask for root permissions for usability reasons
@@ -64,7 +66,8 @@ bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
     }
 
     // Save the state of snapper being installed since we have to check it so often
-    hasSnapper = runCmd("which snapper", false).output.endsWith("snapper");
+    QString snapperPath = settings->value("snapper", "/usr/bin/snapper").toString();
+    hasSnapper = QFile::exists(snapperPath);
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (!hasSnapper) {
@@ -374,17 +377,8 @@ void BtrfsAssistant::on_pushButton_deletesubvol_clicked() {
 
     Result result;
 
-    // First let's see if this is a timeshift or snapper snapshot, if it is, we need to use timeshift to remove it
-    if (isTimeshift(subvol) && runCmd("which timeshift", false).output.endsWith("timeshift")) {
-        QString snapshot = subvol.split('/').at(2);
-        // Let's het confirmation first
-        if (QMessageBox::question(0, tr("Please Confirm"),
-                                  tr("You are about to delete all subvolumes associated with timeshift snapshot ") + snapshot + "\n\n" +
-                                      tr("Are you sure you want to proceed?")) != QMessageBox::Yes)
-            return;
-
-        result = runCmd("/usr/bin/timeshift --delete --snapshot '" + snapshot + "'", true);
-    } else if (isSnapper(subvol) && hasSnapper) {
+    // Check to see if the subvolume is a snapper snapshot
+    if (isSnapper(subvol) && hasSnapper) {
         QMessageBox::information(0, tr("Snapshot Delete"),
                                  tr("That subvolume is a snapper shapshot") + "\n\n" + tr("Please use the snapper tab to remove it"));
         return;

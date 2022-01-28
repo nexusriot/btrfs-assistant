@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QSet>
+#include <QSettings>
 #include <QSignalMapper>
 #include <QThread>
 #include <QTime>
@@ -70,6 +71,7 @@ class BtrfsAssistant : public QMainWindow {
     QMap<QString, QVector<SnapperSubvolume>> snapperSubvolumes;
     bool hasSnapper = false;
     bool isSnapBoot = false;
+    QSettings *settings;
 
     void refreshInterface();
     void displayError(QString errorText);
