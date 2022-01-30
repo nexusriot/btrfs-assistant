@@ -1,17 +1,26 @@
 #include "btrfs-assistant.h"
 #include "config.h"
 #include "ui_btrfs-assistant.h"
+#include <QDebug>
 
-BtrfsAssistant::BtrfsAssistant(QWidget *parent) : QMainWindow(parent), ui(new Ui::BtrfsAssistant) {
-    ui->setupUi(this);
+/*
+ *
+ * static free utility functions
+ *
+ */
 
-    this->setWindowTitle(tr("BTRFS Assistant"));
+// A simple wrapper to QMessageBox for creating consistent error messages
+static void displayError(const QString &errorText) { QMessageBox::critical(0, "Error", errorText); }
+
+// returns true if the end users confirms that they want to restore the snapshot that they are currnetly booted into
+static bool askSnapshotBoot(const QString &subvol) {
+    return QMessageBox::question(0, QObject::tr("Snapshot boot detected"),
+                                 QObject::tr("You are currently booted into snapshot ") + subvol + "\n\n" +
+                                     QObject::tr("Would you like to restore it?")) == QMessageBox::Yes;
 }
 
-BtrfsAssistant::~BtrfsAssistant() { delete ui; }
-
 // Util function for getting bash command output and error code
-Result BtrfsAssistant::runCmd(QString cmd, bool includeStderr, int timeout) const {
+static const Result runCmd(const QString &cmd, bool includeStderr, int timeout = 60) {
     QProcess proc;
 
     if (includeStderr)
@@ -24,7 +33,7 @@ Result BtrfsAssistant::runCmd(QString cmd, bool includeStderr, int timeout) cons
 }
 
 // An overloaded version that takes a list so multiple commands can be executed at once
-Result BtrfsAssistant::runCmd(QStringList cmdList, bool includeStderr, int timeout) const {
+static const Result runCmd(const QStringList &cmdList, bool includeStderr, int timeout = 60) {
     QString fullCommand;
     for (const QString &command : qAsConst(cmdList)) {
         if (fullCommand == "")
@@ -36,6 +45,236 @@ Result BtrfsAssistant::runCmd(QStringList cmdList, bool includeStderr, int timeo
     // Run the composite command as a single command
     return runCmd(fullCommand, includeStderr, timeout);
 }
+
+// Returns a list of btrfs filesystems
+static const QStringList getBTRFSFilesystems() {
+    return runCmd("btrfs filesystem show -m | grep uuid | awk -F':' '{gsub(/ /,\"\");print $3}'", false).output.split('\n');
+}
+
+// Returns one of the mountpoints for a given UUID
+static const QString findMountpoint(const QString &uuid) {
+    return runCmd("findmnt --real -rno target,uuid | grep " + uuid + " | head -n 1 | awk '{print $1}'", false).output;
+}
+
+// Finds the direct children of a given subvolid
+static const QStringList findBtrfsChildren(const QString &subvolid, const QString &uuid) {
+    QString output = runCmd("sudo btrfs subvolume list / | awk '{print $7, $9}' | grep " + subvolid, false).output;
+    if (output.isEmpty())
+        return QStringList();
+
+    QStringList subvols;
+    const QStringList outputList = output.split('\n');
+    for (const QString &subvolEntry : outputList) {
+        if (subvolEntry.isEmpty())
+            continue;
+
+        if (subvolEntry.split(' ').at(0).trimmed() == subvolid)
+            subvols.append(subvolEntry.split(' ').at(1).trimmed());
+    }
+
+    return subvols;
+}
+
+// Returns name of the subvol mounted at /. If no subvol is found, returns a default constructed string
+static const QString findRootSubvol() {
+    const QString output = runCmd("LANG=C findmnt -no uuid,options /", false).output;
+    if (output.isEmpty())
+        return QString();
+
+    const QString uuid = output.split(' ').at(0).trimmed();
+    const QString options = output.right(output.length() - uuid.length()).trimmed();
+    if (options.isEmpty() || uuid.isEmpty())
+        return QString();
+
+    QString subvol;
+    const QStringList optionsList = options.split(',');
+    for (const QString &option : optionsList) {
+        if (option.startsWith("subvol="))
+            subvol = option.split("subvol=").at(1);
+    }
+
+    // Make sure subvolume doesn't have a leading slash
+    if (subvol.startsWith("/"))
+        subvol = subvol.right(subvol.length() - 1);
+
+    // At this point subvol will either contain nothing or the name of the subvol
+    return subvol;
+}
+
+// Converts a double to a human readable string for displaying data storage amounts
+static const QString toHumanReadable(double number) {
+    int i = 0;
+    const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
+    while (number > 1024) {
+        number /= 1024;
+        i++;
+    }
+    return QString::number(number) + " " + units[i];
+}
+
+// Returns the list of subvolume mountpoints
+static const QStringList gatherBtrfsMountpoints() {
+    QStringList mountpoints;
+
+    const QStringList output = runCmd("findmnt --real -lno fstype,target", false).output.trimmed().split('\n');
+    for (const QString &line : output) {
+        if (line.startsWith("btrfs")) {
+            QString mountpoint = line.simplified().split(' ').at(1).trimmed();
+            QStringList crap = line.split(' ');
+            qDebug() << crap;
+            if (!mountpoint.isEmpty()) {
+                mountpoints.append(mountpoint);
+            }
+        }
+    }
+
+    mountpoints.sort();
+
+    return mountpoints;
+}
+
+// Finds the mountpoint of a given btrfs volume.  If it isn't mounted, it will first mount it.
+// returns the mountpoint or a default constructed string if it fails
+static const QString mountRoot(const QString &uuid) {
+    // Check to see if it is already mounted
+    QStringList findmntOutput = runCmd("findmnt -nO subvolid=5 -o uuid,target | head -n 1", false).output.split('\n');
+    QString mountpoint;
+    for (const QString &line : qAsConst(findmntOutput)) {
+        if (line.split(' ').at(0).trimmed() == uuid)
+            mountpoint = line.split(' ').at(1).trimmed();
+    }
+
+    // If it isn't mounted we need to mount it
+    if (mountpoint.isEmpty()) {
+        // Format a temp mountpoint using a GUID
+        mountpoint = QDir::cleanPath(QDir::tempPath() + QDir::separator() + QUuid::createUuid().toString());
+
+        // Create the mountpoint and mount the volume if successful
+        QDir tempMount;
+        if (tempMount.mkpath(mountpoint))
+            runCmd("mount -t btrfs -o subvolid=5 UUID=" + uuid + " " + mountpoint, false);
+        else
+            return QString();
+    }
+
+    return mountpoint;
+}
+
+// Returns true if a given subvolume is a timeshift snapshot
+static bool isTimeshift(const QString &subvolume) { return subvolume.contains("timeshift-btrfs"); }
+
+// Returns true if a given subvolume is a snapper snapshot
+static bool isSnapper(const QString &subvolume) { return subvolume.contains(".snapshots") && !subvolume.endsWith(".snapshots"); }
+
+// Returns true if a given btrfs subvolume is mounted
+static bool isMounted(const QString &uuid, const QString &subvolid) {
+    return uuid == runCmd("findmnt -nO subvolid=" + subvolid.trimmed() + " -o uuid | head -n 1", false).output.trimmed();
+}
+
+// Renames a btrfs subvolume from source to target.  Both should be absolute paths
+static bool renameSubvolume(const QString &source, const QString &target) {
+    QDir dir;
+    return dir.rename(source, target);
+}
+
+// Read a snapper snapshot meta file and return the data
+static SnapperSnapshots getSnapperMeta(const QString &filename) {
+    SnapperSnapshots snap;
+    snap.number = 0;
+    QFile metaFile(filename);
+    if (!metaFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return snap;
+
+    while (!metaFile.atEnd()) {
+        QString line = metaFile.readLine();
+        if (line.trimmed().startsWith("<num>"))
+            snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
+        else if (line.trimmed().startsWith("<date>"))
+            snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
+        else if (line.trimmed().startsWith("<description>"))
+            snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
+    }
+
+    return snap;
+}
+
+// Selects all rows in @p listWidget that match an item in @p items
+static void setListWidgetSelections(const QStringList &items, QListWidget *listWidget) {
+    QAbstractItemModel *model = listWidget->model();
+    QItemSelectionModel *selectModel = listWidget->selectionModel();
+    for (int i = 0; i < model->rowCount(); i++) {
+        QModelIndex index = model->index(i, 0);
+        if (items.contains(model->data(index).toString())) {
+            selectModel->select(index, QItemSelectionModel::Select);
+        }
+    }
+}
+
+/*
+ *
+ * QSettings read/write functions
+ *
+ */
+
+// Called by QSetting to read the contents of the Btrfs maintenance config file.
+// Populates @p with all the keys and values from the file.  Also populates map
+// with a key named "raw" that contains the original contents
+bool readBmFile(QIODevice &device, QSettings::SettingsMap &map) {
+    QStringList rawList;
+    while (!device.atEnd()) {
+        QString line = device.readLine();
+        rawList.append(line);
+        if (!line.trimmed().isEmpty() && !line.trimmed().startsWith("#")) {
+            const QStringList lineList = line.simplified().trimmed().split("=");
+            map.insert(lineList.at(0).trimmed(), lineList.at(1).trimmed().remove("\""));
+        }
+    }
+
+    map.insert("raw", rawList);
+
+    return true;
+}
+
+// Called by QSetting to write the contents of the Btrfs maintenance config file.
+// Reads the contents of the "raw" key in map and writes a new file based on it
+// and the other key, value pairs in @p map.
+bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map) {
+    QByteArray data;
+
+    if (!map.contains("raw")) {
+        return false;
+    }
+
+    const QStringList rawList = map.value("raw").toStringList();
+    for (const QString &line : rawList) {
+        if (line.trimmed().startsWith("#")) {
+            data += line.toUtf8();
+        } else {
+            const QString key = line.simplified().split("=").at(0).trimmed();
+            if (map.contains(key)) {
+                data += key.toUtf8() + "=\"" + map.value(key).toString().toUtf8() + "\"\n";
+            }
+        }
+    }
+
+    device.write(data);
+
+    return true;
+}
+
+/*
+ *
+ * BtrfsAssistant functions
+ *
+ */
+
+BtrfsAssistant::BtrfsAssistant(QWidget *parent) : QMainWindow(parent), ui(new Ui::BtrfsAssistant) {
+    ui->setupUi(this);
+
+    this->setWindowTitle(tr("BTRFS Assistant"));
+}
+
+BtrfsAssistant::~BtrfsAssistant() { delete ui; }
 
 // setup various items first time program runs
 bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
@@ -65,15 +304,15 @@ bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
         return false;
     }
 
-    // Save the state of snapper being installed since we have to check it so often
+    // Save the state of snapper and btrfsmaintenance being installed since we have to check them so often
     QString snapperPath = settings->value("snapper", "/usr/bin/snapper").toString();
     hasSnapper = QFile::exists(snapperPath);
 
+    btrfsmaintenanceConfig = settings->value("btrfsmaintenance", "/etc/default/btrfsmaintenance").toString();
+    hasBtrfsmaintenance = QFile::exists(btrfsmaintenanceConfig);
+
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (!hasSnapper) {
-        ui->checkBox_snapper_boot->hide();
-        ui->checkBox_snapper_cleanup->hide();
-        ui->checkBox_snapper_timeline->hide();
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(ui->tab_snapper_general), false);
         ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(ui->tab_snapper_settings), false);
     } else {
@@ -90,6 +329,15 @@ bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
     populateSnapperConfigSettings();
     ui->pushButton_restore_snapshot->setEnabled(false);
 
+    if (hasBtrfsmaintenance) {
+        bmFormat = QSettings::registerFormat("btrfsmaintenance", readBmFile, writeBmFile);
+        bmSettings = new QSettings(btrfsmaintenanceConfig, bmFormat);
+        populateBmTab();
+    } else {
+        // Hide the btrfs maintenance tab
+        ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(ui->tab_btrfsmaintenance), false);
+    }
+
     if ((restoreSnapshotSelected || skipSnapshotPrompt) && sbResult.contains("uuid") && sbResult.contains("subvol")) {
         switchToSnapperRestore();
         restoreSnapshot(sbResult.value("uuid"), sbResult.value("subvol"));
@@ -97,9 +345,6 @@ bool BtrfsAssistant::setup(bool skipSnapshotPrompt) {
 
     return true;
 }
-
-// A simple wrapper to QMessageBox for creating consistent error messages
-void BtrfsAssistant::displayError(QString errorText) { QMessageBox::critical(0, "Error", errorText); }
 
 // Populates servicesEnabledSet with a list of enabled services
 void BtrfsAssistant::loadEnabledUnits() {
@@ -117,71 +362,13 @@ void BtrfsAssistant::refreshInterface() {
     loadEnabledUnits();
 
     // Loop through the checkboxes
-    const QList<QCheckBox *> checkboxes = ui->scrollArea_btrfs->findChildren<QCheckBox *>();
+    const QList<QCheckBox *> checkboxes =
+        ui->scrollArea_bm->findChildren<QCheckBox *>() + ui->groupBox_snapperUnits->findChildren<QCheckBox *>();
     for (QCheckBox *checkbox : checkboxes) {
         if (checkbox->property("actionType") == "service") {
             checkbox->setChecked(this->unitsEnabledSet.contains(checkbox->property("actionData").toString()));
         }
     }
-}
-
-/*######################################################################################
- *                                    BTRFS                                           *
-######################################################################################*/
-
-// Returns a list of btrfs filesystems
-QStringList BtrfsAssistant::getBTRFSFilesystems() const {
-    return runCmd("btrfs filesystem show -m | grep uuid | awk -F':' '{gsub(/ /,\"\");print $3}'", false).output.split('\n');
-}
-
-// Returns one of the mountpoints for a given UUID
-QString BtrfsAssistant::findMountpoint(QString uuid) const {
-    return runCmd("findmnt --real -rno target,uuid | grep " + uuid + " | head -n 1 | awk '{print $1}'", false).output;
-}
-
-// Finds the direct children of a given subvolid
-QStringList BtrfsAssistant::findBtrfsChildren(const QString subvolid, const QString uuid) const {
-    QString output = runCmd("sudo btrfs subvolume list / | awk '{print $7, $9}' | grep " + subvolid, false).output;
-    if (output.isEmpty())
-        return QStringList();
-
-    QStringList subvols;
-    const QStringList outputList = output.split('\n');
-    for (const QString &subvolEntry : outputList) {
-        if (subvolEntry.isEmpty())
-            continue;
-
-        if (subvolEntry.split(' ').at(0).trimmed() == subvolid)
-            subvols.append(subvolEntry.split(' ').at(1).trimmed());
-    }
-
-    return subvols;
-}
-
-// Returns name of the subvol mounted at /. If no subvol is found, returns a default constructed string
-QString BtrfsAssistant::findRootSubvol() const {
-    const QString output = runCmd("LANG=C findmnt -no uuid,options /", false).output;
-    if (output.isEmpty())
-        return QString();
-
-    const QString uuid = output.split(' ').at(0).trimmed();
-    const QString options = output.right(output.length() - uuid.length()).trimmed();
-    if (options.isEmpty() || uuid.isEmpty())
-        return QString();
-
-    QString subvol;
-    const QStringList optionsList = options.split(',');
-    for (const QString &option : optionsList) {
-        if (option.startsWith("subvol="))
-            subvol = option.split("subvol=").at(1);
-    }
-
-    // Make sure subvolume doesn't have a leading slash
-    if (subvol.startsWith("/"))
-        subvol = subvol.right(subvol.length() - 1);
-
-    // At this point subvol will either contain nothing or the name of the subvol
-    return subvol;
 }
 
 // Populates the btrfs fsMap with statistics from the btrfs filesystems
@@ -227,29 +414,13 @@ void BtrfsAssistant::loadBTRFS() {
     reloadSubvolList(ui->comboBox_btrfsdevice->currentText());
 }
 
-// Converts a double to a human readable string for displaying data storage amounts
-QString BtrfsAssistant::toHumanReadable(double number) const {
-    int i = 0;
-    const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
-    while (number > 1024) {
-        number /= 1024;
-        i++;
-    }
-    return QString::number(number) + " " + units[i];
-}
-
 // Populates the UI for the BTRFS tab
-void BtrfsAssistant::populateBtrfsUi(QString uuid) {
+void BtrfsAssistant::populateBtrfsUi(const QString &uuid) {
     // For the tools section
     int dataPercent = ((double)fsMap[uuid].dataUsed / fsMap[uuid].dataSize) * 100;
     ui->progressBar_btrfsdata->setValue(dataPercent);
     ui->progressBar_btrfsmeta->setValue(((double)fsMap[uuid].metaUsed / fsMap[uuid].metaSize) * 100);
     ui->progressBar_btrfssys->setValue(((double)fsMap[uuid].sysUsed / fsMap[uuid].sysSize) * 100);
-    if (dataPercent < 85) {
-        ui->label_balance->setText(tr("Balance recommended.  Click here ---->"));
-    } else {
-        ui->label_balance->setText(tr("Balance not needed at this time"));
-    }
 
     // The information section
     ui->label_btrfsallocated->setText(toHumanReadable(fsMap[uuid].allocatedSize));
@@ -286,7 +457,7 @@ void BtrfsAssistant::on_pushButton_loadsubvol_clicked() {
 }
 
 // Reloads the list of subvolumes on the BTRFS Details tab
-void BtrfsAssistant::reloadSubvolList(QString uuid) {
+void BtrfsAssistant::reloadSubvolList(const QString &uuid) {
     if (!fsMap.contains(uuid))
         return;
 
@@ -306,8 +477,53 @@ void BtrfsAssistant::reloadSubvolList(QString uuid) {
     populateSubvolList(uuid);
 }
 
+// Populate the btrfsmaintenance tab using the settings loaded from the config file
+void BtrfsAssistant::populateBmTab() {
+    ui->comboBox_bmBalanceFreq->clear();
+    ui->comboBox_bmBalanceFreq->insertItems(0, bmFreqValues);
+    ui->comboBox_bmBalanceFreq->setCurrentText(bmSettings->value("BTRFS_BALANCE_PERIOD").toString());
+    ui->comboBox_bmScrubFreq->clear();
+    ui->comboBox_bmScrubFreq->insertItems(0, bmFreqValues);
+    ui->comboBox_bmScrubFreq->setCurrentText(bmSettings->value("BTRFS_SCRUB_PERIOD").toString());
+    ui->comboBox_bmDefragFreq->clear();
+    ui->comboBox_bmDefragFreq->insertItems(0, bmFreqValues);
+    ui->comboBox_bmDefragFreq->setCurrentText(bmSettings->value("BTRFS_DEFRAG_PERIOD").toString());
+
+    const QStringList mountpoints = gatherBtrfsMountpoints();
+    ui->listWidget_bmBalance->clear();
+    ui->listWidget_bmBalance->insertItems(0, mountpoints);
+    QStringList balanceMounts = bmSettings->value("BTRFS_BALANCE_MOUNTPOINTS").toString().trimmed().split(":");
+    if (balanceMounts.contains("auto")) {
+        ui->checkBox_bmBalance->setChecked(true);
+        ui->listWidget_bmBalance->setDisabled(true);
+    } else {
+        ui->checkBox_bmBalance->setChecked(false);
+        setListWidgetSelections(balanceMounts, ui->listWidget_bmBalance);
+    }
+    ui->listWidget_bmScrub->clear();
+    ui->listWidget_bmScrub->insertItems(0, mountpoints);
+    QStringList scrubMounts = bmSettings->value("BTRFS_SCRUB_MOUNTPOINTS").toString().trimmed().split(":");
+    if (scrubMounts.contains("auto")) {
+        ui->checkBox_bmScrub->setChecked(true);
+        ui->listWidget_bmScrub->setDisabled(true);
+    } else {
+        ui->checkBox_bmScrub->setChecked(false);
+        setListWidgetSelections(scrubMounts, ui->listWidget_bmScrub);
+    }
+    ui->listWidget_bmDefrag->clear();
+    ui->listWidget_bmDefrag->insertItems(0, mountpoints);
+    QStringList defragMounts = bmSettings->value("BTRFS_DEFRAG_PATHS").toString().trimmed().split(":");
+    if (defragMounts.contains("auto")) {
+        ui->checkBox_bmDefrag->setChecked(true);
+        ui->listWidget_bmDefrag->setDisabled(true);
+    } else {
+        ui->checkBox_bmDefrag->setChecked(false);
+        setListWidgetSelections(defragMounts, ui->listWidget_bmDefrag);
+    }
+}
+
 // Populates the UI for the BTRFS details tab
-void BtrfsAssistant::populateSubvolList(QString uuid) {
+void BtrfsAssistant::populateSubvolList(const QString &uuid) {
     ui->listWidget_subvols->clear();
 
     if (uuid.isEmpty() || fsMap[uuid].subVolumes.size() <= 0)
@@ -327,10 +543,15 @@ void BtrfsAssistant::populateSubvolList(QString uuid) {
 
 void BtrfsAssistant::on_checkBox_includesnapshots_clicked() { populateSubvolList(ui->comboBox_btrfsdevice->currentText()); }
 
-void BtrfsAssistant::on_pushButton_applybtrfs_clicked() {
+void BtrfsAssistant::on_checkBox_bmBalance_clicked(bool checked) { ui->listWidget_bmBalance->setDisabled(checked); }
+
+void BtrfsAssistant::on_checkBox_bmScrub_clicked(bool checked) { ui->listWidget_bmScrub->setDisabled(checked); }
+
+void BtrfsAssistant::on_checkBox_bmDefrag_clicked(bool checked) { ui->listWidget_bmDefrag->setDisabled(checked); }
+
+void BtrfsAssistant::updateServices(QList<QCheckBox *> checkboxList) {
     QStringList cmdList;
 
-    auto checkboxList = ui->scrollArea_btrfs->findChildren<QCheckBox *>();
     for (auto checkbox : checkboxList) {
         QString service = checkbox->property("actionData").toString();
         if (service != "" && unitsEnabledSet.contains(service) != checkbox->isChecked()) {
@@ -342,10 +563,66 @@ void BtrfsAssistant::on_pushButton_applybtrfs_clicked() {
     }
 
     runCmd(cmdList, false);
+    loadEnabledUnits();
+}
 
-    QMessageBox::information(0, tr("BTRFS Assistant"), tr("Changes applied"));
+void BtrfsAssistant::on_pushButton_bmApply_clicked() {
 
-    ui->pushButton_applybtrfs->clearFocus();
+    // First, update the services per the checkboxes
+    updateServices(ui->scrollArea_bm->findChildren<QCheckBox *>());
+
+    // Read and set the Btrfs maintenance settings
+    bmSettings->setValue("BTRFS_BALANCE_PERIOD", ui->comboBox_bmBalanceFreq->currentText());
+    bmSettings->setValue("BTRFS_SCRUB_PERIOD", ui->comboBox_bmScrubFreq->currentText());
+    bmSettings->setValue("BTRFS_DEFRAG_PERIOD", ui->comboBox_bmDefragFreq->currentText());
+
+    if (ui->checkBox_bmBalance->isChecked()) {
+        bmSettings->setValue("BTRFS_BALANCE_MOUNTPOINTS", "auto");
+    } else {
+        const QList<QListWidgetItem *> balanceItems = ui->listWidget_bmBalance->selectedItems();
+        QStringList balancePaths;
+        for (const QListWidgetItem *item : balanceItems) {
+            balancePaths.append(item->text());
+        }
+        bmSettings->setValue("BTRFS_BALANCE_MOUNTPOINTS", balancePaths.join(":"));
+    }
+
+    if (ui->checkBox_bmScrub->isChecked()) {
+        bmSettings->setValue("BTRFS_SCRUB_MOUNTPOINTS", "auto");
+    } else {
+        const QList<QListWidgetItem *> scrubItems = ui->listWidget_bmScrub->selectedItems();
+        QStringList scrubPaths;
+        for (const QListWidgetItem *item : scrubItems) {
+            scrubPaths.append(item->text());
+        }
+        bmSettings->setValue("BTRFS_SCRUB_MOUNTPOINTS", scrubPaths.join(":"));
+    }
+
+    if (ui->checkBox_bmDefrag->isChecked()) {
+        bmSettings->setValue("BTRFS_DEFRAG_PATHS", "auto");
+    } else {
+        const QList<QListWidgetItem *> defragItems = ui->listWidget_bmDefrag->selectedItems();
+        QStringList defragPaths;
+        for (const QListWidgetItem *item : defragItems) {
+            defragPaths.append(item->text());
+        }
+        bmSettings->setValue("BTRFS_DEFRAG_PATHS", defragPaths.join(":"));
+    }
+
+    bmSettings->sync();
+
+    QMessageBox::information(0, tr("BTRFS Assistant"), tr("Changes applied successfully"));
+
+    ui->pushButton_bmApply->clearFocus();
+}
+
+void BtrfsAssistant::on_pushButton_SnapperUnitsApply_clicked() {
+
+    updateServices(ui->groupBox_snapperUnits->findChildren<QCheckBox *>());
+
+    QMessageBox::information(0, tr("BTRFS Assistant"), tr("Changes applied successfully"));
+
+    ui->pushButton_SnapperUnitsApply->clearFocus();
 }
 
 // Delete a subvolume after checking for a variety of errors
@@ -403,33 +680,6 @@ void BtrfsAssistant::on_pushButton_deletesubvol_clicked() {
     ui->pushButton_deletesubvol->clearFocus();
 }
 
-// Finds the mountpoint of a given btrfs volume.  If it isn't mounted, it will first mount it.
-// returns the mountpoint or a default constructed string if it fails
-QString BtrfsAssistant::mountRoot(QString uuid) {
-    // Check to see if it is already mounted
-    QStringList findmntOutput = runCmd("findmnt -nO subvolid=5 -o uuid,target | head -n 1", false).output.split('\n');
-    QString mountpoint;
-    for (const QString &line : qAsConst(findmntOutput)) {
-        if (line.split(' ').at(0).trimmed() == uuid)
-            mountpoint = line.split(' ').at(1).trimmed();
-    }
-
-    // If it isn't mounted we need to mount it
-    if (mountpoint.isEmpty()) {
-        // Format a temp mountpoint using a GUID
-        mountpoint = QDir::cleanPath(QDir::tempPath() + QDir::separator() + QUuid::createUuid().toString());
-
-        // Create the mountpoint and mount the volume if successful
-        QDir tempMount;
-        if ( tempMount.mkpath(mountpoint) )
-            runCmd("mount -t btrfs -o subvolid=5 UUID=" + uuid + " " + mountpoint, false);
-        else
-            return QString();
-    }
-
-    return mountpoint;
-}
-
 // When a change is detected on the dropdown of btrfs devices, repopulate the UI based on the new selection
 void BtrfsAssistant::on_comboBox_btrfsdevice_activated(int) {
     QString device = ui->comboBox_btrfsdevice->currentText();
@@ -440,37 +690,8 @@ void BtrfsAssistant::on_comboBox_btrfsdevice_activated(int) {
     ui->comboBox_btrfsdevice->clearFocus();
 }
 
-// This needs to be looked at as part of the btrfs-maintance expansion
-void BtrfsAssistant::on_pushButton_balance_clicked() {
-    runCmd("systemctl start btrfs-balance.service", false);
-    QMessageBox::information(0, tr("BTRFS Balance"),
-                             tr("The balance operation is running in the background") + "\n\n" +
-                                 tr("Use 'systemctl status btrfs-balance.service' to check the status"));
-}
-
-// Returns true if a given subvolume is a timeshift snapshot
-bool BtrfsAssistant::isTimeshift(QString subvolume) { return subvolume.contains("timeshift-btrfs"); }
-
-// Returns true if a given subvolume is a snapper snapshot
-bool BtrfsAssistant::isSnapper(QString subvolume) { return subvolume.contains(".snapshots") && !subvolume.endsWith(".snapshots"); }
-
-// Returns true if a given btrfs subvolume is mounted
-bool BtrfsAssistant::isMounted(QString uuid, QString subvolid) {
-    return uuid == runCmd("findmnt -nO subvolid=" + subvolid.trimmed() + " -o uuid | head -n 1", false).output.trimmed();
-}
-
-/*######################################################################################
- *                           Snapper                                                  *
-######################################################################################*/
-
-// Renames a btrfs subvolume from source to target.  Both should be absolute paths
-bool BtrfsAssistant::renameSubvolume(QString source, QString target) {
-    QDir dir;
-    return dir.rename(source, target);
-}
-
 // Restores a snapper snapshot after extensive error checking
-void BtrfsAssistant::restoreSnapshot(QString uuid, QString subvolume) {
+void BtrfsAssistant::restoreSnapshot(const QString &uuid, QString subvolume) {
     // Make sure subvolume doesn't have a leading slash
     if (subvolume.startsWith("/"))
         subvolume = subvolume.right(subvolume.length() - 1);
@@ -547,7 +768,8 @@ void BtrfsAssistant::restoreSnapshot(QString uuid, QString subvolume) {
     if (!dirWorker.exists(mountpoint + targetSubvolume)) {
         // That failed, try to put the old one back
         renameSubvolume(QDir::cleanPath(mountpoint + targetBackup), QDir::cleanPath(mountpoint + targetSubvolume));
-        displayError(tr("Failed to restore subvolume!") + "\n\n" + tr("Snapshot restore failed.  Please verify the status of your system before rebooting"));
+        displayError(tr("Failed to restore subvolume!") + "\n\n" +
+                     tr("Snapshot restore failed.  Please verify the status of your system before rebooting"));
         return;
     }
 
@@ -667,27 +889,6 @@ void BtrfsAssistant::loadSnapper() {
                     {snap.split('|').at(0).trimmed().toInt(), snap.split('|').at(1).trimmed(), snap.split('|').at(2).trimmed()});
         }
     }
-}
-
-// Read a snapper snapshot meta file and return the data
-SnapperSnapshots BtrfsAssistant::getSnapperMeta(QString filename) const {
-    SnapperSnapshots snap;
-    snap.number = 0;
-    QFile metaFile(filename);
-    if (!metaFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        return snap;
-
-    while (!metaFile.atEnd()) {
-        QString line = metaFile.readLine();
-        if (line.trimmed().startsWith("<num>"))
-            snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
-        else if (line.trimmed().startsWith("<date>"))
-            snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
-        else if (line.trimmed().startsWith("<description>"))
-            snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
-    }
-
-    return snap;
 }
 
 // Populates the main grid on the Snapper tab
@@ -1091,11 +1292,6 @@ QMap<QString, QString> BtrfsAssistant::getSnapshotBoot() {
     return {{"uuid", uuid}, {"subvol", subvol}};
 }
 
-// returns true if the end users confirms that they want to restore the snapshot that they are currnetly booted into
-bool BtrfsAssistant::askSnapshotBoot(QString subvol) const {
-    return QMessageBox::question(0, tr("Snapshot boot detected"), tr("You are currently booted into snapshot ") + subvol + "\n\n" + tr("Would you like to restore it?")) == QMessageBox::Yes;
-}
-
 // When booting off a snapshot this forcibly switches to the correct tab and enables the restore mode
 void BtrfsAssistant::switchToSnapperRestore() {
     ui->tabWidget->setTabVisible(ui->tabWidget->indexOf(ui->tab_snapper_general), true);
@@ -1105,7 +1301,6 @@ void BtrfsAssistant::switchToSnapperRestore() {
 
     return;
 }
-
 
 // Populates the UI for the restore mode of the snapper tab
 void BtrfsAssistant::loadSnapperRestoreMode() {
