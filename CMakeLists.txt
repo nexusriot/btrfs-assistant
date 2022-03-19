@@ -25,6 +25,8 @@ set(PROJECT_SOURCES
         btrfs-assistant.h
         btrfs-assistant.ui
         icons.qrc
+        Snapper.h Snapper.cpp
+        System.h System.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 

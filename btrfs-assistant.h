@@ -16,16 +16,13 @@
 #include <QUuid>
 #include <QXmlStreamReader>
 
+#include "Snapper.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class BtrfsAssistant;
 }
 QT_END_NAMESPACE
-
-struct Result {
-    int exitCode;
-    QString output;
-};
 
 struct Btrfs {
     QString mountPoint;
@@ -60,7 +57,6 @@ class BtrfsAssistant : public QMainWindow {
     Q_OBJECT
 
   protected:
-    QSet<QString> unitsEnabledSet;
     QHash<QString, QCheckBox *> configCheckBoxes;
     QMap<QString, Btrfs> fsMap;
 
@@ -79,7 +75,6 @@ class BtrfsAssistant : public QMainWindow {
     QSettings::Format bmFormat;
 
     void refreshInterface();
-    void loadEnabledUnits();
     void setupConfigBoxes();
     void apply();
     void loadBTRFS();
@@ -107,7 +102,7 @@ class BtrfsAssistant : public QMainWindow {
     QString version;
     QString output;
 
-    bool setup(bool skipSnapshotPrompt);
+    bool setup();
 
   private slots:
     void on_checkBox_bmBalance_clicked(bool checked);
