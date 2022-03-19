@@ -489,10 +489,11 @@ void BtrfsAssistant::populateBmTab() {
     ui->comboBox_bmDefragFreq->insertItems(0, bmFreqValues);
     ui->comboBox_bmDefragFreq->setCurrentText(bmSettings->value("BTRFS_DEFRAG_PERIOD").toString());
 
+    // Populate the balance section
+    const QStringList balanceMounts = bmSettings->value("BTRFS_BALANCE_MOUNTPOINTS").toString().trimmed().split(":");
     const QStringList mountpoints = gatherBtrfsMountpoints();
     ui->listWidget_bmBalance->clear();
     ui->listWidget_bmBalance->insertItems(0, mountpoints);
-    QStringList balanceMounts = bmSettings->value("BTRFS_BALANCE_MOUNTPOINTS").toString().trimmed().split(":");
     if (balanceMounts.contains("auto")) {
         ui->checkBox_bmBalance->setChecked(true);
         ui->listWidget_bmBalance->setDisabled(true);
@@ -500,9 +501,11 @@ void BtrfsAssistant::populateBmTab() {
         ui->checkBox_bmBalance->setChecked(false);
         setListWidgetSelections(balanceMounts, ui->listWidget_bmBalance);
     }
+
+    // Populate the scrub section
+    const QStringList scrubMounts = bmSettings->value("BTRFS_SCRUB_MOUNTPOINTS").toString().trimmed().split(":");
     ui->listWidget_bmScrub->clear();
     ui->listWidget_bmScrub->insertItems(0, mountpoints);
-    QStringList scrubMounts = bmSettings->value("BTRFS_SCRUB_MOUNTPOINTS").toString().trimmed().split(":");
     if (scrubMounts.contains("auto")) {
         ui->checkBox_bmScrub->setChecked(true);
         ui->listWidget_bmScrub->setDisabled(true);
@@ -510,9 +513,19 @@ void BtrfsAssistant::populateBmTab() {
         ui->checkBox_bmScrub->setChecked(false);
         setListWidgetSelections(scrubMounts, ui->listWidget_bmScrub);
     }
+
+    // Populate the defrag section
+    const QStringList defragMounts = bmSettings->value("BTRFS_DEFRAG_PATHS").toString().trimmed().split(":");
+
+    // In the case of defrag we need to include any nested subvols listed in the config
+    QStringList combinedMountpoints = defragMounts + mountpoints;
+
+    // Remove empty and duplicate entries
+    combinedMountpoints.removeAll(QString());
+    combinedMountpoints.removeDuplicates();
+
     ui->listWidget_bmDefrag->clear();
-    ui->listWidget_bmDefrag->insertItems(0, mountpoints);
-    QStringList defragMounts = bmSettings->value("BTRFS_DEFRAG_PATHS").toString().trimmed().split(":");
+    ui->listWidget_bmDefrag->insertItems(0, combinedMountpoints);
     if (defragMounts.contains("auto")) {
         ui->checkBox_bmDefrag->setChecked(true);
         ui->listWidget_bmDefrag->setDisabled(true);
