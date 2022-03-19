@@ -42,7 +42,7 @@
              <x>0</x>
              <y>0</y>
              <width>870</width>
-             <height>609</height>
+             <height>606</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -459,7 +459,7 @@
              <x>0</x>
              <y>0</y>
              <width>870</width>
-             <height>609</height>
+             <height>606</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -768,7 +768,7 @@
                <item row="6" column="0">
                 <widget class="QLabel" name="label_21">
                  <property name="text">
-                  <string>Pacman</string>
+                  <string>Number</string>
                  </property>
                 </widget>
                </item>
@@ -780,7 +780,7 @@
                 </widget>
                </item>
                <item row="6" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_pacman"/>
+                <widget class="QSpinBox" name="spinBox_snapper_number"/>
                </item>
                <item row="0" column="2">
                 <widget class="QCheckBox" name="checkBox_snapper_enabletimeline">
@@ -900,8 +900,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>870</width>
-             <height>609</height>
+             <width>856</width>
+             <height>619</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">

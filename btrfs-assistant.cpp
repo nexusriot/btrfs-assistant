@@ -1064,7 +1064,7 @@ void BtrfsAssistant::populateSnapperConfigSettings() {
         else if (key == "TIMELINE_LIMIT_YEARLY")
             ui->spinBox_snapper_yearly->setValue(value.toInt());
         else if (key == "NUMBER_LIMIT")
-            ui->spinBox_snapper_pacman->setValue(value.toInt());
+            ui->spinBox_snapper_number->setValue(value.toInt());
     }
 
     snapperTimelineEnable(ui->checkBox_snapper_enabletimeline->isChecked());
@@ -1108,7 +1108,7 @@ void BtrfsAssistant::on_pushButton_snapper_save_config_clicked() {
         command += " \"TIMELINE_LIMIT_WEEKLY=" + QString::number(ui->spinBox_snapper_weekly->value()) + "\"";
         command += " \"TIMELINE_LIMIT_MONTHLY=" + QString::number(ui->spinBox_snapper_monthly->value()) + "\"";
         command += " \"TIMELINE_LIMIT_YEARLY=" + QString::number(ui->spinBox_snapper_yearly->value()) + "\"";
-        command += " \"NUMBER_LIMIT=" + QString::number(ui->spinBox_snapper_pacman->value()) + "\"";
+        command += " \"NUMBER_LIMIT=" + QString::number(ui->spinBox_snapper_number->value()) + "\"";
 
         runCmd(command, false);
 
