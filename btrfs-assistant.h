@@ -16,6 +16,7 @@
 #include <QUuid>
 #include <QXmlStreamReader>
 
+#include "Btrfs.h"
 #include "Snapper.h"
 
 QT_BEGIN_NAMESPACE
@@ -23,21 +24,6 @@ namespace Ui {
 class BtrfsAssistant;
 }
 QT_END_NAMESPACE
-
-struct Btrfs {
-    QString mountPoint;
-    long totalSize;
-    long allocatedSize;
-    long usedSize;
-    long freeSize;
-    long dataSize;
-    long dataUsed;
-    long metaSize;
-    long metaUsed;
-    long sysSize;
-    long sysUsed;
-    QMap<QString, QString> subVolumes;
-};
 
 struct SnapperSnapshots {
     int number;
@@ -58,7 +44,6 @@ class BtrfsAssistant : public QMainWindow {
 
   protected:
     QHash<QString, QCheckBox *> configCheckBoxes;
-    QMap<QString, Btrfs> fsMap;
 
     QStringList bmFreqValues = {"none", "daily", "weekly", "monthly"};
 
@@ -73,11 +58,11 @@ class BtrfsAssistant : public QMainWindow {
     QSettings *bmSettings;
     QString btrfsmaintenanceConfig;
     QSettings::Format bmFormat;
+    Btrfs *m_btrfs;
 
     void refreshInterface();
     void setupConfigBoxes();
     void apply();
-    void loadBTRFS();
     void populateBtrfsUi(const QString &uuid);
     void populateSubvolList(const QString &uuid);
     void reloadSubvolList(const QString &uuid);
@@ -93,7 +78,8 @@ class BtrfsAssistant : public QMainWindow {
     void populateBmTab();
     void updateServices(QList<QCheckBox *>);
 
-  public:
+    void refreshBtrfsUi();
+public:
     explicit BtrfsAssistant(QWidget *parent = 0);
     ~BtrfsAssistant();
 

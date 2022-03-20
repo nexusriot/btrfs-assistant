@@ -2,11 +2,7 @@
 
 #include <QProcess>
 
-System::System(QObject *parent)
-    : QObject{parent}
-{
-
-}
+System::System(QObject *parent) : QObject{parent} {}
 
 bool System::enableService(QString serviceName, bool enable) {
     int exitCode;
@@ -52,4 +48,3 @@ const Result System::runCmd(const QStringList &cmdList, bool includeStderr, int 
     // Run the composite command as a single command
     return runCmd(fullCommand, includeStderr, timeout);
 }
-

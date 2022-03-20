@@ -10,13 +10,9 @@ struct Result {
     QString output;
 };
 
-class System : public QObject
-{
+class System : public QObject {
     Q_OBJECT
-public:
-    explicit System(QObject *parent = nullptr);
-
-
+  public:
     /** @brief Enables or disables a service
      *
      * Enables or disables the service specified by name in @p serviceName. If @p enable is true,
@@ -51,10 +47,9 @@ public:
 
     static const Result runCmd(const QStringList &cmdList, bool includeStderr, int timeout = 60);
 
-
-
-private:
-
+  private:
+    // This class contains only static functions.  There is no reason to instantiate it.
+    explicit System(QObject *parent = nullptr);
 };
 
 #endif // SYSTEM_H
