@@ -18,6 +18,7 @@
 
 #include "Btrfs.h"
 #include "Snapper.h"
+#include "BtrfsMaintenance.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -55,10 +56,8 @@ class BtrfsAssistant : public QMainWindow {
     bool hasBtrfsmaintenance = false;
     bool isSnapBoot = false;
     QSettings *settings;
-    QSettings *bmSettings;
-    QString btrfsmaintenanceConfig;
-    QSettings::Format bmFormat;
     Btrfs *m_btrfs;
+    BtrfsMaintenance *m_btrfsMaint;
 
     void refreshInterface();
     void setupConfigBoxes();

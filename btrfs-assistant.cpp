@@ -59,57 +59,6 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
     }
 }
 
-/*
- *
- * QSettings read/write functions
- *
- */
-
-// Called by QSetting to read the contents of the Btrfs maintenance config file.
-// Populates @p with all the keys and values from the file.  Also populates map
-// with a key named "raw" that contains the original contents
-bool readBmFile(QIODevice &device, QSettings::SettingsMap &map) {
-    QStringList rawList;
-    while (!device.atEnd()) {
-        QString line = device.readLine();
-        rawList.append(line);
-        if (!line.trimmed().isEmpty() && !line.trimmed().startsWith("#")) {
-            const QStringList lineList = line.simplified().trimmed().split("=");
-            map.insert(lineList.at(0).trimmed(), lineList.at(1).trimmed().remove("\""));
-        }
-    }
-
-    map.insert("raw", rawList);
-
-    return true;
-}
-
-// Called by QSetting to write the contents of the Btrfs maintenance config file.
-// Reads the contents of the "raw" key in map and writes a new file based on it
-// and the other key, value pairs in @p map.
-bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map) {
-    QByteArray data;
-
-    if (!map.contains("raw")) {
-        return false;
-    }
-
-    const QStringList rawList = map.value("raw").toStringList();
-    for (const QString &line : rawList) {
-        if (line.trimmed().startsWith("#")) {
-            data += line.toUtf8();
-        } else {
-            const QString key = line.simplified().split("=").at(0).trimmed();
-            if (map.contains(key)) {
-                data += key.toUtf8() + "=\"" + map.value(key).toString().toUtf8() + "\"\n";
-            }
-        }
-    }
-
-    device.write(data);
-
-    return true;
-}
 
 /*
  *
@@ -122,7 +71,7 @@ BtrfsAssistant::BtrfsAssistant(QWidget *parent) : QMainWindow(parent), ui(new Ui
 
     m_btrfs = new Btrfs();
     setup();
-    this->setWindowTitle(tr("BTRFS Assistant"));
+    this->setWindowTitle(tr("Btrfs Assistant"));
 }
 
 BtrfsAssistant::~BtrfsAssistant() { delete ui; }
@@ -135,8 +84,8 @@ bool BtrfsAssistant::setup() {
     QString snapperPath = settings->value("snapper", "/usr/bin/snapper").toString();
     hasSnapper = QFile::exists(snapperPath);
 
-    btrfsmaintenanceConfig = settings->value("btrfsmaintenance", "/etc/default/btrfsmaintenance").toString();
-    hasBtrfsmaintenance = QFile::exists(btrfsmaintenanceConfig);
+    QString btrfsMaintenanceConfig = settings->value("bm_config", "/etc/default/btrfsmaintenance").toString();
+    hasBtrfsmaintenance = QFile::exists(btrfsMaintenanceConfig);
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (!hasSnapper) {
@@ -158,8 +107,7 @@ bool BtrfsAssistant::setup() {
     ui->pushButton_restore_snapshot->setEnabled(false);
 
     if (hasBtrfsmaintenance) {
-        bmFormat = QSettings::registerFormat("btrfsmaintenance", readBmFile, writeBmFile);
-        bmSettings = new QSettings(btrfsmaintenanceConfig, bmFormat);
+        m_btrfsMaint = new BtrfsMaintenance(btrfsMaintenanceConfig, settings->value("bm_refresh_service", "btrfsmaintenance-refresh.service").toString());
         populateBmTab();
     } else {
         // Hide the btrfs maintenance tab
@@ -253,16 +201,16 @@ void BtrfsAssistant::reloadSubvolList(const QString &uuid) {
 void BtrfsAssistant::populateBmTab() {
     ui->comboBox_bmBalanceFreq->clear();
     ui->comboBox_bmBalanceFreq->insertItems(0, bmFreqValues);
-    ui->comboBox_bmBalanceFreq->setCurrentText(bmSettings->value("BTRFS_BALANCE_PERIOD").toString());
+    ui->comboBox_bmBalanceFreq->setCurrentText(m_btrfsMaint->value("BTRFS_BALANCE_PERIOD"));
     ui->comboBox_bmScrubFreq->clear();
     ui->comboBox_bmScrubFreq->insertItems(0, bmFreqValues);
-    ui->comboBox_bmScrubFreq->setCurrentText(bmSettings->value("BTRFS_SCRUB_PERIOD").toString());
+    ui->comboBox_bmScrubFreq->setCurrentText(m_btrfsMaint->value("BTRFS_SCRUB_PERIOD"));
     ui->comboBox_bmDefragFreq->clear();
     ui->comboBox_bmDefragFreq->insertItems(0, bmFreqValues);
-    ui->comboBox_bmDefragFreq->setCurrentText(bmSettings->value("BTRFS_DEFRAG_PERIOD").toString());
+    ui->comboBox_bmDefragFreq->setCurrentText(m_btrfsMaint->value("BTRFS_DEFRAG_PERIOD"));
 
     // Populate the balance section
-    const QStringList balanceMounts = bmSettings->value("BTRFS_BALANCE_MOUNTPOINTS").toString().trimmed().split(":");
+    const QStringList balanceMounts = m_btrfsMaint->value("BTRFS_BALANCE_MOUNTPOINTS").trimmed().split(":");
     const QStringList mountpoints = Btrfs::listMountpoints();
     ui->listWidget_bmBalance->clear();
     ui->listWidget_bmBalance->insertItems(0, mountpoints);
@@ -275,7 +223,7 @@ void BtrfsAssistant::populateBmTab() {
     }
 
     // Populate the scrub section
-    const QStringList scrubMounts = bmSettings->value("BTRFS_SCRUB_MOUNTPOINTS").toString().trimmed().split(":");
+    const QStringList scrubMounts = m_btrfsMaint->value("BTRFS_SCRUB_MOUNTPOINTS").trimmed().split(":");
     ui->listWidget_bmScrub->clear();
     ui->listWidget_bmScrub->insertItems(0, mountpoints);
     if (scrubMounts.contains("auto")) {
@@ -287,7 +235,7 @@ void BtrfsAssistant::populateBmTab() {
     }
 
     // Populate the defrag section
-    const QStringList defragMounts = bmSettings->value("BTRFS_DEFRAG_PATHS").toString().trimmed().split(":");
+    const QStringList defragMounts = m_btrfsMaint->value("BTRFS_DEFRAG_PATHS").trimmed().split(":");
 
     // In the case of defrag we need to include any nested subvols listed in the config
     QStringList combinedMountpoints = defragMounts + mountpoints;
@@ -352,46 +300,47 @@ void BtrfsAssistant::on_pushButton_bmApply_clicked() {
     updateServices(ui->scrollArea_bm->findChildren<QCheckBox *>());
 
     // Read and set the Btrfs maintenance settings
-    bmSettings->setValue("BTRFS_BALANCE_PERIOD", ui->comboBox_bmBalanceFreq->currentText());
-    bmSettings->setValue("BTRFS_SCRUB_PERIOD", ui->comboBox_bmScrubFreq->currentText());
-    bmSettings->setValue("BTRFS_DEFRAG_PERIOD", ui->comboBox_bmDefragFreq->currentText());
+    m_btrfsMaint->setValue("BTRFS_BALANCE_PERIOD", ui->comboBox_bmBalanceFreq->currentText());
+    m_btrfsMaint->setValue("BTRFS_SCRUB_PERIOD", ui->comboBox_bmScrubFreq->currentText());
+    m_btrfsMaint->setValue("BTRFS_DEFRAG_PERIOD", ui->comboBox_bmDefragFreq->currentText());
 
     if (ui->checkBox_bmBalance->isChecked()) {
-        bmSettings->setValue("BTRFS_BALANCE_MOUNTPOINTS", "auto");
+        m_btrfsMaint->setValue("BTRFS_BALANCE_MOUNTPOINTS", "auto");
     } else {
         const QList<QListWidgetItem *> balanceItems = ui->listWidget_bmBalance->selectedItems();
         QStringList balancePaths;
         for (const QListWidgetItem *item : balanceItems) {
             balancePaths.append(item->text());
         }
-        bmSettings->setValue("BTRFS_BALANCE_MOUNTPOINTS", balancePaths.join(":"));
+        m_btrfsMaint->setValue("BTRFS_BALANCE_MOUNTPOINTS", balancePaths.join(":"));
     }
 
     if (ui->checkBox_bmScrub->isChecked()) {
-        bmSettings->setValue("BTRFS_SCRUB_MOUNTPOINTS", "auto");
+        m_btrfsMaint->setValue("BTRFS_SCRUB_MOUNTPOINTS", "auto");
     } else {
         const QList<QListWidgetItem *> scrubItems = ui->listWidget_bmScrub->selectedItems();
         QStringList scrubPaths;
         for (const QListWidgetItem *item : scrubItems) {
             scrubPaths.append(item->text());
         }
-        bmSettings->setValue("BTRFS_SCRUB_MOUNTPOINTS", scrubPaths.join(":"));
+        m_btrfsMaint->setValue("BTRFS_SCRUB_MOUNTPOINTS", scrubPaths.join(":"));
     }
 
     if (ui->checkBox_bmDefrag->isChecked()) {
-        bmSettings->setValue("BTRFS_DEFRAG_PATHS", "auto");
+        m_btrfsMaint->setValue("BTRFS_DEFRAG_PATHS", "auto");
     } else {
         const QList<QListWidgetItem *> defragItems = ui->listWidget_bmDefrag->selectedItems();
         QStringList defragPaths;
         for (const QListWidgetItem *item : defragItems) {
             defragPaths.append(item->text());
         }
-        bmSettings->setValue("BTRFS_DEFRAG_PATHS", defragPaths.join(":"));
+        m_btrfsMaint->setValue("BTRFS_DEFRAG_PATHS", defragPaths.join(":"));
     }
 
-    bmSettings->sync();
+    // Force Btrfs Maintenance to reload the config file
+    m_btrfsMaint->refresh();
 
-    QMessageBox::information(0, tr("BTRFS Assistant"), tr("Changes applied"));
+    QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
     ui->pushButton_bmApply->clearFocus();
 }
@@ -400,7 +349,7 @@ void BtrfsAssistant::on_pushButton_SnapperUnitsApply_clicked() {
 
     updateServices(ui->groupBox_snapperUnits->findChildren<QCheckBox *>());
 
-    QMessageBox::information(0, tr("BTRFS Assistant"), tr("Changes applied successfully"));
+    QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied successfully"));
 
     ui->pushButton_SnapperUnitsApply->clearFocus();
 }

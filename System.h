@@ -47,6 +47,13 @@ class System : public QObject {
 
     static const Result runCmd(const QStringList &cmdList, bool includeStderr, int timeout = 60);
 
+    /** @brief Starts the systemd unit with the unit name of @p unit
+     *
+     *  Returns a Result struct from runCmd()
+     *
+     */
+    static const Result startUnit(const QString &unit) { return runCmd("systemctl start " + unit, false); }
+
   private:
     // This class contains only static functions.  There is no reason to instantiate it.
     explicit System(QObject *parent = nullptr);

@@ -28,6 +28,7 @@ set(PROJECT_SOURCES
         Snapper.h Snapper.cpp
         System.h System.cpp
         Btrfs.h Btrfs.cpp
+        BtrfsMaintenance.h BtrfsMaintenance.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
