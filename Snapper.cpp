@@ -152,7 +152,7 @@ void Snapper::reloadSubvols() {
             }
 
             subvol.uuid = uuid;
-            subvol.subvolid = line.split(' ').at(1).trimmed();
+            subvol.subvolid = line.split(' ').at(1).trimmed().toInt();
             subvol.subvol = line.split(' ').at(8).trimmed();
 
             // Check if it is snapper snapshot
@@ -179,6 +179,7 @@ void Snapper::reloadSubvols() {
 
             subvol.desc = snap.desc;
             subvol.time = snap.time;
+            subvol.snapshotNum = snap.number;
 
             QString prefix = subvol.subvol.split(".snapshots").at(0).trimmed();
 

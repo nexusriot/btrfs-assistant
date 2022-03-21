@@ -16,7 +16,8 @@ struct SnapperSnapshots {
 
 struct SnapperSubvolume {
     QString subvol;
-    QString subvolid;
+    int subvolid;
+    int snapshotNum;
     QString time;
     QString desc;
     QString uuid;
