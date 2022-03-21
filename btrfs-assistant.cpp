@@ -801,7 +801,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, QString subvolume) {
 
         // rename snapshot
         QString sourcePath = QDir::cleanPath(mountpoint + targetBackup + QDir::separator() + childSubvolPath);
-        QString destinationPath = QDir::cleanPath(mountpoint + targetSubvolume + "/.");
+        QString destinationPath = QDir::cleanPath(mountpoint + targetSubvolume + "/" + childSubvolPath);
         if (!renameSubvolume(sourcePath, destinationPath)) {
             // If this fails, not much can be done except let the user know
             displayError(tr("The restore was successful but the migration of the nested subvolumes failed") + "\n\n" +
