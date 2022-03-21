@@ -174,6 +174,9 @@ static bool isMounted(const QString &uuid, const QString &subvolid) {
 // Renames a btrfs subvolume from source to target.  Both should be absolute paths
 static bool renameSubvolume(const QString &source, const QString &target) {
     QDir dir;
+    if (dir.exists(target)) {
+        dir.rmdir(target);
+    }
     return dir.rename(source, target);
 }
 
