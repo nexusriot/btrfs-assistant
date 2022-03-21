@@ -4,6 +4,11 @@
 #include <QMap>
 #include <QObject>
 
+struct Subvolume {
+    int parentId = 0;
+    QString subvolName;
+};
+
 struct BtrfsMeta {
     bool populated = false;
     QString mountPoint;
@@ -17,7 +22,7 @@ struct BtrfsMeta {
     long metaUsed;
     long sysSize;
     long sysUsed;
-    QMap<QString, QString> subVolumes;
+    QMap<int, Subvolume> subvolumes;
 };
 
 class Btrfs : public QObject {
@@ -41,7 +46,7 @@ class Btrfs : public QObject {
      *  Returns a QStringList containing the subvol names/paths of all the children subvols
      *
      */
-    static const QStringList children(const int subvolid, const QString &uuid);
+    const QStringList children(const int subvolid, const QString &uuid) const;
 
     /** @brief Deletes a given subvolume
      *
@@ -91,7 +96,7 @@ class Btrfs : public QObject {
      *  returns an empty list
      *
      */
-    const QMap<QString, QString> listSubvolumes(const QString &uuid);
+    const QMap<int, Subvolume> listSubvolumes(const QString &uuid);
 
     /** @brief Mounts the root of a given Btrfs volume
      *
@@ -126,11 +131,13 @@ class Btrfs : public QObject {
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
      *  it returns 0
      */
-    const int subvolId(const QString &uuid, const QString &subvol);
+    const int subvolId(const QString &uuid, const QString &subvolName);
+
+    const int subvolTopParent(const QString &uuid, const int subvolId);
 
   private:
     // A map BtrfsMeta.  The key is UUID
-    QMap<QString, BtrfsMeta> m_btrfsVolumes;
+    QMap<QString, BtrfsMeta> m_volumes;
 
   signals:
 };

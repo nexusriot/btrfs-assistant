@@ -26,20 +26,6 @@ class BtrfsAssistant;
 }
 QT_END_NAMESPACE
 
-struct SnapperSnapshots {
-    int number;
-    QString time;
-    QString desc;
-};
-
-struct SnapperSubvolume {
-    QString subvol;
-    QString subvolid;
-    QString time;
-    QString desc;
-    QString uuid;
-};
-
 class BtrfsAssistant : public QMainWindow {
     Q_OBJECT
 
@@ -49,15 +35,12 @@ class BtrfsAssistant : public QMainWindow {
     QStringList bmFreqValues = {"none", "daily", "weekly", "monthly"};
 
     QSet<QCheckBox *> changedCheckBoxes;
-    QMap<QString, QString> snapperConfigs;
-    QMap<QString, QVector<SnapperSnapshots>> snapperSnapshots;
-    QMap<QString, QVector<SnapperSubvolume>> snapperSubvolumes;
     bool hasSnapper = false;
     bool hasBtrfsmaintenance = false;
-    bool isSnapBoot = false;
     QSettings *settings;
     Btrfs *m_btrfs;
     BtrfsMaintenance *m_btrfsMaint;
+    Snapper *m_snapper;
 
     void refreshInterface();
     void setupConfigBoxes();
@@ -65,10 +48,10 @@ class BtrfsAssistant : public QMainWindow {
     void populateBtrfsUi(const QString &uuid);
     void populateSubvolList(const QString &uuid);
     void reloadSubvolList(const QString &uuid);
-    void loadSnapper();
+    void loadSnapperUI();
     void populateSnapperGrid();
     void populateSnapperConfigSettings();
-    void restoreSnapshot(const QString &uuid, QString subvolume);
+    void restoreSnapshot(const QString &uuid, const QString &subvolume);
     void switchToSnapperRestore();
     QMap<QString, QString> getSnapshotBoot();
     void enableRestoreMode(bool enable);
