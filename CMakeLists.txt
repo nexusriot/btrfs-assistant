@@ -21,14 +21,13 @@ configure_file(config.h.in config.h @ONLY)
 
 set(PROJECT_SOURCES
         main.cpp
-        btrfs-assistant.cpp
-        btrfs-assistant.h
         btrfs-assistant.ui
         icons.qrc
+        Btrfs.h Btrfs.cpp
+        BtrfsAssistant.h BtrfsAssistant.cpp
+        BtrfsMaintenance.h BtrfsMaintenance.cpp
         Snapper.h Snapper.cpp
         System.h System.cpp
-        Btrfs.h Btrfs.cpp
-        BtrfsMaintenance.h BtrfsMaintenance.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 

@@ -23,14 +23,12 @@ struct SnapperSubvolume {
     QString uuid;
 };
 
-
-class Snapper : public QObject
-{
+class Snapper : public QObject {
     Q_OBJECT
-public:
-    explicit Snapper(Btrfs *btrfs, QObject *parent = nullptr);
+  public:
+    explicit Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
-    const QString config(const QString &mountpoint) { return m_configs.key(mountpoint); }
+    const QMap<QString, QString> config(const QString &name);
 
     /**
      * @brief Finds all available Snapper configs
@@ -40,15 +38,35 @@ public:
      */
     const QStringList configs() { return m_configs.keys(); }
 
+    void createConfig(const QString &name, const QString &path) const { runSnapper("create-config " + path, name); }
+
+    void createSnapshot(const QString &name) const { runSnapper("create -d 'Manual Snapshot'", name); }
+
+    void deleteConfig(const QString &name) const { runSnapper("delete-config", name); }
+
+    void deleteSnapshot(const QString &name, const int num) const { runSnapper("delete " + QString::number(num), name); }
+
     /**
      * @brief Loads all the Snapper meta data from disk
      *
      * Populates m_configs and m_snapshots from the results of the snapper command
      *
      */
-    void reload();
+    void load();
 
-    void reloadSubvols();
+    /**
+     * @brief loads the data for a single Snapper config
+     * @param name - A QString that holds the name of the config to load
+     */
+    void loadConfig(const QString &name);
+
+    /**
+     * @brief loads the Btrfs subvolumes that are Snapper snapshots
+     */
+    void loadSubvols();
+
+    void setConfig(const QString &name, const QMap<QString, QString> configMap);
+
     /**
      * @brief Returns a list of metadata for each snapshot in @p config
      * @param config - The name of the Snapper config to list
@@ -64,15 +82,18 @@ public:
      * @return A QVector of SnapperSubvolumes for each subvol
      */
     const QVector<SnapperSubvolume> subvols(const QString &config);
-private:
+
+  private:
     Btrfs *m_btrfs;
-    QMap<QString, QString> m_configs;
+    // The outer map is keyed with the config name, the inner map is the name, value pairs in the named config
+    QMap<QString, QMap<QString, QString>> m_configs;
+    QString m_snapperCommand;
     QMap<QString, QVector<SnapperSnapshots>> m_snapshots;
     QMap<QString, QVector<SnapperSubvolume>> m_subvols;
 
+    const QStringList runSnapper(const QString &command, const QString &name = "") const;
 
-signals:
-
+  signals:
 };
 
 #endif // SNAPPER_H

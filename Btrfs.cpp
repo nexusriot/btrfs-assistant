@@ -5,14 +5,9 @@
 #include <QDir>
 #include <QUuid>
 
-// Returns one of the mountpoints for a given UUID
-static const QString findMountpoint(const QString &uuid) {
-    return System::runCmd("findmnt --real -rno target,uuid | grep " + uuid + " | head -n 1 | awk '{print $1}'", false).output;
-}
-
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { reloadVolumes(); }
 
-const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) {
+const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     // If the uuid isn't found return a default constructed btrfsMeta
     if (!m_volumes.contains(uuid)) {
         return BtrfsMeta();
@@ -57,7 +52,9 @@ const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
 }
 
 bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
-    return uuid == System::runCmd("findmnt -nO subvolid=" + QString::number(subvolid) + " -o uuid | head -n 1", false).output.trimmed();
+    const QStringList outputList =
+        System::runCmd("findmnt -nO subvolid=" + QString::number(subvolid) + " -o uuid", false).output.trimmed().split("\n");
+    return uuid == outputList.at(0).trimmed();
 }
 
 const QString Btrfs::findRootSubvol() {
@@ -86,7 +83,14 @@ const QString Btrfs::findRootSubvol() {
 }
 
 const QStringList Btrfs::listFilesystems() {
-    return System::runCmd("btrfs filesystem show -m | grep uuid | awk -F':' '{gsub(/ /,\"\");print $3}'", false).output.split('\n');
+    const QStringList outputList = System::runCmd("btrfs filesystem show -m", false).output.split('\n');
+    QStringList uuids;
+    for (const QString &line : outputList) {
+        if (line.contains("uuid:")) {
+            uuids.append(line.split("uuid:").at(1).trimmed());
+        }
+    }
+    return uuids;
 }
 
 const QStringList Btrfs::listMountpoints() {
@@ -109,7 +113,7 @@ const QStringList Btrfs::listMountpoints() {
     return mountpoints;
 }
 
-const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) {
+const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) const {
     // If the uuid isn't found return a default constructed QMap
     if (!m_volumes.contains(uuid)) {
         return QMap<int, Subvolume>();
@@ -120,7 +124,7 @@ const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) {
 
 const QString Btrfs::mountRoot(const QString &uuid) {
     // Check to see if it is already mounted
-    QStringList findmntOutput = System::runCmd("findmnt -nO subvolid=5 -o uuid,target | head -n 1", false).output.split('\n');
+    QStringList findmntOutput = System::runCmd("findmnt -nO subvolid=5 -o uuid,target", false).output.split('\n');
     QString mountpoint;
     for (const QString &line : qAsConst(findmntOutput)) {
         if (!line.isEmpty() && line.split(' ').at(0).trimmed() == uuid)
@@ -180,7 +184,7 @@ void Btrfs::reloadVolumes() {
     QStringList uuidList = listFilesystems();
 
     for (const QString &uuid : qAsConst(uuidList)) {
-        QString mountpoint = findMountpoint(uuid);
+        QString mountpoint = mountRoot(uuid);
         if (!mountpoint.isEmpty()) {
             BtrfsMeta btrfs;
             btrfs.populated = true;
@@ -222,7 +226,71 @@ bool Btrfs::renameSubvolume(const QString &source, const QString &target) {
     return dir.rename(source, target);
 }
 
-const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) {
+const RestoreResult Btrfs::restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const {
+    RestoreResult restoreResult;
+
+    // Get the subvol names associated with the IDs
+    const QString sourceName = subvolName(uuid, sourceId);
+    const QString targetName = subvolName(uuid, targetId);
+
+    // Ensure the root of the partition is mounted and get the mountpoint
+    QString mountpoint = Btrfs::mountRoot(uuid);
+
+    // Make sure we have a trailing /
+    QDir::cleanPath(mountpoint += "/");
+
+    // We are out of excuses, time to do the restore....carefully
+    QString targetBackup = "restore_backup_" + targetName + "_" + QTime::currentTime().toString("HHmmsszzz");
+    restoreResult.backupSubvolName = targetBackup;
+
+    QDir dirWorker;
+
+    // Find the children before we start
+    const QStringList children = this->children(targetId, uuid);
+
+    // Rename the target
+    if (!Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + targetName), QDir::cleanPath(mountpoint + targetBackup))) {
+        restoreResult.failureMessage = tr("Failed to make a backup of target subvolume");
+        return restoreResult;
+    }
+
+    // We moved the snapshot so we need to change the location
+    const QString newSubvolume = targetBackup + sourceName.right(sourceName.length() - targetName.length());
+
+    // Place a snapshot of the source where the target was
+    System::runCmd("btrfs subvolume snapshot " + mountpoint + newSubvolume + " " + mountpoint + targetName, false);
+
+    // Make sure it worked
+    if (!dirWorker.exists(mountpoint + targetName)) {
+        // That failed, try to put the old one back
+        Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + targetBackup), QDir::cleanPath(mountpoint + targetName));
+        restoreResult.failureMessage = tr("Failed to restore subvolume!") + "\n\n" +
+                                       tr("Snapshot restore failed.  Please verify the status of your system before rebooting");
+        return restoreResult;
+    }
+
+    // The restore was successful, now we need to move any child subvolumes into the target
+    QString childSubvolPath;
+    for (const QString &childSubvol : children) {
+        childSubvolPath = childSubvol.right(childSubvol.length() - (targetName.length() + 1));
+
+        // rename snapshot
+        QString sourcePath = QDir::cleanPath(mountpoint + targetBackup + QDir::separator() + childSubvolPath);
+        QString destinationPath = QDir::cleanPath(mountpoint + childSubvol);
+        if (!Btrfs::renameSubvolume(sourcePath, destinationPath)) {
+            // If this fails, not much can be done except let the user know
+            restoreResult.failureMessage = tr("The restore was successful but the migration of the nested subvolumes failed") + "\n\n" +
+                                           tr("Please migrate the those subvolumes manually");
+            return restoreResult;
+        }
+    }
+
+    // If we get to here, it worked!
+    restoreResult.success = true;
+    return restoreResult;
+}
+
+const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const {
     if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
         return 0;
     }
@@ -238,7 +306,15 @@ const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) {
     return subvolId;
 }
 
-const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) {
+const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
+    if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
+        return m_volumes[uuid].subvolumes[subvolId].subvolName;
+    } else {
+        return QString();
+    }
+}
+
+const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) const {
     int parentId = subvolId;
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
         while (m_volumes[uuid].subvolumes[parentId].parentId != 5) {

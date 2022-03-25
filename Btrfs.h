@@ -1,8 +1,16 @@
 #ifndef BTRFS_H
 #define BTRFS_H
 
+#include <QDir>
 #include <QMap>
 #include <QObject>
+#include <QTime>
+
+struct RestoreResult {
+    bool success = false;
+    QString failureMessage;
+    QString backupSubvolName;
+};
 
 struct Subvolume {
     int parentId = 0;
@@ -36,7 +44,7 @@ class Btrfs : public QObject {
      * If no data is found for the given UUID, it returns a default contructed value
      *
      */
-    const BtrfsMeta btrfsVolume(const QString &uuid);
+    const BtrfsMeta btrfsVolume(const QString &uuid) const;
 
     /** @brief Returns the direct children for a given subvolume
      *
@@ -96,7 +104,7 @@ class Btrfs : public QObject {
      *  returns an empty list
      *
      */
-    const QMap<int, Subvolume> listSubvolumes(const QString &uuid);
+    const QMap<int, Subvolume> listSubvolumes(const QString &uuid) const;
 
     /** @brief Mounts the root of a given Btrfs volume
      *
@@ -126,14 +134,37 @@ class Btrfs : public QObject {
      */
     static bool renameSubvolume(const QString &source, const QString &target);
 
+    /**
+     * @brief Restores the source subvolume over the target
+     * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
+     * @param sourceId - An int that is the subvolid of the source subvolume
+     * @param targetId - An int that is the subvolid of the target subvolume
+     * @return A RestoreResult struct that contains the results of the operation
+     */
+    const RestoreResult restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const;
+
     /** @brief Returns the subvolid for a given subvol
      *
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
      *  it returns 0
      */
-    const int subvolId(const QString &uuid, const QString &subvolName);
+    const int subvolId(const QString &uuid, const QString &subvolName) const;
 
-    const int subvolTopParent(const QString &uuid, const int subvolId);
+    /**
+     * @brief Returns the name of the subvol with id @p subvolId
+     * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
+     * @param subvolId - An int with the ID of the subvolume to find the name for
+     * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
+     */
+    const QString subvolName(const QString &uuid, const int subvolId) const;
+
+    /**
+     * @brief Finds the ID of the subvolume that is the top level parent of @p subvolId
+     * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
+     * @param subvolId - An int with the ID of the subvolume to find the top level parent of
+     * @return An int with top level parent ID or 0 if the subvolId is not found
+     */
+    const int subvolTopParent(const QString &uuid, const int subvolId) const;
 
   private:
     // A map BtrfsMeta.  The key is UUID

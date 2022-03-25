@@ -1,5 +1,8 @@
 ### Btrfs Assistant
 
+0.9.1 - 2022-03-21
+* Fix bugs that caused nested subvolumes from being properly restored
+
 0.9 - 2022-03-19
 * Add more thorough support for Btrfs Maintenance
 * Major code refactor

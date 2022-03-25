@@ -1,24 +1,15 @@
 #ifndef BTRFSASSISTANT_H
 #define BTRFSASSISTANT_H
 
-#include <QDir>
-#include <QFile>
 #include <QMainWindow>
 #include <QMap>
 #include <QMessageBox>
-#include <QProcess>
-#include <QSet>
-#include <QSettings>
 #include <QSignalMapper>
-#include <QThread>
-#include <QTime>
 #include <QTranslator>
-#include <QUuid>
-#include <QXmlStreamReader>
 
 #include "Btrfs.h"
-#include "Snapper.h"
 #include "BtrfsMaintenance.h"
+#include "Snapper.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,48 +20,36 @@ QT_END_NAMESPACE
 class BtrfsAssistant : public QMainWindow {
     Q_OBJECT
 
-  protected:
-    QHash<QString, QCheckBox *> configCheckBoxes;
-
-    QStringList bmFreqValues = {"none", "daily", "weekly", "monthly"};
-
-    QSet<QCheckBox *> changedCheckBoxes;
-    bool hasSnapper = false;
-    bool hasBtrfsmaintenance = false;
-    QSettings *settings;
-    Btrfs *m_btrfs;
-    BtrfsMaintenance *m_btrfsMaint;
-    Snapper *m_snapper;
-
-    void refreshInterface();
-    void setupConfigBoxes();
-    void apply();
-    void populateBtrfsUi(const QString &uuid);
-    void populateSubvolList(const QString &uuid);
-    void reloadSubvolList(const QString &uuid);
-    void loadSnapperUI();
-    void populateSnapperGrid();
-    void populateSnapperConfigSettings();
-    void restoreSnapshot(const QString &uuid, const QString &subvolume);
-    void switchToSnapperRestore();
-    QMap<QString, QString> getSnapshotBoot();
-    void enableRestoreMode(bool enable);
-    void loadSnapperRestoreMode();
-    void snapperTimelineEnable(bool enable);
-    void populateBmTab();
-    void updateServices(QList<QCheckBox *>);
-
-    void refreshBtrfsUi();
-public:
-    explicit BtrfsAssistant(QWidget *parent = 0);
+  public:
+    explicit BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = 0);
     ~BtrfsAssistant();
 
-    QString getVersion(QString name);
+  private:
+    const QStringList m_bmFreqValues = {"none", "daily", "weekly", "monthly"};
+    Btrfs *m_btrfs;
+    BtrfsMaintenance *m_btrfsMaint;
+    QSet<QCheckBox *> m_changedCheckBoxes;
+    QHash<QString, QCheckBox *> m_configCheckBoxes;
+    bool m_hasSnapper = false;
+    bool m_hasBtrfsmaintenance = false;
+    Snapper *m_snapper;
+    Ui::BtrfsAssistant *m_ui;
 
-    QString version;
-    QString output;
-
+    void enableRestoreMode(bool enable);
+    void loadSnapperRestoreMode();
+    void loadSnapperUI();
+    void populateBmTab();
+    void populateBtrfsUi(const QString &uuid);
+    void populateSnapperGrid();
+    void populateSnapperConfigSettings();
+    void refreshSubvolListUi(const QString &uuid);
+    void refreshBtrfsUi();
+    void refreshSnapperServices();
+    void restoreSnapshot(const QString &uuid, const QString &subvolume);
     bool setup();
+    void setupConfigBoxes();
+    void snapperTimelineEnable(bool enable);
+    void updateServices(QList<QCheckBox *>);
 
   private slots:
     void on_checkBox_bmBalance_clicked(bool checked);
@@ -93,8 +72,5 @@ public:
     void on_pushButton_snapper_new_config_clicked();
     void on_pushButton_snapper_save_config_clicked();
     void on_pushButton_SnapperUnitsApply_clicked();
-
-  private:
-    Ui::BtrfsAssistant *ui;
 };
 #endif // BTRFSASSISTANT_H

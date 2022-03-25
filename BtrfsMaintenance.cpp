@@ -57,12 +57,8 @@ bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map) {
     return true;
 }
 
-
-BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, const QString &serviceName, QObject *parent)
-    : QObject{parent}
-{
+BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, const QString &serviceName, QObject *parent) : QObject{parent} {
     QSettings::Format bmFormat = QSettings::registerFormat("btrfsmaintenance", readBmFile, writeBmFile);
     m_settings = new QSettings(configFile, bmFormat);
     m_serviceName = serviceName;
 }
-

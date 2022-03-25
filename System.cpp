@@ -18,8 +18,12 @@ bool System::enableService(QString serviceName, bool enable) {
 
 QStringList System::findEnabledUnits() {
 
-    const QString bashOutput = System::runCmd("systemctl list-unit-files --state=enabled -q --no-pager | awk '{print $1}'", false).output;
-    const QStringList serviceList = bashOutput.split('\n');
+    const QString bashOutput = System::runCmd("systemctl list-unit-files --state=enabled -q --no-pager", false).output;
+    const QStringList outputList = bashOutput.split('\n');
+    QStringList serviceList;
+    for (const QString &line : outputList) {
+        serviceList.append(line.split(QRegExp("[\t ]+")).at(0));
+    }
 
     return serviceList;
 }
