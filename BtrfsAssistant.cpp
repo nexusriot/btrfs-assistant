@@ -247,11 +247,12 @@ void BtrfsAssistant::populateSnapperGrid() {
 
         // Clear the table and set the headers
         m_ui->tableWidget_snapper->clear();
-        m_ui->tableWidget_snapper->setColumnCount(4);
+        m_ui->tableWidget_snapper->setColumnCount(5);
         m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
         m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Subvolume")));
         m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Type")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
 
         QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
         // Make sure there is something to populate
@@ -265,17 +266,19 @@ void BtrfsAssistant::populateSnapperGrid() {
             m_ui->tableWidget_snapper->setItem(i, 0, new QTableWidgetItem(QString::number(subvols.at(i).snapshotNum)));
             m_ui->tableWidget_snapper->setItem(i, 1, subvol);
             m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).time));
-            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).desc));
+            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
+            m_ui->tableWidget_snapper->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
         }
     } else {
         QString config = m_ui->comboBox_snapper_configs->currentText();
 
         // Clear the table and set the headers
         m_ui->tableWidget_snapper->clear();
-        m_ui->tableWidget_snapper->setColumnCount(3);
+        m_ui->tableWidget_snapper->setColumnCount(4);
         m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
         m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Description")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Type")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
 
         // Make sure there is something to populate
         QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);
@@ -290,7 +293,8 @@ void BtrfsAssistant::populateSnapperGrid() {
             number->setData(Qt::DisplayRole, snapshots.at(i).number);
             m_ui->tableWidget_snapper->setItem(i, 0, number);
             m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(snapshots.at(i).time));
-            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).desc));
+            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
+            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
         }
     }
 

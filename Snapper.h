@@ -12,6 +12,7 @@ struct SnapperSnapshots {
     int number;
     QString time;
     QString desc;
+    QString type;
 };
 
 struct SnapperSubvolume {
@@ -21,6 +22,7 @@ struct SnapperSubvolume {
     QString time;
     QString desc;
     QString uuid;
+    QString type;
 };
 
 class Snapper : public QObject {

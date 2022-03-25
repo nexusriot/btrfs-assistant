@@ -16,6 +16,8 @@ static SnapperSnapshots getSnapperMeta(const QString &filename) {
             snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
         else if (line.trimmed().startsWith("<description>"))
             snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
+        else if (line.trimmed().startsWith("<type>"))
+            snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
     }
 
     return snap;
@@ -51,7 +53,7 @@ void Snapper::load() {
 
         // The root needs special handling because we may be booted off a snapshot
         if (name == "root") {
-            list = runSnapper("list --columns number,date,description");
+            list = runSnapper("list --columns number,date,description,type");
             if (list.isEmpty()) {
                 // This means that either there are no snapshots or the root is mounted on non-btrfs filesystem like an overlayfs
                 // Let's check the latter case first
@@ -102,14 +104,14 @@ void Snapper::load() {
                     mountpoint += "/";
                 }
 
-                list = runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + prefix) + " list --columns number,date,description");
+                list = runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + prefix) + " list --columns number,date,description,type");
                 if (list.isEmpty()) {
                     // If this is still empty, give up
                     continue;
                 }
             }
         } else {
-            list = runSnapper("list --columns number,date,description", name);
+            list = runSnapper("list --columns number,date,description,type", name);
             if (list.isEmpty()) {
                 continue;
             }
@@ -117,7 +119,7 @@ void Snapper::load() {
 
         for (const QString &snap : qAsConst(list)) {
             m_snapshots[name].append(
-                {snap.split(',').at(0).trimmed().toInt(), snap.split(',').at(1).trimmed(), snap.split(',').at(2).trimmed()});
+                {snap.split(',').at(0).trimmed().toInt(), snap.split(',').at(1).trimmed(), snap.split(',').at(2).trimmed(), snap.split(',').at(3).trimmed()});
         }
     }
     loadSubvols();
@@ -208,6 +210,7 @@ void Snapper::loadSubvols() {
             subvol.desc = snap.desc;
             subvol.time = snap.time;
             subvol.snapshotNum = snap.number;
+            subvol.type = snap.type;
 
             QString prefix = subvol.subvol.split(".snapshots").at(0).trimmed();
 
