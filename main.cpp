@@ -6,18 +6,17 @@
 #include <QDesktopWidget>
 #include <QSettings>
 
-// We have to manually parse argv into QStringList because by the time QCoreApplication initializes it's already too late because Qt already picked the theme
-QStringList parseArgs(int argc, char *argv[])
-{
+// We have to manually parse argv into QStringList because by the time QCoreApplication initializes it's already too late because Qt already
+// picked the theme
+QStringList parseArgs(int argc, char *argv[]) {
     QStringList list;
     const int ac = argc;
-    char ** const av = argv;
+    char **const av = argv;
     for (int a = 0; a < ac; ++a) {
         list << QString::fromLocal8Bit(av[a]);
     }
     return list;
 }
-
 
 int main(int argc, char *argv[]) {
     QCommandLineParser cmdline;

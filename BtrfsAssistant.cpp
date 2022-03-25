@@ -247,10 +247,11 @@ void BtrfsAssistant::populateSnapperGrid() {
 
         // Clear the table and set the headers
         m_ui->tableWidget_snapper->clear();
-        m_ui->tableWidget_snapper->setColumnCount(3);
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Subvolume")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Description")));
+        m_ui->tableWidget_snapper->setColumnCount(4);
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Subvolume")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
+        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
 
         QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
         // Make sure there is something to populate
@@ -261,9 +262,10 @@ void BtrfsAssistant::populateSnapperGrid() {
         m_ui->tableWidget_snapper->setRowCount(subvols.size());
         for (int i = 0; i < subvols.size(); i++) {
             QTableWidgetItem *subvol = new QTableWidgetItem(subvols.at(i).subvol);
-            m_ui->tableWidget_snapper->setItem(i, 0, subvol);
-            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(subvols.at(i).time));
-            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).desc));
+            m_ui->tableWidget_snapper->setItem(i, 0, new QTableWidgetItem(QString::number(subvols.at(i).snapshotNum)));
+            m_ui->tableWidget_snapper->setItem(i, 1, subvol);
+            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).time));
+            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).desc));
         }
     } else {
         QString config = m_ui->comboBox_snapper_configs->currentText();
@@ -612,7 +614,7 @@ void BtrfsAssistant::on_pushButton_restore_snapshot_clicked() {
     }
 
     QString config = m_ui->comboBox_snapper_configs->currentText();
-    QString subvol = m_ui->tableWidget_snapper->item(m_ui->tableWidget_snapper->currentRow(), 0)->text();
+    QString subvol = m_ui->tableWidget_snapper->item(m_ui->tableWidget_snapper->currentRow(), 1)->text();
 
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(config);
 
