@@ -36,6 +36,20 @@ int main(int argc, char *argv[]) {
     QString snapperPath = settings.value("snapper", "/usr/bin/snapper").toString();
     QString btrfsMaintenanceConfig = settings.value("bm_config", "/etc/default/btrfsmaintenance").toString();
 
+    // Load the subvol mapping from the settings file
+    settings.beginGroup("Subvol-Mapping");
+    const QStringList keys = settings.childKeys();
+    QMap<QString, QString> subvolMap;
+    for (const QString &key : keys) {
+        if (!key.isEmpty() && settings.value(key).toString().contains(",") && !settings.value(key).toString().startsWith("#")) {
+            const QStringList mapList = settings.value(key).toString().split(",");
+            if (mapList.count()==3) {
+                subvolMap.insert(mapList.at(0).trimmed(), mapList.at(1).trimmed() + "," + mapList.at(2).trimmed());
+            }
+        }
+    }
+    settings.endGroup();
+
     // The btrfs object is used to interact with the application
     Btrfs btrfs;
 
@@ -49,7 +63,7 @@ int main(int argc, char *argv[]) {
     // If Snapper is installed, instantiate the snapper object
     Snapper *snapper = nullptr;
     if (QFile::exists(snapperPath)) {
-        snapper = new Snapper(&btrfs, snapperPath);
+        snapper = new Snapper(&btrfs, snapperPath, subvolMap);
     }
 
     // For a GUI session, instantiate the Main Window

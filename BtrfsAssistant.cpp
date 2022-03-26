@@ -262,9 +262,10 @@ void BtrfsAssistant::populateSnapperGrid() {
         // Populate the table
         m_ui->tableWidget_snapper->setRowCount(subvols.size());
         for (int i = 0; i < subvols.size(); i++) {
-            QTableWidgetItem *subvol = new QTableWidgetItem(subvols.at(i).subvol);
-            m_ui->tableWidget_snapper->setItem(i, 0, new QTableWidgetItem(QString::number(subvols.at(i).snapshotNum)));
-            m_ui->tableWidget_snapper->setItem(i, 1, subvol);
+            QTableWidgetItem *number = new QTableWidgetItem(subvols.at(i).snapshotNum);
+            number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
+            m_ui->tableWidget_snapper->setItem(i, 0, number);
+            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
             m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).time));
             m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
             m_ui->tableWidget_snapper->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
@@ -353,19 +354,19 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
     m_btrfs->reloadSubvols(uuid);
 
     const int subvolId = m_btrfs->subvolId(uuid, subvolume);
-    int targetId = m_btrfs->subvolTopParent(uuid, subvolId);
-    QString targetSubvol = m_btrfs->subvolName(uuid, targetId);
-
-    // Get the subvolid of the target and do some additional error checking
-    if (targetId == 0 || targetSubvol.isEmpty()) {
-        displayError(tr("Target not found"));
+    const QString snapshotSubvol = Snapper::findSnapshotSubvolume(subvolume);
+    if (snapshotSubvol.isEmpty()) {
+        displayError(tr("Snapshot subvolume not found"));
         return;
     }
 
-    // Handle a special case where the snapshot is of the root of the Btrfs partition
-    if (targetSubvol == ".snapshots") {
-        targetId = 5;
-        targetSubvol = "";
+    // Check the map for the target subvolume
+    const QString targetSubvol = m_snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const int targetId = m_btrfs->subvolId(uuid, targetSubvol);
+
+    if (targetId == 0 || targetSubvol.isEmpty()) {
+        displayError(tr("Target not found"));
+        return;
     }
 
     // We are out of errors to check for, time to ask for confirmation

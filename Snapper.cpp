@@ -23,9 +23,10 @@ static SnapperSnapshots getSnapperMeta(const QString &filename) {
     return snap;
 }
 
-Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent} {
+Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, const QMap<QString, QString> &subvolMap, QObject *parent) : QObject{parent} {
     m_btrfs = btrfs;
     m_snapperCommand = snapperCommand;
+    m_subvolMap = subvolMap;
     load();
 }
 
@@ -34,6 +35,50 @@ const QMap<QString, QString> Snapper::config(const QString &name) {
         return m_configs[name];
     } else {
         return QMap<QString, QString>();
+    }
+}
+
+void Snapper::createSubvolMap() {
+    for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
+        const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
+        const QString uuid = subvol.at(0).uuid;
+        if (!m_subvolMap.value(snapshotSubvol, "").endsWith(uuid)) {
+            const int snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
+            int targetId = m_btrfs->subvolTopParent(uuid, snapSubvolId);
+            QString targetSubvol = m_btrfs->subvolName(uuid, targetId);
+
+            // Get the subvolid of the target and do some additional error checking
+            if (targetId == 0 || targetSubvol.isEmpty()) {
+                continue;
+            }
+
+            // Handle a special case where the snapshot is of the root of the Btrfs partition
+            if (targetSubvol == ".snapshots") {
+                targetSubvol = "";
+            }
+
+            m_subvolMap.insert(snapshotSubvol, targetSubvol + "," + uuid);
+        }
+    }
+}
+
+const QString Snapper::findSnapshotSubvolume(const QString &subvol) {
+    static QRegularExpression re("\\/[0-9]*\\/snapshot$");
+    QStringList subvolSplit = subvol.split(re);
+
+    // If count > 1 than the split worked, otherwise there was no match
+    if (subvolSplit.count() > 1) {
+        return subvolSplit.at(0);
+    } else {
+        return QString();
+    }
+}
+
+const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const {
+    if (m_subvolMap.value(snapshotSubvol, "").endsWith(uuid)) {
+        return m_subvolMap[snapshotSubvol].split(",").at(0);
+    } else {
+        return QString();
     }
 }
 
@@ -118,8 +163,8 @@ void Snapper::load() {
         }
 
         for (const QString &snap : qAsConst(list)) {
-            m_snapshots[name].append(
-                {snap.split(',').at(0).trimmed().toInt(), snap.split(',').at(1).trimmed(), snap.split(',').at(2).trimmed(), snap.split(',').at(3).trimmed()});
+            m_snapshots[name].append({snap.split(',').at(0).trimmed().toInt(), snap.split(',').at(1).trimmed(),
+                                      snap.split(',').at(2).trimmed(), snap.split(',').at(3).trimmed()});
         }
     }
     loadSubvols();
@@ -191,15 +236,10 @@ void Snapper::loadSubvols() {
             }
 
             // It is a snapshot so now we parse it and read the snapper XML
-            QString end = "snapshot";
+            const QString end = "snapshot";
             QString filename = subvol.subvol.left(subvol.subvol.length() - end.length()) + "info.xml";
 
-            // If the normal root is mounted the root snapshots will be at /.snapshots
-            if (subvol.subvol.startsWith(".snapshots")) {
-                filename = QDir::cleanPath(QDir::separator() + filename);
-            } else {
-                filename = QDir::cleanPath(mountpoint + filename);
-            }
+            filename = QDir::cleanPath(mountpoint + filename);
 
             SnapperSnapshots snap = getSnapperMeta(filename);
 
@@ -212,37 +252,29 @@ void Snapper::loadSubvols() {
             subvol.snapshotNum = snap.number;
             subvol.type = snap.type;
 
-            QString prefix = subvol.subvol.split(".snapshots").at(0).trimmed();
-
-            if (prefix == "") {
-                QString optionsOutput = System::runCmd("LANG=C findmnt -no options " + mountpoint, false).output.trimmed();
-                if (optionsOutput.isEmpty()) {
-                    return;
-                }
-
-                QString subvolOption;
-                const QStringList optionsList = optionsOutput.split(',');
-                for (const QString &option : optionsList) {
-                    if (option.startsWith("subvol=")) {
-                        subvolOption = option.split("subvol=").at(1);
-                    }
-                }
-                if (subvolOption.startsWith("/")) {
-                    subvolOption = subvolOption.right(subvolOption.length() - 1);
-                }
-
-                if (subvolOption.isEmpty()) {
-                    prefix = "root";
-                } else {
-                    prefix = subvolOption;
-                }
-            } else {
-                prefix = prefix.left(prefix.length() - 1);
+            const QString snapshotSubvol = findSnapshotSubvolume(subvol.subvol);
+            if (snapshotSubvol.isEmpty()) {
+                continue;
             }
 
-            m_subvols[prefix].append(subvol);
+            // Check the map for the target subvolume
+            QString targetSubvol = findTargetSubvol(snapshotSubvol, uuid);
+
+            // If it is empty, it may mean the the map isn't loaded yet for the nested subvolumes
+            if (targetSubvol.isEmpty()) {
+                if (snapshotSubvol.endsWith(".snapshots")) {
+                    const int targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
+                    const int parentId = m_btrfs->subvolTopParent(uuid, targetSubvolId);
+                    targetSubvol = m_btrfs->subvolName(uuid, parentId);
+                } else {
+                    continue;
+                }
+            }
+
+            m_subvols[targetSubvol].append(subvol);
         }
     }
+    createSubvolMap();
 }
 
 void Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {

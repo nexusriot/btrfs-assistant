@@ -51,6 +51,11 @@ const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
     return false;
 }
 
+bool Btrfs::isSnapper(const QString &subvolume) {
+    static QRegularExpression re("\\/[0-9]*\\/snapshot$");
+    return re.match(subvolume).hasMatch();
+}
+
 bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
     const QStringList outputList =
         System::runCmd("findmnt -nO subvolid=" + QString::number(subvolid) + " -o uuid", false).output.trimmed().split("\n");

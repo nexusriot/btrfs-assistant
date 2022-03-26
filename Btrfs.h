@@ -4,6 +4,7 @@
 #include <QDir>
 #include <QMap>
 #include <QObject>
+#include <QRegularExpression>
 #include <QTime>
 
 struct RestoreResult {
@@ -73,7 +74,7 @@ class Btrfs : public QObject {
     /** @brief Returns true if @p subvolume is a snapper snapshot
      *
      */
-    static bool isSnapper(const QString &subvolume) { return subvolume.contains(".snapshots") && !subvolume.endsWith(".snapshots"); }
+    static bool isSnapper(const QString &subvolume);
 
     /** @brief Returns the name of the subvol mounted at /
      *
