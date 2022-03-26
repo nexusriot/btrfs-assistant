@@ -13,6 +13,13 @@ struct Result {
 class System : public QObject {
     Q_OBJECT
   public:
+
+    /**
+     * @brief Checks to see if the user running the application is root
+     * @return True is the user has a UID of 0, false otherwise
+     */
+    static bool checkRootUid() { return System::runCmd("id -u", false).output == "0"; }
+
     /** @brief Enables or disables a service
      *
      * Enables or disables the service specified by name in @p serviceName. If @p enable is true,

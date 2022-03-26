@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+#
+# This wrapper allows allows XDG_CURRENT_DESKTOP to be set properly even when it isn't in the environment
+#
+
+# extract the value of --xdg-desktop if it is passed and put all other args in params
+for i in "$@"; do
+    case $i in
+        -x=*|--xdg-desktop=*)
+            XDG_CURRENT_DESKTOP="${i#*=}"
+            shift
+        ;;
+        *)
+            params="${params} ${i}"
+            shift
+        ;;
+    esac
+done
+
+export XDG_CURRENT_DESKTOP
+export XDG_RUNTIME_DIR=$(mktemp -d)
+btrfs-assistant-bin ${params}

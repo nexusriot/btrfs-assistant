@@ -48,7 +48,7 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_ui->setupUi(this);
 
     // Ensure the application is running as root
-    if (System::runCmd("id -u", false).output != "0") {
+    if (!System::checkRootUid()) {
         displayError(tr("The application must be run as the superuser(root)"));
         exit(1);
     }
