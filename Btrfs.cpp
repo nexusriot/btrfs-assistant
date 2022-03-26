@@ -242,7 +242,7 @@ const RestoreResult Btrfs::restoreSubvol(const QString &uuid, const int sourceId
     QString mountpoint = Btrfs::mountRoot(uuid);
 
     // We are out of excuses, time to do the restore....carefully
-    QString targetBackup = "restore_backup_" + targetName + "_" + QTime::currentTime().toString("HHmmsszzz");
+    QString targetBackup = "restore_backup_" + targetName + "_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
     restoreResult.backupSubvolName = targetBackup;
 
     QDir dirWorker;
