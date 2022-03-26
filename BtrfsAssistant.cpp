@@ -637,7 +637,6 @@ void BtrfsAssistant::on_pushButton_restore_snapshot_clicked() {
     m_ui->pushButton_restore_snapshot->clearFocus();
 }
 
-// When the create config button is clicked, use the inputted data to create the config
 void BtrfsAssistant::on_pushButton_snapper_create_clicked() {
     QString config = m_ui->comboBox_snapper_configs->currentText();
 
@@ -651,8 +650,16 @@ void BtrfsAssistant::on_pushButton_snapper_create_clicked() {
         return;
     }
 
+    // Ask the user for the description
+    bool ok;
+    QString snapshotDescription = QInputDialog::getText(this, tr("Enter a description for the snapshot"), tr("Description:"),
+                                                        QLineEdit::Normal, "Manual Snapshot", &ok);
+    if (!ok) {
+        return;
+    }
+
     // OK, let's go ahead and take the snapshot
-    m_snapper->createSnapshot(config);
+    m_snapper->createSnapshot(config, snapshotDescription);
 
     // Reload the data and refresh the UI
     m_snapper->load();
@@ -663,7 +670,6 @@ void BtrfsAssistant::on_pushButton_snapper_create_clicked() {
     m_ui->pushButton_snapper_create->clearFocus();
 }
 
-// When the snapper delete config button is clicked, call snapper to remove the config
 void BtrfsAssistant::on_pushButton_snapper_delete_clicked() {
     if (m_ui->tableWidget_snapper->currentRow() == -1) {
         displayError(tr("Nothing selected!"));

@@ -43,7 +43,7 @@ class Snapper : public QObject {
 
     void createConfig(const QString &name, const QString &path) const { runSnapper("create-config " + path, name); }
 
-    void createSnapshot(const QString &name) const { runSnapper("create -d 'Manual Snapshot'", name); }
+    void createSnapshot(const QString &name, const QString &description) const { runSnapper("create -d '" + description + "'", name); }
 
     /**
      * @brief Reads the list of subvols to create mapping between the snapshot subvolume and the source subvolume

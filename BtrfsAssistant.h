@@ -1,6 +1,7 @@
 #ifndef BTRFSASSISTANT_H
 #define BTRFSASSISTANT_H
 
+#include <QInputDialog>
 #include <QMainWindow>
 #include <QMap>
 #include <QMessageBox>
