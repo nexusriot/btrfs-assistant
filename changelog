@@ -12,7 +12,6 @@
 * Added the ability to manually name snapshots
 * Added date to backup subvolume name to make it easier to determine how old the backups were
 
-
 0.9.1 - 2022-03-21
 * Fix bugs that caused nested subvolumes from being properly restored
 
