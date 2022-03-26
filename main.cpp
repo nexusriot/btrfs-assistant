@@ -17,10 +17,15 @@ int main(int argc, char *argv[]) {
     parser.addHelpOption();
     parser.addVersionOption();
 
-    QCommandLineOption listOption(QStringList() << "l" << "list", QCoreApplication::translate("main", "List snapshots"));
+    QCommandLineOption listOption(QStringList() << "l"
+                                                << "list",
+                                  QCoreApplication::translate("main", "List snapshots"));
     parser.addOption(listOption);
 
-    QCommandLineOption restoreOption(QStringList() << "r" << "restore", QCoreApplication::translate("main", "Restore the given subvolume/UUID"), QCoreApplication::translate("main", "subvolume,UUID"));
+    QCommandLineOption restoreOption(QStringList() << "r"
+                                                   << "restore",
+                                     QCoreApplication::translate("main", "Restore the given subvolume/UUID"),
+                                     QCoreApplication::translate("main", "subvolume,UUID"));
     parser.addOption(restoreOption);
     parser.process(ba);
 
@@ -40,7 +45,7 @@ int main(int argc, char *argv[]) {
     for (const QString &key : keys) {
         if (!key.isEmpty() && settings.value(key).toString().contains(",") && !settings.value(key).toString().startsWith("#")) {
             const QStringList mapList = settings.value(key).toString().split(",");
-            if (mapList.count()==3) {
+            if (mapList.count() == 3) {
                 subvolMap.insert(mapList.at(0).trimmed(), mapList.at(1).trimmed() + "," + mapList.at(2).trimmed());
             }
         }
@@ -57,9 +62,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (parser.isSet(listOption) && snapper != nullptr) {
-        Cli::listSnapshots(snapper);
-        return 0;
-    } else if (parser.isSet(restoreOption)) {
+        return Cli::listSnapshots(snapper);
+    } else if (parser.isSet(restoreOption) && snapper != nullptr) {
         return Cli::restore(&btrfs, snapper, parser.value(restoreOption));
     } else {
         // If Btrfs Maintenance is installed, instantiate the btrfsMaintenance object

@@ -12,7 +12,7 @@ class Cli : public QObject
 {
     Q_OBJECT
 public:
-    static void listSnapshots(Snapper *snapper);
+    static int listSnapshots(Snapper *snapper);
     static int restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget);
 
 private:

@@ -4,11 +4,11 @@ static void displayError(const QString &error) { QTextStream(stderr) << "Error: 
 
 Cli::Cli(QObject *parent) : QObject{parent} {}
 
-void Cli::listSnapshots(Snapper *snapper) {
+int Cli::listSnapshots(Snapper *snapper) {
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
         displayError(tr("You must run this application as root"));
-        exit(1);
+        return 1;
     }
 
     const QStringList targets = snapper->subvolKeys();
@@ -19,6 +19,8 @@ void Cli::listSnapshots(Snapper *snapper) {
                                 << subvol.subvol << "," << subvol.uuid << Qt::endl;
         }
     }
+
+    return 0;
 }
 
 int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
