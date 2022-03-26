@@ -168,7 +168,7 @@ class Btrfs : public QObject {
     const int subvolTopParent(const QString &uuid, const int subvolId) const;
 
   private:
-    // A map BtrfsMeta.  The key is UUID
+    // A map of BtrfsMeta.  The key is UUID
     QMap<QString, BtrfsMeta> m_volumes;
 
   signals:

@@ -31,6 +31,11 @@ class Snapper : public QObject {
   public:
     explicit Snapper(Btrfs *btrfs, QString snapperCommand, const QMap<QString, QString> &subvolMap, QObject *parent = nullptr);
 
+    /**
+     * @brief Gets the list of configuration settings for a given config
+     * @param name - A QString that is the Snapper config name
+     * @return A QMap of name, value pairs for each setting
+     */
     const QMap<QString, QString> config(const QString &name);
 
     /**
@@ -41,8 +46,18 @@ class Snapper : public QObject {
      */
     const QStringList configs() { return m_configs.keys(); }
 
+    /**
+     * @brief Creates a new Snapper config
+     * @param name - The name of the new config
+     * @param path - The absolute path to the mountpoint of the subvolume that will be snapshotted by the config
+     */
     void createConfig(const QString &name, const QString &path) const { runSnapper("create-config " + path, name); }
 
+    /**
+     * @brief Creates a new manual snapshot with the given description
+     * @param name - The name of the Snapper config
+     * @param description - A string holding the description to be saved
+     */
     void createSnapshot(const QString &name, const QString &description) const { runSnapper("create -d '" + description + "'", name); }
 
     /**
@@ -50,8 +65,17 @@ class Snapper : public QObject {
      */
     void createSubvolMap();
 
+    /**
+     * @brief Deletes the given snapper config
+     * @param name - The name of the Snapper config to delete
+     */
     void deleteConfig(const QString &name) const { runSnapper("delete-config", name); }
 
+    /**
+     * @brief Deletes a given Snapper snapshot
+     * @param name - The name of the config that contains the snapshot to delete
+     * @param num - The number of the snapshot to delete
+     */
     void deleteSnapshot(const QString &name, const int num) const { runSnapper("delete " + QString::number(num), name); }
 
     /**
@@ -61,6 +85,12 @@ class Snapper : public QObject {
      */
     static const QString findSnapshotSubvolume(const QString &subvol);
 
+    /**
+     * @brief Finds where the snapshots of @p snapshotSubvol should be restored to
+     * @param snapshotSubvol - The path to the snapshot subvolume relative to the root of the filesystem
+     * @param uuid - The UUID of the btrfs filesystem
+     * @return A QString that is the path to the target subvolume relative to the root of the filesystem
+     */
     const QString findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const;
 
     /**
@@ -82,6 +112,11 @@ class Snapper : public QObject {
      */
     void loadSubvols();
 
+    /**
+     * @brief Updates the settings for a given Snapper config described by @p name
+     * @param name - The name of the Snapper config to be updated
+     * @param configMap - A QMap of name/value pairs that holds the settings to update
+     */
     void setConfig(const QString &name, const QMap<QString, QString> configMap);
 
     /**
@@ -91,6 +126,10 @@ class Snapper : public QObject {
      */
     const QVector<SnapperSnapshots> snapshots(const QString &config);
 
+    /**
+     * @brief Gets the list of targets where a Snapper snapshot can be restored to
+     * @return A QStringList that is a list of paths relative to the root of the Btrfs filesystem
+     */
     const QStringList subvolKeys() { return m_subvols.keys(); }
 
     /**
@@ -102,7 +141,7 @@ class Snapper : public QObject {
 
   private:
     Btrfs *m_btrfs;
-    // The outer map is keyed with the config name, the inner map is the name, value pairs in the named config
+    // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
     QMap<QString, QMap<QString, QString>> m_configs;
 
     // The absolute path to the snapper command
@@ -111,7 +150,7 @@ class Snapper : public QObject {
     // A map of snapper snapshots.  The key is the snapper config name
     QMap<QString, QVector<SnapperSnapshots>> m_snapshots;
 
-    // A map of btrfs subvolumes that hold snapper snapshots.  The key is the source subvol.
+    // A map of btrfs subvolumes that hold snapper snapshots.  The key is the target subvol.
     QMap<QString, QVector<SnapperSubvolume>> m_subvols;
 
     // Maps the subvolumes to their snapshot directories.  key is the snapshot subvol path
