@@ -28,7 +28,7 @@
       </property>
       <widget class="QWidget" name="tab_btrfs">
        <attribute name="title">
-        <string>BTRFS</string>
+        <string>Btrfs</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_33">
         <item row="0" column="0">
@@ -190,7 +190,7 @@
                <item>
                 <widget class="QPushButton" name="pushButton_load">
                  <property name="text">
-                  <string>Refresh BTRFS Data</string>
+                  <string>Refresh Btrfs Data</string>
                  </property>
                 </widget>
                </item>
@@ -275,7 +275,7 @@
       </widget>
       <widget class="QWidget" name="tab_subvolumes">
        <attribute name="title">
-        <string>BTRFS Subvolumes</string>
+        <string>Btrfs Subvolumes</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_23">
         <item row="3" column="0">
