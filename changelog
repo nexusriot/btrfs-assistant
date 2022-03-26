@@ -1,5 +1,18 @@
 ### Btrfs Assistant
 
+1.0 - TBD
+* A large refactor of the entire code base including touching almost every section of the code
+* Removed all shell manipulation functions(sed/grep/awk/etc).  These functions are now performed in C++.
+* Added a basic CLI to list and restore snapshots
+* Removed the requirement that .snapshots must be a nested subvolume.  If you use non-nested subvolumes for snapshots, you can now specify those in the config.
+* Removed the functionality to automatically launch the application when booting off a snapshot
+* Change the sort order of snapshots in restore mode so the most recent snapshots are first
+* Added snapshot number to snapper restore grid
+* Added the snapshot type info to all snapshot views
+* Added the ability to manually name snapshots
+* Added date to backup subvolume name to make it easier to determine how old the backups were
+
+
 0.9.1 - 2022-03-21
 * Fix bugs that caused nested subvolumes from being properly restored
 
