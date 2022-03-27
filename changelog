@@ -8,6 +8,7 @@
 * Added a basic CLI to list and restore snapshots
 * Removed the requirement that .snapshots must be a nested subvolume.  If you use non-nested subvolumes for snapshots, you can now specify those in the config.
 * Removed the functionality to automatically launch the application when booting off a snapshot
+* Removed the checkboxes to manage Btrfs Maintenance systemd units because they were also being managed by Btrfs Maintenance which caused conflicts
 * Change the sort order of snapshots in restore mode so the most recent snapshots are first
 * Added snapshot number to snapper restore grid
 * Added the snapshot type info to all snapshot views
