@@ -323,6 +323,78 @@ bool Snapper::restoreFile(const QString &snapshotPath, const QString &filePath, 
     return true;
 }
 
+const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const {
+    RestoreResult restoreResult;
+
+    // Get the subvol names associated with the IDs
+    const QString sourceName = m_btrfs->subvolName(uuid, sourceId);
+    const QString targetName = m_btrfs->subvolName(uuid, targetId);
+
+    // Ensure the root of the partition is mounted and get the mountpoint
+    QString mountpoint = Btrfs::mountRoot(uuid);
+
+    QString snapshotSubvol = findSnapshotSubvolume(sourceName);
+
+    // We are out of excuses, time to do the restore....carefully
+    QString targetBackup = "restore_backup_" + targetName + "_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
+    restoreResult.backupSubvolName = targetBackup;
+
+    QDir dirWorker;
+
+    // Find the children before we start
+    const QStringList children = m_btrfs->children(targetId, uuid);
+
+    // Rename the target
+    if (!Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetName),
+                                QDir::cleanPath(mountpoint + QDir::separator() + targetBackup))) {
+        restoreResult.failureMessage = tr("Failed to make a backup of target subvolume");
+        return restoreResult;
+    }
+
+    // We moved the snapshot so we need to change the location
+    QString newSubvolume;
+    if (targetName + "/.snapshots" == snapshotSubvol) {
+        newSubvolume = targetBackup + sourceName.right(sourceName.length() - targetName.length());
+    } else {
+        newSubvolume = sourceName;
+    }
+
+    // Place a snapshot of the source where the target was
+    System::runCmd("btrfs subvolume snapshot " + QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume) + " " +
+                       QDir::cleanPath(mountpoint + QDir::separator() + targetName),
+                   false);
+
+    // Make sure it worked
+    if (!dirWorker.exists(QDir::cleanPath(mountpoint + QDir::separator() + targetName))) {
+        // That failed, try to put the old one back
+        Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetBackup),
+                               QDir::cleanPath(mountpoint + QDir::separator() + targetName));
+        restoreResult.failureMessage = tr("Failed to restore subvolume!") + "\n\n" +
+                                       tr("Snapshot restore failed.  Please verify the status of your system before rebooting");
+        return restoreResult;
+    }
+
+    // The restore was successful, now we need to move any child subvolumes into the target
+    QString childSubvolPath;
+    for (const QString &childSubvol : children) {
+        childSubvolPath = childSubvol.right(childSubvol.length() - (targetName.length() + 1));
+
+        // rename snapshot
+        QString sourcePath = QDir::cleanPath(mountpoint + QDir::separator() + targetBackup + QDir::separator() + childSubvolPath);
+        QString destinationPath = QDir::cleanPath(mountpoint + QDir::separator() + childSubvol);
+        if (!Btrfs::renameSubvolume(sourcePath, destinationPath)) {
+            // If this fails, not much can be done except let the user know
+            restoreResult.failureMessage = tr("The restore was successful but the migration of the nested subvolumes failed") + "\n\n" +
+                                           tr("Please migrate the those subvolumes manually");
+            return restoreResult;
+        }
+    }
+
+    // If we get to here, it worked!
+    restoreResult.success = true;
+    return restoreResult;
+}
+
 void Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {
     const QStringList keys = configMap.keys();
 

@@ -135,15 +135,6 @@ class Btrfs : public QObject {
      */
     static bool renameSubvolume(const QString &source, const QString &target);
 
-    /**
-     * @brief Restores the source subvolume over the target
-     * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
-     * @param sourceId - An int that is the subvolid of the source subvolume
-     * @param targetId - An int that is the subvolid of the target subvolume
-     * @return A RestoreResult struct that contains the results of the operation
-     */
-    const RestoreResult restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const;
-
     /** @brief Returns the subvolid for a given subvol
      *
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,

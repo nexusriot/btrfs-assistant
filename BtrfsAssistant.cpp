@@ -378,7 +378,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
         return;
 
     // Everything checks out, time to do the restore
-    RestoreResult restoreResult = m_btrfs->restoreSubvol(uuid, subvolId, targetId);
+    RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, subvolId, targetId);
 
     // Report the outcome to the end user
     if (restoreResult.success) {

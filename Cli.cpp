@@ -68,7 +68,7 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
     }
 
     // Everything checks out, time to do the restore
-    RestoreResult restoreResult = btrfs->restoreSubvol(uuid, subvolId, targetId);
+    RestoreResult restoreResult = snapper->restoreSubvol(uuid, subvolId, targetId);
 
     // Report the outcome to the end user
     if (restoreResult.success) {

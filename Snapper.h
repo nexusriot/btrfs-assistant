@@ -122,6 +122,15 @@ class Snapper : public QObject {
     bool restoreFile(const QString &snapshotPath, const QString &filePath, const QString &uuid) const;
 
     /**
+     * @brief Restores the source subvolume over the target
+     * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
+     * @param sourceId - An int that is the subvolid of the source subvolume
+     * @param targetId - An int that is the subvolid of the target subvolume
+     * @return A RestoreResult struct that contains the results of the operation
+     */
+    const RestoreResult restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const;
+
+    /**
      * @brief Updates the settings for a given Snapper config described by @p name
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update
