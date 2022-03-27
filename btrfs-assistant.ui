@@ -444,6 +444,9 @@
           <property name="editTriggers">
            <set>QAbstractItemView::NoEditTriggers</set>
           </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
           <attribute name="horizontalHeaderCascadingSectionResizes">
            <bool>true</bool>
           </attribute>

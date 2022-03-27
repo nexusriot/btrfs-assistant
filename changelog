@@ -6,7 +6,7 @@
 * Added a snapshot browser to explore your Snapper snapshots
 * Added the abilty to restore individual files from snapshots
 * Added a basic CLI to list and restore snapshots
-* Removed the requirement that .snapshots must be a nested subvolume.  If you use non-nested subvolumes for snapshots, you can now specify those in the config.
+* Removed the requirement that .snapshots must be a nested subvolume.  If you use non-nested subvolumes for snapshots, you can now specify those in the config
 * Removed the functionality to automatically launch the application when booting off a snapshot
 * Removed the checkboxes to manage Btrfs Maintenance systemd units because they were also being managed by Btrfs Maintenance which caused conflicts
 * Change the sort order of snapshots in restore mode so the most recent snapshots are first
@@ -14,6 +14,7 @@
 * Added the snapshot type info to all snapshot views
 * Added the ability to manually name snapshots
 * Added date to backup subvolume name to make it easier to determine how old the backups were
+* The entire row is now selected when clicking in the grid on the Snapper tab
 
 0.9.1 - 2022-03-21
 * Fix bugs that caused nested subvolumes from being properly restored
