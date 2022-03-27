@@ -438,11 +438,7 @@ void BtrfsAssistant::updateServices(QList<QCheckBox *> checkboxList) {
     for (auto checkbox : checkboxList) {
         QString service = checkbox->property("actionData").toString().trimmed();
         if (service != "" && enabledUnits.contains(service) != checkbox->isChecked()) {
-            if (checkbox->isChecked()) {
-                System::enableService(service, true);
-            } else {
-                System::enableService(service, false);
-            }
+            System::enableService(service, checkbox->isChecked());
         }
     }
 }
