@@ -42,7 +42,7 @@ add_executable(btrfs-assistant-bin
 install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/btrfs-assistant/translations/)
 install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications/)
 install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps/)
-install(FILES btrfs-assistant RUNTIME DESTINATION bin)
+install(FILES btrfs-assistant DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION bin)
 
 
