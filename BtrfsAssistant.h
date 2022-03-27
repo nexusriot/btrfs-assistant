@@ -67,6 +67,7 @@ class BtrfsAssistant : public QMainWindow {
     void on_pushButton_load_clicked();
     void on_pushButton_loadsubvol_clicked();
     void on_pushButton_restore_snapshot_clicked();
+    void on_pushButton_snapperBrowse_clicked();
     void on_pushButton_snapper_create_clicked();
     void on_pushButton_snapper_delete_clicked();
     void on_pushButton_snapper_delete_config_clicked();

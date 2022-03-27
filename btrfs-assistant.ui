@@ -403,6 +403,26 @@
             </widget>
            </item>
            <item>
+            <widget class="QToolButton" name="pushButton_snapperBrowse">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Browse Snapshot</string>
+             </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/assets/assets/filebrowse.png</normaloff>:/assets/assets/filebrowse.png</iconset>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextUnderIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QToolButton" name="pushButton_restore_snapshot">
              <property name="text">
               <string>Restore Snapshot</string>

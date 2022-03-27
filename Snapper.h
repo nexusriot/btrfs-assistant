@@ -113,6 +113,15 @@ class Snapper : public QObject {
     void loadSubvols();
 
     /**
+     * @brief Restores a single file identified by @p filePath to it's original location
+     * @param snapshotPath - An absolute to where the snapshot subvolume is currently mounted
+     * @param filePath - An absolute path to the file to restore
+     * @param uuid - The UUID of the filesystem the restore applies to
+     * @return Return true on success and false otherwise
+     */
+    bool restoreFile(const QString &snapshotPath, const QString &filePath, const QString &uuid) const;
+
+    /**
      * @brief Updates the settings for a given Snapper config described by @p name
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update

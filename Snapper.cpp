@@ -1,5 +1,9 @@
 #include "Snapper.h"
 
+#include <unistd.h>
+
+#include <QDir>
+
 // Read a snapper snapshot meta file and return the data
 static SnapperSnapshots getSnapperMeta(const QString &filename) {
     SnapperSnapshots snap;
@@ -275,6 +279,48 @@ void Snapper::loadSubvols() {
         }
     }
     createSubvolMap();
+}
+
+bool Snapper::restoreFile(const QString &snapshotPath, const QString &filePath, const QString &uuid) const {
+    // Make sure it is Snapper snapshot
+    if (!Btrfs::isSnapper(snapshotPath)) {
+        return false;
+    }
+
+    QString snapshotSubvol = findSnapshotSubvolume(snapshotPath);
+
+    // Ensure the root of the partition is mounted and get the mountpoint
+    QString mountpoint = Btrfs::mountRoot(uuid);
+
+    QDir mp(mountpoint);
+
+    const QString relSnapshotSubvol = mp.relativeFilePath(snapshotSubvol);
+    QString targetSubvol = findTargetSubvol(relSnapshotSubvol, uuid);
+
+    QDir snapshotDir(snapshotPath);
+
+    QString relpath = snapshotDir.relativeFilePath(filePath);
+
+    if (snapshotSubvol.isEmpty() || targetSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
+        return false;
+    }
+
+    QString destPath = QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
+
+    // QFile won't overwrite an existing file so we need to remove it first
+    if (QFile::exists(destPath)) {
+        QFile::remove(destPath);
+    }
+    if (!QFile::copy(filePath, destPath)) {
+        return false;
+    }
+
+    // Now we need to restore the permissions or it will be owned by root
+    QFileInfo qfi(filePath);
+    chown(destPath.toUtf8(), qfi.ownerId(), qfi.groupId());
+    QFile::setPermissions(destPath, QFile::permissions(filePath));
+
+    return true;
 }
 
 void Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {

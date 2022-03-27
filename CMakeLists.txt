@@ -27,6 +27,7 @@ set(PROJECT_SOURCES
         BtrfsAssistant.h BtrfsAssistant.cpp
         BtrfsMaintenance.h BtrfsMaintenance.cpp
         Cli.h Cli.cpp
+        FileBrowser.h FileBrowser.cpp FileBrowser.ui
         Snapper.h Snapper.cpp
         System.h System.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h

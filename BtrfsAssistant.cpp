@@ -2,6 +2,7 @@
 #include "config.h"
 #include "ui_btrfs-assistant.h"
 
+#include "FileBrowser.h"
 #include "System.h"
 
 #include <QDebug>
@@ -60,7 +61,7 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
     setup();
-    this->setWindowTitle(tr("Btrfs Assistant"));
+    this->setWindowTitle(QCoreApplication::applicationName());
 }
 
 BtrfsAssistant::~BtrfsAssistant() { delete m_ui; }
@@ -70,6 +71,7 @@ void BtrfsAssistant::enableRestoreMode(bool enable) {
     m_ui->pushButton_snapper_create->setEnabled(!enable);
     m_ui->pushButton_snapper_delete->setEnabled(!enable);
     m_ui->pushButton_restore_snapshot->setEnabled(enable);
+    m_ui->pushButton_snapperBrowse->setEnabled(enable);
 
     if (enable) {
         m_ui->label_snapper_combo->setText(tr("Select Subvolume:"));
@@ -409,6 +411,7 @@ bool BtrfsAssistant::setup() {
     populateSnapperGrid();
     populateSnapperConfigSettings();
     m_ui->pushButton_restore_snapshot->setEnabled(false);
+    m_ui->pushButton_snapperBrowse->setEnabled(false);
 
     if (m_hasBtrfsmaintenance) {
         populateBmTab();
@@ -635,6 +638,32 @@ void BtrfsAssistant::on_pushButton_restore_snapshot_clicked() {
     restoreSnapshot(uuid, subvol);
 
     m_ui->pushButton_restore_snapshot->clearFocus();
+}
+
+void BtrfsAssistant::on_pushButton_snapperBrowse_clicked() {
+    QString target = m_ui->comboBox_snapper_configs->currentText();
+    if (m_ui->tableWidget_snapper->currentRow() == -1) {
+        displayError("You must select snapshot to browse!");
+        return;
+    }
+
+    QString subvolPath = m_ui->tableWidget_snapper->item(m_ui->tableWidget_snapper->currentRow(), 1)->text();
+
+    QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(target);
+
+    // This shouldn't be possible but check anyway
+    if (snapperSubvols.isEmpty()) {
+        displayError(tr("Failed to restore snapshot"));
+        return;
+    }
+
+    const QString uuid = snapperSubvols.at(0).uuid;
+
+    // We need to mount the root so we can browse from there
+    const QString mountpoint = m_btrfs->mountRoot(uuid);
+
+    FileBrowser fb(m_snapper, QDir::cleanPath(mountpoint + QDir::separator() + subvolPath), uuid);
+    fb.exec();
 }
 
 void BtrfsAssistant::on_pushButton_snapper_create_clicked() {
