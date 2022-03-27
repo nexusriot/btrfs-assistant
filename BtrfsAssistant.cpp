@@ -483,10 +483,6 @@ void BtrfsAssistant::on_comboBox_snapper_configs_activated(int) {
 }
 
 void BtrfsAssistant::on_pushButton_bmApply_clicked() {
-
-    // First, update the services per the checkboxes
-    updateServices(m_ui->scrollArea_bm->findChildren<QCheckBox *>());
-
     // Read and set the Btrfs maintenance settings
     m_btrfsMaint->setValue("BTRFS_BALANCE_PERIOD", m_ui->comboBox_bmBalanceFreq->currentText());
     m_btrfsMaint->setValue("BTRFS_SCRUB_PERIOD", m_ui->comboBox_bmScrubFreq->currentText());
