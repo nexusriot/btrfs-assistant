@@ -225,6 +225,9 @@
                </item>
                <item row="1" column="1">
                 <widget class="QProgressBar" name="progressBar_btrfsmeta">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Utilization percentage of metadata chunks in the allocated space.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="value">
                   <number>0</number>
                  </property>
@@ -239,6 +242,9 @@
                </item>
                <item row="0" column="1">
                 <widget class="QProgressBar" name="progressBar_btrfsdata">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Utilization percentage of data chunks in the allocated space.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="value">
                   <number>0</number>
                  </property>
@@ -246,6 +252,9 @@
                </item>
                <item row="2" column="1">
                 <widget class="QProgressBar" name="progressBar_btrfssys">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Utilization percentage of system chunks in the allocated space.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="value">
                   <number>0</number>
                  </property>
@@ -280,6 +289,9 @@
        <layout class="QGridLayout" name="gridLayout_23">
         <item row="3" column="0">
          <widget class="QCheckBox" name="checkBox_includesnapshots">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Include children subvolumes of .snapshots and timeshift folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Include Timeshift and Snapper Snapshots</string>
           </property>
@@ -356,6 +368,9 @@
            </item>
            <item>
             <widget class="QCheckBox" name="checkBox_snapper_restore">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Toggle restore mode UI.&lt;/p&gt;&lt;p&gt;Disables deleting and creating snapshots.&lt;/p&gt;&lt;p&gt;Enables browsing and restoring snapshots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Restore Mode</string>
              </property>
@@ -1144,6 +1159,9 @@
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_bmApply">
+                 <property name="toolTip">
+                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update Btrfs Maintenance config file and call service to load new settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                 </property>
                  <property name="text">
                   <string>Apply</string>
                  </property>
