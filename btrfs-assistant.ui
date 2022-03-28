@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>912</width>
-    <height>675</height>
+    <width>946</width>
+    <height>717</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
       </property>
       <widget class="QWidget" name="tab_btrfs">
        <attribute name="title">
-        <string>BTRFS</string>
+        <string>Btrfs</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_33">
         <item row="0" column="0">
@@ -41,8 +41,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>870</width>
-             <height>606</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -190,7 +190,7 @@
                <item>
                 <widget class="QPushButton" name="pushButton_load">
                  <property name="text">
-                  <string>Refresh BTRFS Data</string>
+                  <string>Refresh Btrfs Data</string>
                  </property>
                 </widget>
                </item>
@@ -275,7 +275,7 @@
       </widget>
       <widget class="QWidget" name="tab_subvolumes">
        <attribute name="title">
-        <string>BTRFS Subvolumes</string>
+        <string>Btrfs Subvolumes</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_23">
         <item row="3" column="0">
@@ -403,6 +403,26 @@
             </widget>
            </item>
            <item>
+            <widget class="QToolButton" name="pushButton_snapperBrowse">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Browse Snapshot</string>
+             </property>
+             <property name="icon">
+              <iconset resource="icons.qrc">
+               <normaloff>:/assets/assets/filebrowse.png</normaloff>:/assets/assets/filebrowse.png</iconset>
+             </property>
+             <property name="toolButtonStyle">
+              <enum>Qt::ToolButtonTextUnderIcon</enum>
+             </property>
+            </widget>
+           </item>
+           <item>
             <widget class="QToolButton" name="pushButton_restore_snapshot">
              <property name="text">
               <string>Restore Snapshot</string>
@@ -423,6 +443,9 @@
          <widget class="QTableWidget" name="tableWidget_snapper">
           <property name="editTriggers">
            <set>QAbstractItemView::NoEditTriggers</set>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
           </property>
           <attribute name="horizontalHeaderCascadingSectionResizes">
            <bool>true</bool>
@@ -458,8 +481,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>870</width>
-             <height>606</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -900,100 +923,11 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>856</width>
-             <height>619</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
-            <item>
-             <widget class="QGroupBox" name="groupBox_bmUnits">
-              <property name="title">
-               <string>systemd Unit Settings</string>
-              </property>
-              <layout class="QGridLayout" name="gridLayout_3">
-               <item row="1" column="0">
-                <widget class="QCheckBox" name="checkBox_Balance">
-                 <property name="text">
-                  <string>Btrfs maintenance balance timer enabled</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="actionType" stdset="0">
-                  <string notr="true">service</string>
-                 </property>
-                 <property name="actionData" stdset="0">
-                  <string notr="true">btrfs-balance.timer</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="1">
-                <widget class="QCheckBox" name="checkBox_Defrag">
-                 <property name="text">
-                  <string>Btrfs maintenance defrag timer enabled</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="actionType" stdset="0">
-                  <string notr="true">service</string>
-                 </property>
-                 <property name="actionData" stdset="0">
-                  <string notr="true">btrfs-defrag.timer</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QCheckBox" name="checkBox_Trim">
-                 <property name="text">
-                  <string>Btrfs maintenance trim timer enabled</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="actionType" stdset="0">
-                  <string notr="true">service</string>
-                 </property>
-                 <property name="actionData" stdset="0">
-                  <string notr="true">btrfs-trim.timer</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QCheckBox" name="checkBox_Scrub">
-                 <property name="text">
-                  <string>Btrfs maintenance scrub timer enabled</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="actionType" stdset="0">
-                  <string notr="true">service</string>
-                 </property>
-                 <property name="actionData" stdset="0">
-                  <string notr="true">btrfs-scrub.timer</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="3">
-                <widget class="QCheckBox" name="checkBox_path">
-                 <property name="text">
-                  <string>Btrfs maintenance refresh enabled</string>
-                 </property>
-                 <property name="checked">
-                  <bool>false</bool>
-                 </property>
-                 <property name="actionType" stdset="0">
-                  <string notr="true">service</string>
-                 </property>
-                 <property name="actionData" stdset="0">
-                  <string notr="true">btrfsmaintenance-refresh.path</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
-             </widget>
-            </item>
             <item>
              <widget class="QGroupBox" name="groupBox_bmBalance">
               <property name="title">

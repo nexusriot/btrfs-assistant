@@ -1,39 +1,80 @@
-#include "btrfs-assistant.h"
+#include "BtrfsAssistant.h"
+#include "Cli.h"
+
 #include <QApplication>
 #include <QCommandLineParser>
-#include <QDesktopWidget>
 #include <QDebug>
-
-// We have to manually parse argv into QStringList because by the time QCoreApplication initializes it's already too late because Qt already picked the theme
-QStringList parseArgs(int argc, char *argv[])
-{
-    QStringList list;
-    const int ac = argc;
-    char ** const av = argv;
-    for (int a = 0; a < ac; ++a) {
-        list << QString::fromLocal8Bit(av[a]);
-    }
-    return list;
-}
+#include <QDesktopWidget>
+#include <QSettings>
 
 int main(int argc, char *argv[]) {
-    QCommandLineParser cmdline;
-    QCommandLineOption xdgDesktop("xdg-desktop", "Set XDG_CURRENT_DESKTOP via params", "desktop");
-    QCommandLineOption skipSnapshotPrompt("skip-snapshot-prompt", "Assume yes for the initial snapshot restore prompt");
-    cmdline.addOption(xdgDesktop);
-    cmdline.addOption(skipSnapshotPrompt);
-    cmdline.process(parseArgs(argc, argv));
-    if (cmdline.isSet(xdgDesktop))
-        qputenv("XDG_CURRENT_DESKTOP", cmdline.value(xdgDesktop).toUtf8());
+    QApplication ba(argc, argv);
+    QCoreApplication::setApplicationName(QCoreApplication::translate("main", "Btrfs Assistant"));
+    QCoreApplication::setApplicationVersion("1.0");
 
-    QApplication a(argc, argv);
+    QCommandLineParser parser;
+    parser.setApplicationDescription("An application for managing Btrfs and Snapper");
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption listOption(QStringList() << "l"
+                                                << "list",
+                                  QCoreApplication::translate("main", "List snapshots"));
+    parser.addOption(listOption);
+
+    QCommandLineOption restoreOption(QStringList() << "r"
+                                                   << "restore",
+                                     QCoreApplication::translate("main", "Restore the given subvolume/UUID"),
+                                     QCoreApplication::translate("main", "subvolume,UUID"));
+    parser.addOption(restoreOption);
+    parser.process(ba);
+
     QTranslator myappTranslator;
     myappTranslator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");
-    a.installTranslator(&myappTranslator);
+    ba.installTranslator(&myappTranslator);
 
-    BtrfsAssistant w;
-    if (!w.setup(cmdline.isSet(skipSnapshotPrompt)))
-        return 0;
-    w.show();
-    return a.exec();
+    // Get the config settings
+    QSettings settings("/etc/btrfs-assistant.conf", QSettings::NativeFormat);
+    QString snapperPath = settings.value("snapper", "/usr/bin/snapper").toString();
+    QString btrfsMaintenanceConfig = settings.value("bm_config", "/etc/default/btrfsmaintenance").toString();
+
+    // Load the subvol mapping from the settings file
+    settings.beginGroup("Subvol-Mapping");
+    const QStringList keys = settings.childKeys();
+    QMap<QString, QString> subvolMap;
+    for (const QString &key : keys) {
+        if (!key.isEmpty() && settings.value(key).toString().contains(",") && !settings.value(key).toString().startsWith("#")) {
+            const QStringList mapList = settings.value(key).toString().split(",");
+            if (mapList.count() == 3) {
+                subvolMap.insert(mapList.at(0).trimmed(), mapList.at(1).trimmed() + "," + mapList.at(2).trimmed());
+            }
+        }
+    }
+    settings.endGroup();
+
+    // The btrfs object is used to interact with the application
+    Btrfs btrfs;
+
+    // If Snapper is installed, instantiate the snapper object
+    Snapper *snapper = nullptr;
+    if (QFile::exists(snapperPath)) {
+        snapper = new Snapper(&btrfs, snapperPath, subvolMap);
+    }
+
+    if (parser.isSet(listOption) && snapper != nullptr) {
+        return Cli::listSnapshots(snapper);
+    } else if (parser.isSet(restoreOption) && snapper != nullptr) {
+        return Cli::restore(&btrfs, snapper, parser.value(restoreOption));
+    } else {
+        // If Btrfs Maintenance is installed, instantiate the btrfsMaintenance object
+        BtrfsMaintenance *btrfsMaintenance = nullptr;
+        if (QFile::exists(btrfsMaintenanceConfig)) {
+            btrfsMaintenance = new BtrfsMaintenance(btrfsMaintenanceConfig,
+                                                    settings.value("bm_refresh_service", "btrfsmaintenance-refresh.service").toString());
+        }
+
+        BtrfsAssistant mainWindow(btrfsMaintenance, &btrfs, snapper);
+        mainWindow.show();
+        return ba.exec();
+    }
 }

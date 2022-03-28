@@ -21,23 +21,29 @@ configure_file(config.h.in config.h @ONLY)
 
 set(PROJECT_SOURCES
         main.cpp
-        btrfs-assistant.cpp
-        btrfs-assistant.h
         btrfs-assistant.ui
         icons.qrc
+        Btrfs.h Btrfs.cpp
+        BtrfsAssistant.h BtrfsAssistant.cpp
+        BtrfsMaintenance.h BtrfsMaintenance.cpp
+        Cli.h Cli.cpp
+        FileBrowser.h FileBrowser.cpp FileBrowser.ui
+        Snapper.h Snapper.cpp
+        System.h System.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
 qt5_create_translation(FILES_TS ${PROJECT_SOURCES} ${TS_FILES})
 
-add_executable(btrfs-assistant
+add_executable(btrfs-assistant-bin
     ${PROJECT_SOURCES} ${FILES_TS}
 )
 
 install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/btrfs-assistant/translations/)
 install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications/)
 install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps/)
-install(TARGETS btrfs-assistant RUNTIME DESTINATION bin)
+install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION bin)
 
 
-target_link_libraries(btrfs-assistant PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(btrfs-assistant-bin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
