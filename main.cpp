@@ -53,6 +53,11 @@ int main(int argc, char *argv[]) {
     }
     settings.endGroup();
 
+    if(System::runCmd("btrfs filesystem show -m", false).output.isEmpty()) {
+        QTextStream(stderr) << "Error: No Btrfs filesystems found" << Qt::endl;
+        return 1;
+    }
+
     // The btrfs object is used to interact with the application
     Btrfs btrfs;
 
