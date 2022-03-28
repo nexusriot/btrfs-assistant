@@ -11,6 +11,9 @@ namespace Ui {
 class FileBrowser;
 }
 
+/**
+ * @brief The FileBrowser class that handles the snapshot file browsing window.
+ */
 class FileBrowser : public QDialog {
     Q_OBJECT
 
@@ -27,7 +30,9 @@ class FileBrowser : public QDialog {
     Snapper *m_snapper;
 
   private slots:
+    // Close button handler
     void on_pushButton_close_clicked();
+    // Restore file button handler
     void on_pushButton_restore_clicked();
 };
 

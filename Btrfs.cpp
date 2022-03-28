@@ -101,6 +101,7 @@ const QStringList Btrfs::listFilesystems() {
 const QStringList Btrfs::listMountpoints() {
     QStringList mountpoints;
 
+    // loop through mountpoints and only include those with btrfs fileystem
     const QStringList output = System::runCmd("findmnt --real -lno fstype,target", false).output.trimmed().split('\n');
     for (const QString &line : output) {
         if (line.startsWith("btrfs")) {
@@ -188,6 +189,7 @@ void Btrfs::reloadVolumes() {
 
     QStringList uuidList = listFilesystems();
 
+    // Loop through btrfs devices and retrieve filesystem usage
     for (const QString &uuid : qAsConst(uuidList)) {
         QString mountpoint = mountRoot(uuid);
         if (!mountpoint.isEmpty()) {

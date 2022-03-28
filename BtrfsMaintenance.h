@@ -7,6 +7,9 @@
 
 #include "System.h"
 
+/**
+ * @brief The BtrfsMaintenance class that handles interfacing with the btrfs maintenance configuration.
+ */
 class BtrfsMaintenance : public QObject {
     Q_OBJECT
   public:
