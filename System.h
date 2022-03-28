@@ -10,6 +10,9 @@ struct Result {
     QString output;
 };
 
+/**
+ * @brief The System class used to interact directly with the running operating system.
+ */
 class System : public QObject {
     Q_OBJECT
   public:

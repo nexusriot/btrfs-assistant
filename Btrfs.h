@@ -34,6 +34,9 @@ struct BtrfsMeta {
     QMap<int, Subvolume> subvolumes;
 };
 
+/**
+ * @brief The Btrfs service class handles all btrfs device functionality.
+ */
 class Btrfs : public QObject {
     Q_OBJECT
   public:

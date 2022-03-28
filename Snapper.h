@@ -26,6 +26,9 @@ struct SnapperSubvolume {
     QString type;
 };
 
+/**
+ * @brief The Snapper service class that handles all the interaction with the snapper application.
+ */
 class Snapper : public QObject {
     Q_OBJECT
   public:
