@@ -3,6 +3,7 @@
 #include <unistd.h>
 
 #include <QDir>
+#include <QDebug>
 
 // Read a snapper snapshot meta file and return the data
 static SnapperSnapshots getSnapperMeta(const QString &filename) {
@@ -317,7 +318,9 @@ bool Snapper::restoreFile(const QString &snapshotPath, const QString &filePath, 
 
     // Now we need to restore the permissions or it will be owned by root
     QFileInfo qfi(filePath);
-    chown(destPath.toUtf8(), qfi.ownerId(), qfi.groupId());
+    if (chown(destPath.toUtf8(), qfi.ownerId(), qfi.groupId()) != 0) {
+        qWarning() << tr("Failed to reset ownership of restored file") << Qt::endl;
+    }
     QFile::setPermissions(destPath, QFile::permissions(filePath));
 
     return true;
