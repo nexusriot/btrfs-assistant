@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     }
     settings.endGroup();
 
-    if(System::runCmd("btrfs filesystem show -m", false).output.isEmpty()) {
+    if (!System::runCmd("findmnt --real -no fstype ", false).output.contains("btrfs")) {
         QTextStream(stderr) << "Error: No Btrfs filesystems found" << Qt::endl;
         return 1;
     }
