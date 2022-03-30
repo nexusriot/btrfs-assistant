@@ -1,7 +1,8 @@
 ### Btrfs Assistant
 
-1.1 - TBD
+1.1 - 2022-03-30
 * Added the ability to perform manual scrub and balance operations(Contributed by Austin Horstman)
+* Fixed an issue where the application crashes if snapper isn't installed
 
 1.0 - 2022-03-30
 * A large refactor of the entire code base including touching almost every section of the code

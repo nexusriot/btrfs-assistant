@@ -456,17 +456,18 @@ bool BtrfsAssistant::setup() {
     }
 
     // Populate the UI
-    refreshSnapperServices();
-
     refreshBtrfsUi();
-    loadSnapperUI();
-    if (m_hasSnapper && m_snapper->configs().contains("root")) {
-        m_ui->comboBox_snapper_configs->setCurrentText("root");
+    if (m_hasSnapper) {
+        refreshSnapperServices();
+        loadSnapperUI();
+        if (m_snapper->configs().contains("root")) {
+            m_ui->comboBox_snapper_configs->setCurrentText("root");
+        }
+        populateSnapperGrid();
+        populateSnapperConfigSettings();
+        m_ui->pushButton_restore_snapshot->setEnabled(false);
+        m_ui->pushButton_snapperBrowse->setEnabled(false);
     }
-    populateSnapperGrid();
-    populateSnapperConfigSettings();
-    m_ui->pushButton_restore_snapshot->setEnabled(false);
-    m_ui->pushButton_snapperBrowse->setEnabled(false);
 
     btrfsBalanceStatusUpdateUI();
     btrfsScrubStatusUpdateUI();
