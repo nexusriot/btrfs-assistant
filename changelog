@@ -1,6 +1,6 @@
 ### Btrfs Assistant
 
-1.0 - TBD
+1.0 - 2022-03-30
 * A large refactor of the entire code base including touching almost every section of the code
 * Removed all shell manipulation functions(sed/grep/awk/etc).  These functions are now performed in C++.
 * Added a snapshot browser to explore your Snapper snapshots
@@ -17,6 +17,7 @@
 * Added date to backup subvolume name to make it easier to determine how old the backups were
 * The entire row is now selected when clicking in the grid on the Snapper tab
 * The subvolume list is now relative to the root of the Btrfs partition
+* Added tooltips to elements of the UI that needed further clarification(Contributed by Austin Horstman)
 
 0.9.1 - 2022-03-21
 * Fix bugs that caused nested subvolumes from being properly restored
@@ -26,7 +27,6 @@
 * Major code refactor
 * Make Btrfs Maintenance and optional dependency
 * Add configuration file
-
 
 0.8 - 2021-12-12
 * Initial Release
