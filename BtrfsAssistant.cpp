@@ -460,7 +460,7 @@ bool BtrfsAssistant::setup() {
 
     refreshBtrfsUi();
     loadSnapperUI();
-    if (m_snapper->configs().contains("root")) {
+    if (m_hasSnapper && m_snapper->configs().contains("root")) {
         m_ui->comboBox_snapper_configs->setCurrentText("root");
     }
     populateSnapperGrid();
