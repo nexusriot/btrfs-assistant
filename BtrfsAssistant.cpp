@@ -6,6 +6,8 @@
 #include "System.h"
 
 #include <QDebug>
+#include <QThread>
+#include <QTimer>
 
 /**
  * @brief A simple wrapper to QMessageBox for creating consistent error messages
@@ -54,18 +56,24 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
         exit(1);
     }
 
+    //
     m_btrfs = btrfs;
     m_snapper = snapper;
     m_btrfsMaint = btrfsMaintenance;
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
+    // timers for filesystem operations
+    m_balanceTimer = new QTimer(this);
+    m_scrubTimer = new QTimer(this);
+    connect(m_balanceTimer, &QTimer::timeout, this, &BtrfsAssistant::btrfsBalanceStatusUpdateUI);
+    connect(m_scrubTimer, &QTimer::timeout, this, &BtrfsAssistant::btrfsScrubStatusUpdateUI);
+
     setup();
     this->setWindowTitle(QCoreApplication::applicationName());
 }
 
 BtrfsAssistant::~BtrfsAssistant() { delete m_ui; }
-
 void BtrfsAssistant::enableRestoreMode(bool enable) {
     m_ui->pushButton_snapper_create->setEnabled(!enable);
     m_ui->pushButton_snapper_delete->setEnabled(!enable);
@@ -83,6 +91,45 @@ void BtrfsAssistant::enableRestoreMode(bool enable) {
     }
 }
 
+void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
+    QString uuid = m_ui->comboBox_btrfsdevice->currentText();
+    QString balanceStatus = m_btrfs->checkBalanceStatus(m_btrfs->mountRoot(uuid));
+
+    // if balance is running currently, make sure you can stop it and we monitor progress
+    if (!balanceStatus.contains("No balance found")) {
+        m_ui->pushButton_btrfsBalance->setText("Stop");
+        // update status to current balance operation status
+        m_ui->label_btrfsBalanceStatus->setText(balanceStatus);
+        // keep updating UI if it isn't already doing so
+        if (m_balanceTimer->timerId() == -1) {
+            m_balanceTimer->start();
+        }
+    } else {
+        // update status to reflect no balance running and stop timer
+        m_ui->label_btrfsBalanceStatus->setText("No balance running.");
+        m_ui->pushButton_btrfsBalance->setText("Start");
+        m_balanceTimer->stop();
+    }
+}
+
+void BtrfsAssistant::btrfsScrubStatusUpdateUI() {
+    QString uuid = m_ui->comboBox_btrfsdevice->currentText();
+    QString scrubStatus = m_btrfs->checkScrubStatus(m_btrfs->mountRoot(uuid));
+
+    // update status to current scrub operation status
+    m_ui->label_btrfsScrubStatus->setText(scrubStatus);
+    // if scrub is running currently, make sure you can stop it and we monitor progress
+    if (scrubStatus.contains("ETA:")) {
+        m_ui->pushButton_btrfsScrub->setText("Stop");
+        if (m_scrubTimer->timerId() == -1) {
+            m_scrubTimer->start();
+        }
+    } else {
+        m_scrubTimer->stop();
+        m_ui->pushButton_btrfsScrub->setText("Start");
+    }
+}
+
 void BtrfsAssistant::loadSnapperRestoreMode() {
     // Sanity check
     if (!m_ui->checkBox_snapper_restore->isChecked()) {
@@ -92,7 +139,7 @@ void BtrfsAssistant::loadSnapperRestoreMode() {
     // Clear the existing info
     m_ui->comboBox_snapper_configs->clear();
 
-     // Load snapper subvolumes into combobox.
+    // Load snapper subvolumes into combobox.
     const QStringList configs = m_snapper->subvolKeys();
     for (const QString &config : configs) {
         m_ui->comboBox_snapper_configs->addItem(config);
@@ -199,6 +246,10 @@ void BtrfsAssistant::populateBtrfsUi(const QString &uuid) {
     } else {
         m_ui->label_btrfsmessage->setText(tr("Your disk space is well utilized"));
     }
+
+    // filesystems operation section
+    btrfsBalanceStatusUpdateUI();
+    btrfsScrubStatusUpdateUI();
 }
 
 void BtrfsAssistant::populateSnapperConfigSettings() {
@@ -417,6 +468,9 @@ bool BtrfsAssistant::setup() {
     m_ui->pushButton_restore_snapshot->setEnabled(false);
     m_ui->pushButton_snapperBrowse->setEnabled(false);
 
+    btrfsBalanceStatusUpdateUI();
+    btrfsScrubStatusUpdateUI();
+
     // Populate or hide btrfs maintenance tab depending on if system has btrfs maintenance units
     if (m_hasBtrfsmaintenance) {
         populateBmTab();
@@ -531,6 +585,32 @@ void BtrfsAssistant::on_pushButton_bmApply_clicked() {
     QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
     m_ui->pushButton_bmApply->clearFocus();
+}
+
+void BtrfsAssistant::on_pushButton_btrfsBalance_clicked() {
+    QString uuid = m_ui->comboBox_btrfsdevice->currentText();
+
+    // Stop or start balance depending on current operation
+    if (m_ui->pushButton_btrfsBalance->text().contains("Stop")) {
+        m_btrfs->stopBalanceRoot(uuid);
+        btrfsBalanceStatusUpdateUI();
+    } else {
+        m_btrfs->startBalanceRoot(uuid);
+        btrfsBalanceStatusUpdateUI();
+    }
+}
+
+void BtrfsAssistant::on_pushButton_btrfsScrub_clicked() {
+    QString uuid = m_ui->comboBox_btrfsdevice->currentText();
+
+    // Stop or start scrub depending on current operation
+    if (m_ui->pushButton_btrfsScrub->text().contains("Stop")) {
+        m_btrfs->stopScrubRoot(uuid);
+        btrfsScrubStatusUpdateUI();
+    } else {
+        m_btrfs->startScrubRoot(uuid);
+        btrfsScrubStatusUpdateUI();
+    }
 }
 
 void BtrfsAssistant::on_pushButton_deletesubvol_clicked() {

@@ -50,6 +50,15 @@ class BtrfsAssistant : public QMainWindow {
     Ui::BtrfsAssistant *m_ui;
 
     /**
+     * @brief Timer used to periodically update UI on balance progress
+     */
+    QTimer *m_balanceTimer;
+    /**
+     * @brief Timer used to periodically update UI on scrub progress
+     */
+    QTimer *m_scrubTimer;
+
+    /**
      * @brief Toggle the UI elements in Snapper tab depending on restore mode checkbox state.
      * @param enable
      */
@@ -115,6 +124,18 @@ class BtrfsAssistant : public QMainWindow {
      * @param checkboxList
      */
     void updateServices(QList<QCheckBox *>);
+    /**
+     * @brief Method used to fetch and update the btrfs balance status
+     */
+    void btrfsBalanceStatusUpdateUI();
+    /**
+     * @brief Method used to fetch and update the btrfs balance status
+     */
+    void btrfsScrubStatusUpdateUI();
+    /**
+     * @brief Method used to fetch and update the btrfs balance status
+     */
+    void btrfsDefragStatusUpdateUI();
 
   private slots:
 
@@ -148,9 +169,17 @@ class BtrfsAssistant : public QMainWindow {
      */
     void on_checkBox_snapper_restore_clicked(bool checked);
     /**
+     * @brief Btrfs balance button handler
+     */
+    void on_pushButton_btrfsBalance_clicked();
+    /**
      * @brief When a change is detected on the dropdown of btrfs devices, repopulate the UI based on the new selection
      */
     void on_comboBox_btrfsdevice_activated(int);
+    /**
+     * @brief Btrfs scrub button handler
+     */
+    void on_pushButton_btrfsScrub_clicked();
     /**
      * @brief Repopulate the grid when a different config is selected
      */
