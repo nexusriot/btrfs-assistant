@@ -377,13 +377,13 @@
                </sizepolicy>
               </property>
               <property name="title">
-               <string>Device Selection</string>
+               <string>Volume Selection</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
                 <widget class="QLabel" name="label_btrfsDevice">
                  <property name="text">
-                  <string>Device:</string>
+                  <string>Filesystem:</string>
                  </property>
                 </widget>
                </item>
