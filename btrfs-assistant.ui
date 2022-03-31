@@ -99,17 +99,25 @@
                </item>
                <item row="0" column="0" colspan="3">
                 <widget class="QLabel" name="label_btrfsScrubStatus">
+                 <property name="font">
+                  <font>
+                   <family>Bitstream Vera Sans Mono</family>
+                   <pointsize>10</pointsize>
+                   <italic>false</italic>
+                   <bold>false</bold>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>No scrub ran.</string>
                  </property>
                  <property name="alignment">
-                  <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>
                  </property>
                  <property name="margin">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                 </widget>
                </item>
@@ -181,6 +189,12 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="font">
+                  <font>
+                   <family>Bitstream Vera Sans Mono</family>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>No balance ran.</string>
                  </property>
@@ -188,7 +202,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="margin">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                 </widget>
                </item>
