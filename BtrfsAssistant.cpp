@@ -316,7 +316,7 @@ void BtrfsAssistant::populateSnapperGrid() {
             number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
             m_ui->tableWidget_snapper->setItem(i, 0, number);
             m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
-            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).time));
+            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(subvols.at(i).time.toString()));
             m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
             m_ui->tableWidget_snapper->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
         }
@@ -343,7 +343,7 @@ void BtrfsAssistant::populateSnapperGrid() {
             QTableWidgetItem *number = new QTableWidgetItem(snapshots.at(i).number);
             number->setData(Qt::DisplayRole, snapshots.at(i).number);
             m_ui->tableWidget_snapper->setItem(i, 0, number);
-            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(snapshots.at(i).time));
+            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(snapshots.at(i).time.toString()));
             m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
             m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
         }

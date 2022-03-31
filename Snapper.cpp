@@ -172,8 +172,9 @@ void Snapper::load() {
         }
 
         for (const QString &snap : qAsConst(list)) {
-            m_snapshots[name].append({snap.split(',').at(0).trimmed().toInt(), snap.split(',').at(1).trimmed(),
-                                      snap.split(',').at(2).trimmed(), snap.split(',').at(3).trimmed()});
+            m_snapshots[name].append({snap.split(',').at(0).trimmed().toInt(),
+                                      QDateTime::fromString(snap.split(',').at(1).trimmed(), Qt::ISODate), snap.split(',').at(2).trimmed(),
+                                      snap.split(',').at(3).trimmed()});
         }
     }
     loadSubvols();
@@ -295,14 +296,16 @@ SnapperSnapshots Snapper::readSnapperMeta(const QString &filename) {
 
     while (!metaFile.atEnd()) {
         QString line = metaFile.readLine();
-        if (line.trimmed().startsWith("<num>"))
+        if (line.trimmed().startsWith("<num>")) {
             snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
-        else if (line.trimmed().startsWith("<date>"))
-            snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
-        else if (line.trimmed().startsWith("<description>"))
+        } else if (line.trimmed().startsWith("<date>")) {
+            snap.time = QDateTime::fromString(line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed(), Qt::ISODate);
+            snap.time = snap.time.addSecs(snap.time.offsetFromUtc());
+        } else if (line.trimmed().startsWith("<description>")) {
             snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
-        else if (line.trimmed().startsWith("<type>"))
+        } else if (line.trimmed().startsWith("<type>")) {
             snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
+        }
     }
 
     return snap;

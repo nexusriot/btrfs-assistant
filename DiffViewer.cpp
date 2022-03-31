@@ -76,7 +76,7 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
         // Get the date
         const QString metaFileName =
             QDir::cleanPath(stemPath.canonicalPath() + QDir::separator() + snapshotNum + QDir::separator() + "info.xml");
-        const QString date = Snapper::readSnapperMeta(metaFileName).time;
+        const QString date = Snapper::readSnapperMeta(metaFileName).time.toString();
 
         if (snapshotNum.isEmpty() || result.isEmpty() || thisRootPath.isEmpty()) {
             continue;
