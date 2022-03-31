@@ -1,6 +1,9 @@
 ### Btrfs Assistant
 
 1.2 - TBD
+* Added an integrated diff viewer
+* Changed font and alignment on scrub/balance output
+* Modified internal naming of UI elements for consistency and readability(Contributed by Austin Horstman)
 
 1.1 - 2022-03-30
 * Added the ability to perform manual scrub and balance operations(Contributed by Austin Horstman)
