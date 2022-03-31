@@ -12,7 +12,7 @@ class FileBrowser;
 }
 
 /**
- * @brief The FileBrowser class that handles the snapshot file browsing window.
+ * @brief The FileBrowser class that handles the snapshot file browsing dialog
  */
 class FileBrowser : public QDialog {
     Q_OBJECT
@@ -22,7 +22,7 @@ class FileBrowser : public QDialog {
     ~FileBrowser();
 
   private:
-    Ui::FileBrowser *ui;
+    Ui::FileBrowser *m_ui;
     QFileSystemModel *m_fileModel;
     QTreeView *m_treeView;
     QString m_rootPath;
@@ -30,9 +30,8 @@ class FileBrowser : public QDialog {
     Snapper *m_snapper;
 
   private slots:
-    // Close button handler
     void on_pushButton_close_clicked();
-    // Restore file button handler
+    void on_pushButton_diff_clicked();
     void on_pushButton_restore_clicked();
 };
 

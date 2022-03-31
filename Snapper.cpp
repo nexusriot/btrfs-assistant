@@ -2,31 +2,8 @@
 
 #include <unistd.h>
 
-#include <QDir>
 #include <QDebug>
-
-// Read a snapper snapshot meta file and return the data
-static SnapperSnapshots getSnapperMeta(const QString &filename) {
-    SnapperSnapshots snap;
-    snap.number = 0;
-    QFile metaFile(filename);
-    if (!metaFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        return snap;
-
-    while (!metaFile.atEnd()) {
-        QString line = metaFile.readLine();
-        if (line.trimmed().startsWith("<num>"))
-            snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
-        else if (line.trimmed().startsWith("<date>"))
-            snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
-        else if (line.trimmed().startsWith("<description>"))
-            snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
-        else if (line.trimmed().startsWith("<type>"))
-            snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
-    }
-
-    return snap;
-}
+#include <QDir>
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, const QMap<QString, QString> &subvolMap, QObject *parent) : QObject{parent} {
     m_btrfs = btrfs;
@@ -77,6 +54,33 @@ const QString Snapper::findSnapshotSubvolume(const QString &subvol) {
     } else {
         return QString();
     }
+}
+
+const QString Snapper::findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid) {
+    // Make sure it is Snapper snapshot
+    if (!Btrfs::isSnapper(snapshotPath)) {
+        return QString();
+    }
+
+    QString snapshotSubvol = findSnapshotSubvolume(snapshotPath);
+
+    // Ensure the root of the partition is mounted and get the mountpoint
+    QString mountpoint = Btrfs::mountRoot(uuid);
+
+    QDir mp(mountpoint);
+
+    const QString relSnapshotSubvol = mp.relativeFilePath(snapshotSubvol);
+    QString targetSubvol = findTargetSubvol(relSnapshotSubvol, uuid);
+
+    QDir snapshotDir(snapshotPath);
+
+    QString relpath = snapshotDir.relativeFilePath(filePath);
+
+    if (snapshotSubvol.isEmpty() || targetSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
+        return QString();
+    }
+
+    return QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
 }
 
 const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const {
@@ -246,7 +250,7 @@ void Snapper::loadSubvols() {
 
             filename = QDir::cleanPath(mountpoint + filename);
 
-            SnapperSnapshots snap = getSnapperMeta(filename);
+            SnapperSnapshots snap = readSnapperMeta(filename);
 
             if (snap.number == 0) {
                 continue;
@@ -282,46 +286,44 @@ void Snapper::loadSubvols() {
     createSubvolMap();
 }
 
-bool Snapper::restoreFile(const QString &snapshotPath, const QString &filePath, const QString &uuid) const {
-    // Make sure it is Snapper snapshot
-    if (!Btrfs::isSnapper(snapshotPath)) {
-        return false;
+SnapperSnapshots Snapper::readSnapperMeta(const QString &filename) {
+    SnapperSnapshots snap;
+    snap.number = 0;
+    QFile metaFile(filename);
+    if (!metaFile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return snap;
+
+    while (!metaFile.atEnd()) {
+        QString line = metaFile.readLine();
+        if (line.trimmed().startsWith("<num>"))
+            snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
+        else if (line.trimmed().startsWith("<date>"))
+            snap.time = line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed();
+        else if (line.trimmed().startsWith("<description>"))
+            snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
+        else if (line.trimmed().startsWith("<type>"))
+            snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
     }
 
-    QString snapshotSubvol = findSnapshotSubvolume(snapshotPath);
+    return snap;
+}
 
-    // Ensure the root of the partition is mounted and get the mountpoint
-    QString mountpoint = Btrfs::mountRoot(uuid);
-
-    QDir mp(mountpoint);
-
-    const QString relSnapshotSubvol = mp.relativeFilePath(snapshotSubvol);
-    QString targetSubvol = findTargetSubvol(relSnapshotSubvol, uuid);
-
-    QDir snapshotDir(snapshotPath);
-
-    QString relpath = snapshotDir.relativeFilePath(filePath);
-
-    if (snapshotSubvol.isEmpty() || targetSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
-        return false;
-    }
-
-    QString destPath = QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
+bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) const {
 
     // QFile won't overwrite an existing file so we need to remove it first
     if (QFile::exists(destPath)) {
         QFile::remove(destPath);
     }
-    if (!QFile::copy(filePath, destPath)) {
+    if (!QFile::copy(sourcePath, destPath)) {
         return false;
     }
 
     // Now we need to restore the permissions or it will be owned by root
-    QFileInfo qfi(filePath);
+    QFileInfo qfi(sourcePath);
     if (chown(destPath.toUtf8(), qfi.ownerId(), qfi.groupId()) != 0) {
         qWarning() << tr("Failed to reset ownership of restored file") << Qt::endl;
     }
-    QFile::setPermissions(destPath, QFile::permissions(filePath));
+    QFile::setPermissions(destPath, QFile::permissions(sourcePath));
 
     return true;
 }
