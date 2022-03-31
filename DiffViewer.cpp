@@ -88,7 +88,11 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
         m_twSnapshot->setItem(row, DiffColumn::num, number);
         m_twSnapshot->setItem(row, DiffColumn::dateTime, new QTableWidgetItem(date));
         m_twSnapshot->setItem(row, DiffColumn::rootPath, new QTableWidgetItem(thisRootPath));
-        m_twSnapshot->setItem(row, DiffColumn::filePath, new QTableWidgetItem(result));
+        m_twSnapshot->setItem(row, DiffColumn::filePath, new QTableWidgetItem(result.trimmed()));
+
+        if (result.trimmed() == filePath) {
+            m_twSnapshot->selectRow(row);
+        }
 
         row++;
 
