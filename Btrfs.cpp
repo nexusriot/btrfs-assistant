@@ -249,16 +249,15 @@ const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
 }
 
 const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) const {
-    int parentId = subvolId;
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        if (m_volumes[uuid].subvolumes[parentId].parentId != 5) {
-            parentId = m_volumes[uuid].subvolumes[parentId].parentId;
+        if (m_volumes[uuid].subvolumes[subvolId].parentId == 5) {
+            return subvolId;
+        } else {
+            return m_volumes[uuid].subvolumes[subvolId].parentId;
         }
-    } else {
-        return 0;
     }
 
-    return parentId;
+    return 0;
 }
 
 bool Btrfs::UuidIsValid(const QString &uuid) {
