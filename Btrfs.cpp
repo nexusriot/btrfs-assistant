@@ -251,8 +251,10 @@ const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
 const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) const {
     int parentId = subvolId;
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        while (m_volumes[uuid].subvolumes[parentId].parentId != 5) {
+        int levels = 0;
+        while (levels < 2 && m_volumes[uuid].subvolumes[parentId].parentId != 5) {
             parentId = m_volumes[uuid].subvolumes[parentId].parentId;
+            levels++;
         }
     } else {
         return 0;
