@@ -15,7 +15,7 @@ int Cli::listSnapshots(Snapper *snapper) {
     for (const QString &target : targets) {
         const QVector<SnapperSubvolume> subvols = snapper->subvols(target);
         for (const SnapperSubvolume &subvol : subvols) {
-            QTextStream(stdout) << target << "\t" << subvol.snapshotNum << "\t" << subvol.time << "\t" << subvol.type << "\t"
+            QTextStream(stdout) << target << "\t" << subvol.snapshotNum << "\t" << subvol.time.toString() << "\t" << subvol.type << "\t"
                                 << subvol.subvol << "," << subvol.uuid << Qt::endl;
         }
     }

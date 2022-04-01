@@ -47,7 +47,7 @@
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
             <item row="7" column="0">
-             <widget class="QGroupBox" name="groupBox_scrubOperation">
+             <widget class="QGroupBox" name="groupBox_btrfsSrubOperation">
               <property name="title">
                <string>Scrub</string>
               </property>
@@ -99,17 +99,25 @@
                </item>
                <item row="0" column="0" colspan="3">
                 <widget class="QLabel" name="label_btrfsScrubStatus">
+                 <property name="font">
+                  <font>
+                   <family>Bitstream Vera Sans Mono</family>
+                   <pointsize>10</pointsize>
+                   <italic>false</italic>
+                   <bold>false</bold>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>No scrub ran.</string>
                  </property>
                  <property name="alignment">
-                  <set>Qt::AlignJustify|Qt::AlignVCenter</set>
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
                  </property>
                  <property name="wordWrap">
                   <bool>true</bool>
                  </property>
                  <property name="margin">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                 </widget>
                </item>
@@ -117,7 +125,7 @@
              </widget>
             </item>
             <item row="7" column="1">
-             <widget class="QGroupBox" name="groupBox_balanceOperation">
+             <widget class="QGroupBox" name="groupBox_btrfsBalanceOperation">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -181,6 +189,12 @@
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="font">
+                  <font>
+                   <family>Bitstream Vera Sans Mono</family>
+                   <pointsize>10</pointsize>
+                  </font>
+                 </property>
                  <property name="text">
                   <string>No balance ran.</string>
                  </property>
@@ -188,7 +202,7 @@
                   <bool>true</bool>
                  </property>
                  <property name="margin">
-                  <number>10</number>
+                  <number>0</number>
                  </property>
                 </widget>
                </item>
@@ -196,7 +210,7 @@
              </widget>
             </item>
             <item row="6" column="0" colspan="2">
-             <widget class="QGroupBox" name="groupBox_btools">
+             <widget class="QGroupBox" name="groupBox_btrfsFilesystemStats">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -262,7 +276,7 @@
              </widget>
             </item>
             <item row="4" column="0" colspan="2">
-             <widget class="QGroupBox" name="groupBox_btrfsinfo">
+             <widget class="QGroupBox" name="groupBox_btrfsInfo">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
                 <horstretch>0</horstretch>
@@ -274,52 +288,52 @@
               </property>
               <layout class="QGridLayout" name="gridLayout_22">
                <item row="2" column="0" alignment="Qt::AlignLeft">
-                <widget class="QLabel" name="label_5">
+                <widget class="QLabel" name="label_btrfsUsed">
                  <property name="text">
                   <string>Used:</string>
                  </property>
                 </widget>
                </item>
                <item row="3" column="1">
-                <widget class="QLabel" name="label_btrfsfree">
+                <widget class="QLabel" name="label_btrfsFreeValue">
                  <property name="text">
                   <string/>
                  </property>
                 </widget>
                </item>
                <item row="2" column="1">
-                <widget class="QLabel" name="label_btrfsused"/>
+                <widget class="QLabel" name="label_btrfsUsedValue"/>
                </item>
                <item row="1" column="1" alignment="Qt::AlignLeft">
-                <widget class="QLabel" name="label_btrfsallocated">
+                <widget class="QLabel" name="label_btrfsAllocatedValue">
                  <property name="text">
                   <string/>
                  </property>
                 </widget>
                </item>
                <item row="1" column="0" alignment="Qt::AlignLeft">
-                <widget class="QLabel" name="label_3">
+                <widget class="QLabel" name="label_btrfsAllocated">
                  <property name="text">
                   <string>Allocated:  </string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="1">
-                <widget class="QLabel" name="label_btrfssize">
+                <widget class="QLabel" name="label_btrfsSizeValue">
                  <property name="text">
                   <string/>
                  </property>
                 </widget>
                </item>
                <item row="0" column="0" alignment="Qt::AlignLeft">
-                <widget class="QLabel" name="label">
+                <widget class="QLabel" name="label_btrfsSize">
                  <property name="text">
                   <string>Filesystem Size: </string>
                  </property>
                 </widget>
                </item>
                <item row="4" column="1">
-                <widget class="QLabel" name="label_btrfsmessage">
+                <widget class="QLabel" name="label_btrfsMessage">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>3</horstretch>
@@ -345,7 +359,7 @@
                 </spacer>
                </item>
                <item row="3" column="0" alignment="Qt::AlignLeft">
-                <widget class="QLabel" name="label_2">
+                <widget class="QLabel" name="label_btrfsFree">
                  <property name="text">
                   <string>Free (Estimated): </string>
                  </property>
@@ -363,18 +377,18 @@
                </sizepolicy>
               </property>
               <property name="title">
-               <string>Device Selection</string>
+               <string>Volume Selection</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout">
                <item>
-                <widget class="QLabel" name="label_btrfsdevice">
+                <widget class="QLabel" name="label_btrfsDevice">
                  <property name="text">
-                  <string>Device:</string>
+                  <string>Filesystem:</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_btrfsdevice">
+                <widget class="QComboBox" name="comboBox_btrfsDevice">
                  <property name="editable">
                   <bool>false</bool>
                  </property>
@@ -403,7 +417,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_load">
+                <widget class="QPushButton" name="pushButton_btrfsRefreshData">
                  <property name="text">
                   <string>Refresh Btrfs Data</string>
                  </property>
@@ -424,7 +438,7 @@
        </attribute>
        <layout class="QGridLayout" name="gridLayout_23">
         <item row="3" column="0">
-         <widget class="QCheckBox" name="checkBox_includesnapshots">
+         <widget class="QCheckBox" name="checkBox_subvolIncludeSnapshots">
           <property name="toolTip">
            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Include children subvolumes of .snapshots and timeshift folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
@@ -446,7 +460,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout">
            <item>
-            <widget class="QPushButton" name="pushButton_loadsubvol">
+            <widget class="QPushButton" name="pushButton_subvolRefresh">
              <property name="text">
               <string>Refresh Subvolumes</string>
              </property>
@@ -466,7 +480,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QPushButton" name="pushButton_deletesubvol">
+            <widget class="QPushButton" name="pushButton_subvolDelete">
              <property name="text">
               <string>Delete Selected</string>
              </property>
@@ -489,21 +503,21 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QLabel" name="label_snapper_combo">
+            <widget class="QLabel" name="label_snapperSelect">
              <property name="text">
               <string>Select config: </string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="comboBox_snapper_configs">
+            <widget class="QComboBox" name="comboBox_snapperConfigs">
              <property name="sizeAdjustPolicy">
               <enum>QComboBox::AdjustToContents</enum>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QCheckBox" name="checkBox_snapper_restore">
+            <widget class="QCheckBox" name="checkBox_snapperRestoreMode">
              <property name="toolTip">
               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Toggle restore mode UI.&lt;/p&gt;&lt;p&gt;Disables deleting and creating snapshots.&lt;/p&gt;&lt;p&gt;Enables browsing and restoring snapshots.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
@@ -526,7 +540,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="QToolButton" name="pushButton_snapper_create">
+            <widget class="QToolButton" name="pushButton_snapperCreate">
              <property name="text">
               <string>New Snapshot</string>
              </property>
@@ -540,7 +554,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="pushButton_snapper_delete">
+            <widget class="QToolButton" name="pushButton_snapperDelete">
              <property name="text">
               <string>Delete Snapshot</string>
              </property>
@@ -574,7 +588,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QToolButton" name="pushButton_restore_snapshot">
+            <widget class="QToolButton" name="pushButton_snapperRestore">
              <property name="text">
               <string>Restore Snapshot</string>
              </property>
@@ -638,7 +652,7 @@
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <item>
-             <widget class="QGroupBox" name="groupBox_8">
+             <widget class="QGroupBox" name="groupBox_snapperConfigCrud">
               <property name="title">
                <string notr="true"/>
               </property>
@@ -651,7 +665,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_snapper_config_settings"/>
+                <widget class="QComboBox" name="comboBox_snapperConfigSettings"/>
                </item>
                <item>
                 <spacer name="horizontalSpacer_10">
@@ -667,14 +681,14 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_snapper_new_config">
+                <widget class="QPushButton" name="pushButton_snapperNewConfig">
                  <property name="text">
                   <string>New Config</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_snapper_delete_config">
+                <widget class="QPushButton" name="pushButton_snapperDeleteConfig">
                  <property name="text">
                   <string>Delete Config</string>
                  </property>
@@ -694,7 +708,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_snapper_save_config">
+                <widget class="QPushButton" name="pushButton_snapperSaveConfig">
                  <property name="text">
                   <string>Save Config</string>
                  </property>
@@ -704,20 +718,20 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_snapper_config_display">
+             <widget class="QGroupBox" name="groupBox_snapperConfigDisplay">
               <property name="title">
                <string>Config Information</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <item>
-                <widget class="QLabel" name="label_7">
+                <widget class="QLabel" name="label_snapperConfigName">
                  <property name="text">
                   <string>Config name: </string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLabel" name="label_snapper_config_name">
+                <widget class="QLabel" name="label_snapperConfigNameValue">
                  <property name="text">
                   <string notr="true"/>
                  </property>
@@ -737,14 +751,14 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QLabel" name="label_8">
+                <widget class="QLabel" name="label_snapperBackupPath">
                  <property name="text">
                   <string>Backup path: </string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLabel" name="label_snapper_backup_path">
+                <widget class="QLabel" name="label_snapperBackupPathValue">
                  <property name="text">
                   <string notr="true"/>
                  </property>
@@ -767,20 +781,20 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_snapper_config_edit">
+             <widget class="QGroupBox" name="groupBox_snapperConfigEdit">
               <property name="title">
                <string>Config Information</string>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_7">
                <item>
-                <widget class="QLabel" name="label_9">
+                <widget class="QLabel" name="label_snapperName">
                  <property name="text">
                   <string>Config name: </string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="lineEdit_snapper_name">
+                <widget class="QLineEdit" name="lineEdit_snapperName">
                  <property name="maxLength">
                   <number>20</number>
                  </property>
@@ -800,14 +814,14 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QLabel" name="label_10">
+                <widget class="QLabel" name="label_backupPath">
                  <property name="text">
                   <string>Backup path: </string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QComboBox" name="comboBox_snapper_path">
+                <widget class="QComboBox" name="comboBox_snapperPath">
                  <property name="sizeAdjustPolicy">
                   <enum>QComboBox::AdjustToContents</enum>
                  </property>
@@ -830,7 +844,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_snapper_config_settings">
+             <widget class="QGroupBox" name="groupBox_snapperConfigSettings">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                 <horstretch>0</horstretch>
@@ -842,85 +856,85 @@
               </property>
               <layout class="QGridLayout" name="gridLayout_27">
                <item row="4" column="1">
-                <widget class="QLabel" name="label_15">
+                <widget class="QLabel" name="label_snapperSave4">
                  <property name="text">
                   <string>Save: </string>
                  </property>
                 </widget>
                </item>
                <item row="3" column="0">
-                <widget class="QLabel" name="label_18">
+                <widget class="QLabel" name="label_snapperWeekly">
                  <property name="text">
                   <string>Weekly</string>
                  </property>
                 </widget>
                </item>
                <item row="5" column="1">
-                <widget class="QLabel" name="label_14">
+                <widget class="QLabel" name="label_snapperSave5">
                  <property name="text">
                   <string>Save: </string>
                  </property>
                 </widget>
                </item>
                <item row="5" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_yearly"/>
+                <widget class="QSpinBox" name="spinBox_snapperYearly"/>
                </item>
                <item row="2" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_daily"/>
+                <widget class="QSpinBox" name="spinBox_snapperDaily"/>
                </item>
                <item row="1" column="0">
-                <widget class="QLabel" name="label_16">
+                <widget class="QLabel" name="label_snapperHourly">
                  <property name="text">
                   <string>Hourly</string>
                  </property>
                 </widget>
                </item>
                <item row="5" column="0">
-                <widget class="QLabel" name="label_20">
+                <widget class="QLabel" name="label_snapperYearly">
                  <property name="text">
                   <string>Yearly</string>
                  </property>
                 </widget>
                </item>
                <item row="1" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_hourly"/>
+                <widget class="QSpinBox" name="spinBox_snapperHourly"/>
                </item>
                <item row="4" column="0">
-                <widget class="QLabel" name="label_19">
+                <widget class="QLabel" name="label_snapperMonthly">
                  <property name="text">
                   <string>Monthly</string>
                  </property>
                 </widget>
                </item>
                <item row="2" column="0">
-                <widget class="QLabel" name="label_17">
+                <widget class="QLabel" name="label_snapperDaily">
                  <property name="text">
                   <string>Daily</string>
                  </property>
                 </widget>
                </item>
                <item row="4" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_monthly"/>
+                <widget class="QSpinBox" name="spinBox_snapperMonthly"/>
                </item>
                <item row="2" column="1">
-                <widget class="QLabel" name="label_12">
+                <widget class="QLabel" name="label_snapperSave2">
                  <property name="text">
                   <string>Save: </string>
                  </property>
                 </widget>
                </item>
                <item row="3" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_weekly"/>
+                <widget class="QSpinBox" name="spinBox_snapperWeekly"/>
                </item>
                <item row="3" column="1">
-                <widget class="QLabel" name="label_13">
+                <widget class="QLabel" name="label_snapperSave3">
                  <property name="text">
                   <string>Save: </string>
                  </property>
                 </widget>
                </item>
                <item row="1" column="1">
-                <widget class="QLabel" name="label_11">
+                <widget class="QLabel" name="label_snapperSave1">
                  <property name="text">
                   <string>Save: </string>
                  </property>
@@ -940,31 +954,31 @@
                 </spacer>
                </item>
                <item row="6" column="0">
-                <widget class="QLabel" name="label_21">
+                <widget class="QLabel" name="label_snapperNumber">
                  <property name="text">
                   <string>Number</string>
                  </property>
                 </widget>
                </item>
                <item row="6" column="1">
-                <widget class="QLabel" name="label_22">
+                <widget class="QLabel" name="label_snapperSave6">
                  <property name="text">
                   <string>Save:</string>
                  </property>
                 </widget>
                </item>
                <item row="6" column="2">
-                <widget class="QSpinBox" name="spinBox_snapper_number"/>
+                <widget class="QSpinBox" name="spinBox_snapperNumber"/>
                </item>
                <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBox_snapper_enabletimeline">
+                <widget class="QCheckBox" name="checkBox_snapperEnableTimeline">
                  <property name="text">
                   <string/>
                  </property>
                 </widget>
                </item>
                <item row="0" column="0" colspan="2">
-                <widget class="QLabel" name="label_4">
+                <widget class="QLabel" name="label_snapperEnableTimeline">
                  <property name="text">
                   <string>Enable timeline snapshots</string>
                  </property>
@@ -986,7 +1000,7 @@
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_6">
                <item>
-                <widget class="QCheckBox" name="checkBox_snapper_timeline">
+                <widget class="QCheckBox" name="checkBox_snapperTimeline">
                  <property name="text">
                   <string>Snapper timeline enabled</string>
                  </property>
@@ -999,7 +1013,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="checkBox_snapper_cleanup">
+                <widget class="QCheckBox" name="checkBox_snapperCleanup">
                  <property name="text">
                   <string>Snapper cleanup enabled</string>
                  </property>
@@ -1012,7 +1026,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QCheckBox" name="checkBox_snapper_boot">
+                <widget class="QCheckBox" name="checkBox_snapperBoot">
                  <property name="text">
                   <string>Snapper boot enabled</string>
                  </property>
@@ -1025,7 +1039,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_SnapperUnitsApply">
+                <widget class="QPushButton" name="pushButton_snapperUnitsApply">
                  <property name="maximumSize">
                   <size>
                    <width>1000</width>

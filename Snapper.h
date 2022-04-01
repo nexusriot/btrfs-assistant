@@ -11,7 +11,7 @@
 
 struct SnapperSnapshots {
     int number;
-    QString time;
+    QDateTime time;
     QString desc;
     QString type;
 };
@@ -20,7 +20,7 @@ struct SnapperSubvolume {
     QString subvol;
     int subvolid;
     int snapshotNum;
-    QString time;
+    QDateTime time;
     QString desc;
     QString uuid;
     QString type;
@@ -89,6 +89,15 @@ class Snapper : public QObject {
     static const QString findSnapshotSubvolume(const QString &subvol);
 
     /**
+     * @brief Finds the original path where a file in a snapshot should be restored to
+     * @param snapshotPath - The absolute path to the root of the snapshot
+     * @param filePath - The absolute path to the file in the snapshot
+     * @param uuid - The UUID of the filesystem holding the snapshot
+     * @return The absolute path to the file that is the target of the restore
+     */
+    const QString findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid);
+
+    /**
      * @brief Finds where the snapshots of @p snapshotSubvol should be restored to
      * @param snapshotSubvol - The path to the snapshot subvolume relative to the root of the filesystem
      * @param uuid - The UUID of the btrfs filesystem
@@ -116,13 +125,20 @@ class Snapper : public QObject {
     void loadSubvols();
 
     /**
+     * @brief Reads the contents of a snapper metafile for a snapshot
+     * @param filename - The absolute path to the meta file to read
+     * @return A SnapperSnapshots struct with the values from the file
+     */
+    static SnapperSnapshots readSnapperMeta(const QString &filename);
+
+    /**
      * @brief Restores a single file identified by @p filePath to it's original location
      * @param snapshotPath - An absolute to where the snapshot subvolume is currently mounted
      * @param filePath - An absolute path to the file to restore
      * @param uuid - The UUID of the filesystem the restore applies to
      * @return Return true on success and false otherwise
      */
-    bool restoreFile(const QString &snapshotPath, const QString &filePath, const QString &uuid) const;
+    bool restoreFile(const QString &sourcePath, const QString &destPath) const;
 
     /**
      * @brief Restores the source subvolume over the target

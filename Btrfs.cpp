@@ -16,6 +16,14 @@ const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     return m_volumes[uuid];
 }
 
+const QString Btrfs::checkBalanceStatus(const QString &mountpoint) const {
+    return System::runCmd("btrfs balance status " + mountpoint, false).output;
+}
+
+const QString Btrfs::checkScrubStatus(const QString &mountpoint) const {
+    return System::runCmd("btrfs scrub status " + mountpoint, false).output;
+}
+
 const QStringList Btrfs::children(const int subvolId, const QString &uuid) const {
     QStringList children;
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
@@ -154,7 +162,7 @@ const QString Btrfs::mountRoot(const QString &uuid) {
 }
 
 void Btrfs::reloadSubvols(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
+    if (isUuidValid(uuid)) {
         m_volumes[uuid].subvolumes.clear();
 
         QString mountpoint = mountRoot(uuid);
@@ -248,20 +256,15 @@ const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
     }
 }
 
-const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) const {
-    int parentId = subvolId;
+const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        while (m_volumes[uuid].subvolumes[parentId].parentId != 5) {
-            parentId = m_volumes[uuid].subvolumes[parentId].parentId;
-        }
+        return m_volumes[uuid].subvolumes[subvolId].parentId;
     } else {
         return 0;
     }
-
-    return parentId;
 }
 
-bool Btrfs::UuidIsValid(const QString &uuid) {
+bool Btrfs::isUuidValid(const QString &uuid) {
     // First make sure the data we are trying to access exists
     if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
         reloadVolumes();
@@ -277,7 +280,7 @@ bool Btrfs::UuidIsValid(const QString &uuid) {
 }
 
 void Btrfs::startBalanceRoot(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
+    if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         // Run full balance command against UUID top level subvolume.
@@ -285,46 +288,26 @@ void Btrfs::startBalanceRoot(const QString &uuid) {
     }
 }
 
-void Btrfs::stopBalanceRoot(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
-        QString mountpoint = mountRoot(uuid);
-
-        System::runCmd("btrfs balance cancel " + mountpoint, false);
-    }
-}
-
 void Btrfs::startScrubRoot(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
+    if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs scrub start " + mountpoint, false);
     }
 }
 
+void Btrfs::stopBalanceRoot(const QString &uuid) {
+    if (isUuidValid(uuid)) {
+        QString mountpoint = mountRoot(uuid);
+
+        System::runCmd("btrfs balance cancel " + mountpoint, false);
+    }
+}
+
 void Btrfs::stopScrubRoot(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
+    if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs scrub cancel " + mountpoint, false);
     }
-}
-
-void Btrfs::startDefragRoot(const QString &uuid) {
-    if (UuidIsValid(uuid)) {
-        QString mountpoint = mountRoot(uuid);
-
-        System::runCmd("btrfs filesystem defragment start " + mountpoint + " -r", false);
-    }
-}
-
-const QString Btrfs::checkBalanceStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs balance status " + mountpoint, false).output;
-}
-
-const QString Btrfs::checkScrubStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs scrub status " + mountpoint, false).output;
-}
-
-const QString Btrfs::checkDefragStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs defrag status " + mountpoint, false).output;
 }

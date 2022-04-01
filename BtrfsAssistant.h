@@ -157,17 +157,17 @@ class BtrfsAssistant : public QMainWindow {
     /**
      * @brief Refresh subvolume list when toggling include snapshots checkbox state.
      */
-    void on_checkBox_includesnapshots_clicked();
+    void on_checkBox_includeSnapshots_clicked();
     /**
      * @brief Toggle timeline snapshot inputs based on enable timeline snapshots checkbox state.
      * @param checked
      */
-    void on_checkBox_snapper_enabletimeline_clicked(bool checked);
+    void on_checkBox_snapperEnableTimeline_clicked(bool checked);
     /**
      * @brief Update Snapper tab UI depending on restore mode checkbox state.
      * @param checked
      */
-    void on_checkBox_snapper_restore_clicked(bool checked);
+    void on_checkBox_snapperRestoreMode_clicked(bool checked);
     /**
      * @brief Btrfs balance button handler
      */
@@ -175,7 +175,7 @@ class BtrfsAssistant : public QMainWindow {
     /**
      * @brief When a change is detected on the dropdown of btrfs devices, repopulate the UI based on the new selection
      */
-    void on_comboBox_btrfsdevice_activated(int);
+    void on_comboBox_btrfsDevice_activated(int);
     /**
      * @brief Btrfs scrub button handler
      */
@@ -183,11 +183,11 @@ class BtrfsAssistant : public QMainWindow {
     /**
      * @brief Repopulate the grid when a different config is selected
      */
-    void on_comboBox_snapper_configs_activated(int);
+    void on_comboBox_snapperConfigs_activated(int);
     /**
      * @brief When a new config is selected repopulate the UI
      */
-    void on_comboBox_snapper_config_settings_activated(int);
+    void on_comboBox_snapperConfigSettings_activated(int);
     /**
      * @brief Apply btrfs maintenance system settings based on the UI state.
      */
@@ -195,19 +195,19 @@ class BtrfsAssistant : public QMainWindow {
     /**
      * @brief Delete a subvolume after checking for a variety of errors
      */
-    void on_pushButton_deletesubvol_clicked();
+    void on_pushButton_subvolDelete_clicked();
     /**
      * @brief Refreshes Btrfs data button handler
      */
-    void on_pushButton_load_clicked();
+    void on_pushButton_btrfsRefreshData_clicked();
     /**
      * @brief Refreshes subvolume data button handler
      */
-    void on_pushButton_loadsubvol_clicked();
+    void on_pushButton_subvolRefresh_clicked();
     /**
      * @brief Restore snapshot button handler
      */
-    void on_pushButton_restore_snapshot_clicked();
+    void on_pushButton_snapperRestore_clicked();
     /**
      * @brief Snapper browse snapshot button handler
      */
@@ -215,29 +215,29 @@ class BtrfsAssistant : public QMainWindow {
     /**
      * @brief Snapper new snapshot button handler
      */
-    void on_pushButton_snapper_create_clicked();
+    void on_pushButton_snapperCreate_clicked();
     /**
      * @brief Snapper delete snapshot button handler
      */
-    void on_pushButton_snapper_delete_clicked();
+    void on_pushButton_snapperDelete_clicked();
     /**
      * @brief Snapper new config button handler
      * Use snapper to delete a config when the delete config button is pressed
      */
-    void on_pushButton_snapper_delete_config_clicked();
+    void on_pushButton_snapperDeleteConfig_clicked();
     /**
      * @brief Snapper new config button handler
      * Switches the snapper config between edit config and new config mode
      */
-    void on_pushButton_snapper_new_config_clicked();
+    void on_pushButton_snapperNewConfig_clicked();
     /**
      * @brief Snapper save config button handler
      * Uses snapper to create a new config or save an existing config when the save button is pressed
      */
-    void on_pushButton_snapper_save_config_clicked();
+    void on_pushButton_snapperSaveConfig_clicked();
     /**
      * @brief Snapper Settings apply systemd changes button handler
      */
-    void on_pushButton_SnapperUnitsApply_clicked();
+    void on_pushButton_snapperUnitsApply_clicked();
 };
 #endif // BTRFSASSISTANT_H
