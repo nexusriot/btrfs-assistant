@@ -9,10 +9,23 @@ Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem eas
 	* View, create and delete snapshots
 	* Restore snapshots
 	* View, create, edit, remove Snapper configurations
+	* Browse snapshots and restore individual files
+	* Browse diffs of a single file across snapshot versions
 	* Manage Snapper systemd units
 * A front-end for Btrfs Maintenance
 	* Manage systemd units
 	* Easily manage configuration for defrag, balance and srub settings
+
+### Screenshots
+![image](/uploads/7a89a3a3ff6776ae5d3f5a24a32985bb/image.png)
+
+![image](/uploads/03d8541ddca3f0375c1aace1a6450ec6/image.png)
+
+![image](/uploads/229b5792fea354baff5899baaadfb601/image.png)
+
+![image](/uploads/429be74e9fb92088697944d23a1def1d/image.png)
+
+![image](/uploads/ea3940775576a3a0ef7f205b8f2fd77a/image.png)
 
 ## Contributing
 Contributions are welcome!
