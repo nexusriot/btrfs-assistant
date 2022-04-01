@@ -209,7 +209,7 @@ class Btrfs : public QObject {
      * @param uuid - The UUID of the filesystem to validate
      * @return bool - True if the UUID is a mounted Btrfs filesystem
      */
-    bool IsUuidValid(const QString &uuid);
+    bool isUuidValid(const QString &uuid);
 
   signals:
 };
