@@ -256,16 +256,12 @@ const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
     }
 }
 
-const int Btrfs::subvolTopParent(const QString &uuid, const int subvolId) const {
+const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        if (m_volumes[uuid].subvolumes[subvolId].parentId == 5) {
-            return subvolId;
-        } else {
-            return m_volumes[uuid].subvolumes[subvolId].parentId;
-        }
+        return m_volumes[uuid].subvolumes[subvolId].parentId;
+    } else {
+        return 0;
     }
-
-    return 0;
 }
 
 bool Btrfs::IsUuidValid(const QString &uuid) {

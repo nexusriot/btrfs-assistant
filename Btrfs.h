@@ -169,12 +169,12 @@ class Btrfs : public QObject {
     const QString subvolName(const QString &uuid, const int subvolId) const;
 
     /**
-     * @brief Finds the ID of the subvolume that is the top level parent of @p subvolId
+     * @brief Finds the ID of the subvolume that is the parent of @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
-     * @param subvolId - An int with the ID of the subvolume to find the top level parent of
-     * @return An int with top level parent ID or 0 if the subvolId is not found
+     * @param subvolId - An int with the ID of the subvolume to find the parent of
+     * @return An int with parent ID or 0 if the subvolId is not found
      */
-    const int subvolTopParent(const QString &uuid, const int subvolId) const;
+    const int subvolParent(const QString &uuid, const int subvolId) const;
 
     /**
      * @brief Performs a balance operation on top level subvolume for device.

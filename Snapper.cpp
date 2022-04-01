@@ -26,7 +26,7 @@ void Snapper::createSubvolMap() {
         const QString uuid = subvol.at(0).uuid;
         if (!m_subvolMap.value(snapshotSubvol, "").endsWith(uuid)) {
             const int snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
-            int targetId = m_btrfs->subvolTopParent(uuid, snapSubvolId);
+            int targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
             QString targetSubvol = m_btrfs->subvolName(uuid, targetId);
 
             // Get the subvolid of the target and do some additional error checking
@@ -274,7 +274,7 @@ void Snapper::loadSubvols() {
             if (targetSubvol.isEmpty()) {
                 if (snapshotSubvol.endsWith(".snapshots")) {
                     const int targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
-                    const int parentId = m_btrfs->subvolTopParent(uuid, targetSubvolId);
+                    const int parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
                     targetSubvol = m_btrfs->subvolName(uuid, parentId);
                 } else {
                     continue;
