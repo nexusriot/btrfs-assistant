@@ -39,13 +39,6 @@ struct BtrfsMeta {
  */
 class Btrfs : public QObject {
     Q_OBJECT
-  private:
-    /**
-     * @brief Validates the UUID passed in actually exists and is accessible still.
-     * @param uuid
-     * @return bool
-     */
-    bool UuidIsValid(const QString &uuid);
 
   public:
     explicit Btrfs(QObject *parent = nullptr);
@@ -57,6 +50,20 @@ class Btrfs : public QObject {
      *
      */
     const BtrfsMeta btrfsVolume(const QString &uuid) const;
+
+    /**
+     * @brief Checks the balance status of a given subvolume.
+     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
+     * @return Qstring that contains the output from the btrfs balance command.
+     */
+    const QString checkBalanceStatus(const QString &mountpoint) const;
+
+    /**
+     * @brief Checks the scrub status of a given subvolume.
+     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
+     * @return Qstring that contains the output from the btrfs scrub command.
+     */
+    const QString checkScrubStatus(const QString &mountpoint) const;
 
     /** @brief Returns the direct children for a given subvolume
      *
@@ -176,37 +183,16 @@ class Btrfs : public QObject {
     void startBalanceRoot(const QString &uuid);
 
     /**
-     * @brief Stops a balance operation on root subvolume for device.
-     * @param uuid - A QString that represents the UUID of the filesystem to identify top level mountpoint
-     */
-    void stopBalanceRoot(const QString &uuid);
-
-    /**
-     * @brief Checks the balance status of a given subvolume.
-     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
-     * @return Qstring that contains the output from the btrfs balance command.
-     */
-    const QString checkBalanceStatus(const QString &mountpoint) const;
-
-    /**
-     * @brief Checks the scrub status of a given subvolume.
-     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
-     * @return Qstring that contains the output from the btrfs scrub command.
-     */
-    const QString checkScrubStatus(const QString &mountpoint) const;
-
-    /**
-     * @brief Checks the defrag status of a given subvolume.
-     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs defrag on
-     * @return Qstring that contains the output from the btrfs defrag command.
-     */
-    const QString checkDefragStatus(const QString &mountpoint) const;
-
-    /**
      * @brief Performs a scrub operation on root subvolume for device.
      * @param uuid - A QString that represents the UUID of the filesystem to identify top level mountpoint
      */
     void startScrubRoot(const QString &uuid);
+
+    /**
+     * @brief Stops a balance operation on root subvolume for device.
+     * @param uuid - A QString that represents the UUID of the filesystem to identify top level mountpoint
+     */
+    void stopBalanceRoot(const QString &uuid);
 
     /**
      * @brief Stops a scrub operation on root subvolume for device.
@@ -214,15 +200,16 @@ class Btrfs : public QObject {
      */
     void stopScrubRoot(const QString &uuid);
 
-    /**
-     * @brief Performs a defrag operation on root subvolume for device.
-     * @param uuid - A QString that represents the UUID of the filesystem to identify top level mountpoint
-     */
-    void startDefragRoot(const QString &uuid);
-
   private:
     // A map of BtrfsMeta.  The key is UUID
     QMap<QString, BtrfsMeta> m_volumes;
+
+    /**
+     * @brief Validates the UUID passed in actually exists and is accessible still.
+     * @param uuid - The UUID of the filesystem to validate
+     * @return bool - True if the UUID is a mounted Btrfs filesystem
+     */
+    bool IsUuidValid(const QString &uuid);
 
   signals:
 };
