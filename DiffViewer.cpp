@@ -111,6 +111,9 @@ void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged() {
         return;
     }
 
+    // Get a copy of the palette before we start changing colors
+    QPalette defaultPalette = m_ui->textEdit_diff->palette();
+
     // Show the diff
     m_ui->textEdit_diff->clear();
     for (const QString &line : diffOutput) {
@@ -122,6 +125,6 @@ void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged() {
         }
 
         m_ui->textEdit_diff->append(line);
-        m_ui->textEdit_diff->setTextColor(Qt::AutoColor);
+        m_ui->textEdit_diff->setTextColor(defaultPalette.text().color());
     }
 }
