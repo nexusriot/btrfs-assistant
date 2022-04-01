@@ -508,7 +508,7 @@ void BtrfsAssistant::on_checkBox_bmDefrag_clicked(bool checked) { m_ui->listWidg
 
 void BtrfsAssistant::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bmScrub->setDisabled(checked); }
 
-void BtrfsAssistant::on_checkBox_includeSnapshots_clicked() { refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText()); }
+void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() { refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText()); }
 
 void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
