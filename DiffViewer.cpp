@@ -122,6 +122,6 @@ void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged() {
         }
 
         m_ui->textEdit_diff->append(line);
-        m_ui->textEdit_diff->setTextColor(Qt::black);
+        m_ui->textEdit_diff->setTextColor(Qt::AutoColor);
     }
 }
