@@ -62,6 +62,9 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
     m_twSnapshot->setColumnHidden(DiffColumn::filePath, true);
     m_twSnapshot->setRowCount(resultList.count());
 
+    // We need to the locale for displaying the date/time
+    QLocale locale = QLocale::system();
+
     int row = 0;
 
     for (const QString &result : resultList) {
@@ -76,7 +79,7 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
         // Get the date
         const QString metaFileName =
             QDir::cleanPath(stemPath.canonicalPath() + QDir::separator() + snapshotNum + QDir::separator() + "info.xml");
-        const QString date = Snapper::readSnapperMeta(metaFileName).time.toString();
+        const QString date = locale.toString(Snapper::readSnapperMeta(metaFileName).time, QLocale::ShortFormat);
 
         if (snapshotNum.isEmpty() || result.isEmpty() || thisRootPath.isEmpty()) {
             continue;
