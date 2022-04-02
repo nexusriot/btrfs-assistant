@@ -40,9 +40,18 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
 1. `make -C build`
 1. `sudo make -C build install`
-1. `sudo cp btrfs-assistant.conf /etc/.`
-1. `sudo cp org.btrfs-assistant.pkexec.policy /usr/share/polkit-1/actions/.`
 1. Optionally install Snapper - `sudo apt install snapper`
+
+#### Fedora
+1. Install the prerequisites: `sudo dnf install cmake git qt5-qttools qt5-qtbase qt5-qtsvg g++ qt5-qtbase-devel qt5-qttools-devel`
+1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
+1. Untar the archive and cd into the directory
+1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
+1. `make -C build`
+1. `sudo make -C build install`
+1. Optionally install Snapper - `sudo dnf install snapper`
+1. Optionally install Btrfs Maintenance - `sudo dnf install btrfsmaintenance`
+1. Configure Btrfs Maintenance if installed - Edit `/etc/btrfs-assistant.conf` and change `bm_refresh_service` to `/etc/sysconfig/btrfsmaintenance`
 
 ## Contributing
 Contributions are welcome!
