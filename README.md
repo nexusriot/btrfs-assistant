@@ -4,6 +4,7 @@
 Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem easier.  The primary features it offers are:
 * An easy to read overview of Btrfs metadata
 * A simple view of subvolumes with or without Snapper/Timeshift snapshots
+* Run and monitor scrub and balance operations
 * A pushbutton method for removing subvolumes
 * A management front-end for Snapper
 	* View, create and delete snapshots
@@ -26,6 +27,22 @@ Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem eas
 ![image](/uploads/429be74e9fb92088697944d23a1def1d/image.png)
 
 ![image](/uploads/ea3940775576a3a0ef7f205b8f2fd77a/image.png)
+
+## Installing
+
+#### Arch
+Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
+
+#### Debian/Ubuntu
+1. Install the prerequisites: `sudo apt install git cmake qtbase5-dev qttools5-dev fonts-noto libqt5svg5 libqt5core5a g++`
+1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
+1. Untar the archive and cd into the directory
+1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
+1. `make -C build`
+1. `sudo make -C build install`
+1. `sudo cp btrfs-assistant.conf /etc/.`
+1. `sudo cp org.btrfs-assistant.pkexec.policy /usr/share/polkit-1/actions/.`
+1. Optionally install Snapper - `sudo apt install snapper`
 
 ## Contributing
 Contributions are welcome!
