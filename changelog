@@ -6,6 +6,7 @@
 * Time is now displayed in local time format and no longer switches from local time to UTC in different views
 * Modified internal naming of UI elements for consistency and readability(Contributed by Austin Horstman)
 * Fixed an issue where nested subvolumes would were not able to restore
+* Modified cmake configuration to install all files
 
 1.1 - 2022-03-30
 * Added the ability to perform manual scrub and balance operations(Contributed by Austin Horstman)

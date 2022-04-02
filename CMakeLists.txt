@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(btrfs-assistant VERSION 0.1 LANGUAGES CXX)
 
+include(GNUInstallDirs)
+
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(CMAKE_AUTOUIC ON)
@@ -40,11 +42,12 @@ add_executable(btrfs-assistant-bin
     ${PROJECT_SOURCES} ${FILES_TS}
 )
 
-install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_PREFIX}/share/btrfs-assistant/translations/)
-install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_PREFIX}/share/applications/)
-install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/scalable/apps/)
-install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION bin)
-
+install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/btrfs-assistant/translations)
+install(FILES btrfs-assistant.conf DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR})
+install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps/)
+install(FILES org.btrfs-assistant.pkexec.policy DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/actions/)
+install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 target_link_libraries(btrfs-assistant-bin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
