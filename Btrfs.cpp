@@ -70,31 +70,6 @@ bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
     return uuid == outputList.at(0).trimmed();
 }
 
-const QString Btrfs::findRootSubvol() {
-    const Result findmntResult = System::runCmd("findmnt -no uuid,options /", false);
-    if (findmntResult.exitCode != 0 || findmntResult.output.isEmpty())
-        return QString();
-
-    const QString uuid = findmntResult.output.split(' ').at(0).trimmed();
-    const QString options = findmntResult.output.right(findmntResult.output.length() - uuid.length()).trimmed();
-    if (options.isEmpty() || uuid.isEmpty())
-        return QString();
-
-    QString subvol;
-    const QStringList optionsList = options.split(',');
-    for (const QString &option : optionsList) {
-        if (option.startsWith("subvol="))
-            subvol = option.split("subvol=").at(1);
-    }
-
-    // Make sure subvolume doesn't have a leading slash
-    if (subvol.startsWith("/"))
-        subvol = subvol.right(subvol.length() - 1);
-
-    // At this point subvol will either contain nothing or the name of the subvol
-    return subvol;
-}
-
 const QStringList Btrfs::listFilesystems() {
     const QStringList outputList = System::runCmd("btrfs filesystem show -m", false).output.split('\n');
     QStringList uuids;

@@ -94,14 +94,6 @@ class Btrfs : public QObject {
      */
     static bool isSnapper(const QString &subvolume);
 
-    /** @brief Returns the name of the subvol mounted at /
-     *
-     * Returns QString containing the name of the subvol.  If there is not Btrfs subvol mounted at /,
-     * a default constructed QString is returned
-     *
-     */
-    static const QString findRootSubvol();
-
     /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
      */
     static bool isMounted(const QString &uuid, const int subvolid);
