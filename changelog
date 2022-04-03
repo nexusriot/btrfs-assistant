@@ -1,6 +1,6 @@
 ### Btrfs Assistant
 
-1.2 - TBD
+1.2 - 2022-04-03
 * Added an integrated diff viewer
 * Changed font and alignment on scrub/balance output
 * Time is now displayed in local time format and no longer switches from local time to UTC in different views
