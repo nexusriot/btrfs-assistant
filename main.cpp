@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]) {
     QApplication ba(argc, argv);
     QCoreApplication::setApplicationName(QCoreApplication::translate("main", "Btrfs Assistant"));
-    QCoreApplication::setApplicationVersion("1.2");
+    QCoreApplication::setApplicationVersion("1.3");
     ba.setWindowIcon(QIcon(":/btrfs-assistant.png"));
 
     QCommandLineParser parser;
