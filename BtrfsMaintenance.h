@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QSettings>
 
+#include "Settings.h"
 #include "System.h"
 
 /**
@@ -13,11 +14,11 @@
 class BtrfsMaintenance : public QObject {
     Q_OBJECT
   public:
-    explicit BtrfsMaintenance(const QString &configFile, const QString &serviceName, QObject *parent = nullptr);
+    explicit BtrfsMaintenance(const QString &configFile, QObject *parent = nullptr);
 
     /** @brief Forces Btrfs Maintenance to reload the configuration file
      */
-    void refresh() { System::startUnit(m_serviceName); }
+    void refresh();
 
     /** @brief Sets @p value for @p key in the settings file
      */
@@ -29,7 +30,6 @@ class BtrfsMaintenance : public QObject {
 
   private:
     QSettings *m_settings;
-    QString m_serviceName;
 
   signals:
 };

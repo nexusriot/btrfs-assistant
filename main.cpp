@@ -1,11 +1,11 @@
 #include "BtrfsAssistant.h"
 #include "Cli.h"
+#include "Settings.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QDesktopWidget>
-#include <QSettings>
 
 int main(int argc, char *argv[]) {
     QApplication ba(argc, argv);
@@ -34,25 +34,10 @@ int main(int argc, char *argv[]) {
     myappTranslator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");
     ba.installTranslator(&myappTranslator);
 
-    // Get the config settings
-    QSettings settings("/etc/btrfs-assistant.conf", QSettings::NativeFormat);
-    QString snapperPath = settings.value("snapper", "/usr/bin/snapper").toString();
-    QString btrfsMaintenanceConfig = settings.value("bm_config", "/etc/default/btrfsmaintenance").toString();
+    QString snapperPath = Settings::getInstance().value("snapper", "/usr/bin/snapper").toString();
+    QString btrfsMaintenanceConfig = Settings::getInstance().value("bm_config", "/etc/default/btrfsmaintenance").toString();
 
-    // Load the subvol mapping from the settings file
-    settings.beginGroup("Subvol-Mapping");
-    const QStringList keys = settings.childKeys();
-    QMap<QString, QString> subvolMap;
-    for (const QString &key : keys) {
-        if (!key.isEmpty() && settings.value(key).toString().contains(",") && !settings.value(key).toString().startsWith("#")) {
-            const QStringList mapList = settings.value(key).toString().split(",");
-            if (mapList.count() == 3) {
-                subvolMap.insert(mapList.at(0).trimmed(), mapList.at(1).trimmed() + "," + mapList.at(2).trimmed());
-            }
-        }
-    }
-    settings.endGroup();
-
+    // Ensure we are running on a system with btrfs
     if (!System::runCmd("findmnt --real -no fstype ", false).output.contains("btrfs")) {
         QTextStream(stderr) << "Error: No Btrfs filesystems found" << Qt::endl;
         return 1;
@@ -64,7 +49,7 @@ int main(int argc, char *argv[]) {
     // If Snapper is installed, instantiate the snapper object
     Snapper *snapper = nullptr;
     if (QFile::exists(snapperPath)) {
-        snapper = new Snapper(&btrfs, snapperPath, subvolMap);
+        snapper = new Snapper(&btrfs, snapperPath);
     }
 
     if (parser.isSet(listOption) && snapper != nullptr) {
@@ -75,8 +60,7 @@ int main(int argc, char *argv[]) {
         // If Btrfs Maintenance is installed, instantiate the btrfsMaintenance object
         BtrfsMaintenance *btrfsMaintenance = nullptr;
         if (QFile::exists(btrfsMaintenanceConfig)) {
-            btrfsMaintenance = new BtrfsMaintenance(btrfsMaintenanceConfig,
-                                                    settings.value("bm_refresh_service", "btrfsmaintenance-refresh.service").toString());
+            btrfsMaintenance = new BtrfsMaintenance(btrfsMaintenanceConfig);
         }
 
         BtrfsAssistant mainWindow(btrfsMaintenance, &btrfs, snapper);

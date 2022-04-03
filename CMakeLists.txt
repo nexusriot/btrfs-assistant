@@ -31,6 +31,7 @@ set(PROJECT_SOURCES
         Cli.h Cli.cpp
         DiffViewer.h DiffViewer.cpp DiffViewer.ui
         FileBrowser.h FileBrowser.cpp FileBrowser.ui
+        Settings.h Settings.cpp
         Snapper.h Snapper.cpp
         System.h System.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
