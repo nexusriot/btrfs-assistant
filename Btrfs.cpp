@@ -17,11 +17,11 @@ const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
 }
 
 const QString Btrfs::checkBalanceStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs balance status " + mountpoint, false).output;
+    return System::runCmd("btrfs", {"balance", "status", mountpoint}, false).output;
 }
 
 const QString Btrfs::checkScrubStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs scrub status " + mountpoint, false).output;
+    return System::runCmd("btrfs", {"scrub", "status", mountpoint}, false).output;
 }
 
 const QStringList Btrfs::children(const int subvolId, const QString &uuid) const {
@@ -46,9 +46,8 @@ const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
             QString mountpoint = mountRoot(uuid);
 
             // Everything checks out, lets delete the subvol
-            if (mountpoint.right(1) != "/")
-                mountpoint += "/";
-            Result result = System::runCmd("btrfs subvolume delete " + mountpoint + subvol.subvolName, true);
+            const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvol.subvolName);
+            Result result = System::runCmd("btrfs", {"subvolume", "delete", subvolPath}, true);
             if (result.exitCode == 0) {
                 return true;
             }
@@ -71,7 +70,7 @@ bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
 }
 
 const QString Btrfs::findRootSubvol() {
-    const Result findmntResult = System::runCmd("LANG=C findmnt -no uuid,options /", false);
+    const Result findmntResult = System::runCmd("findmnt -no uuid,options /", false);
     if (findmntResult.exitCode != 0 || findmntResult.output.isEmpty())
         return QString();
 
@@ -142,7 +141,7 @@ const QString Btrfs::mountRoot(const QString &uuid) {
     QString mountpoint;
     for (const QString &line : qAsConst(findmntOutput)) {
         if (!line.isEmpty() && line.split(' ').at(0).trimmed() == uuid)
-            mountpoint = line.split(' ').at(1).trimmed();
+            mountpoint = line.section(' ', 1).trimmed();
     }
 
     // If it isn't mounted we need to mount it
@@ -152,10 +151,11 @@ const QString Btrfs::mountRoot(const QString &uuid) {
 
         // Create the mountpoint and mount the volume if successful
         QDir tempMount;
-        if (tempMount.mkpath(mountpoint))
-            System::runCmd("mount -t btrfs -o subvolid=5 UUID=" + uuid + " " + mountpoint, false);
-        else
+        if (tempMount.mkpath(mountpoint)) {
+            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=5", "UUID=" + uuid, mountpoint}, false);
+        } else {
             return QString();
+        }
     }
 
     return mountpoint;
@@ -167,7 +167,7 @@ void Btrfs::reloadSubvols(const QString &uuid) {
 
         QString mountpoint = mountRoot(uuid);
 
-        QStringList output = System::runCmd("btrfs subvolume list " + mountpoint, false).output.split('\n');
+        QStringList output = System::runCmd("btrfs", {"subvolume", "list", mountpoint}, false).output.split('\n');
         QMap<int, Subvolume> subvols;
         for (const QString &line : qAsConst(output)) {
             if (!line.isEmpty()) {
@@ -195,7 +195,7 @@ void Btrfs::reloadVolumes() {
             BtrfsMeta btrfs;
             btrfs.populated = true;
             btrfs.mountPoint = mountpoint;
-            QStringList usageLines = System::runCmd("LANG=C ; btrfs fi usage -b " + mountpoint, false).output.split('\n');
+            QStringList usageLines = System::runCmd("LANG=C ; btrfs fi usage -b \"" + mountpoint + "\"", false).output.split('\n');
             for (const QString &line : qAsConst(usageLines)) {
                 QString type = line.split(':').at(0).trimmed();
                 if (type == "Device size") {
@@ -284,7 +284,7 @@ void Btrfs::startBalanceRoot(const QString &uuid) {
         QString mountpoint = mountRoot(uuid);
 
         // Run full balance command against UUID top level subvolume.
-        System::runCmd("btrfs balance start " + mountpoint + " --full-balance --bg", false);
+        System::runCmd("btrfs", {"balance", "start", mountpoint, "--full-balance", "--bg"}, false);
     }
 }
 
@@ -292,7 +292,7 @@ void Btrfs::startScrubRoot(const QString &uuid) {
     if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
-        System::runCmd("btrfs scrub start " + mountpoint, false);
+        System::runCmd("btrfs", {"scrub", "start", mountpoint}, false);
     }
 }
 
@@ -300,7 +300,7 @@ void Btrfs::stopBalanceRoot(const QString &uuid) {
     if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
-        System::runCmd("btrfs balance cancel " + mountpoint, false);
+        System::runCmd("btrfs", {"balance", "cancel", mountpoint}, false);
     }
 }
 
@@ -308,6 +308,6 @@ void Btrfs::stopScrubRoot(const QString &uuid) {
     if (isUuidValid(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
-        System::runCmd("btrfs scrub cancel " + mountpoint, false);
+        System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
     }
 }

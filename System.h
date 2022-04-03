@@ -37,32 +37,31 @@ class System : public QObject {
      */
     static QStringList findEnabledUnits();
 
-    /** @brief Runs a command on the host system
-     *
-     * Runs the command specified in @p cmd on the host system.  If @p includeStderr is true,
-     * the output from stderr is included in the Result.output.  @p timeout specifies the timeout
-     * in seconds.
-     *
-     * The function returns a Result containing the exist code and the output from the runing the command
-     *
+    /**
+     * @brief An overloaded version of runCmd which takes a string and runs it with bash -c
+     * @param cmd - The command to pass to bash -c
+     * @param includeStderr - When true stderr is included in the Result.output
+     * @param timeout - How long in seconds the command should run before timing out
+     * @return A Result containing the exit code and the output from the running the command
      */
     static const Result runCmd(const QString &cmd, bool includeStderr, int timeout = 60);
 
-    /** @brief Runs a list of commands on the host system
-     *
-     * A convenience overload which takes a list of commands in @p cmdList.  The commands are combined
-     * and run.  Everything else is identical to the simpler form of runCmd above.
-     *
+    /**
+     * @brief Runs a command on the host system
+     * @param cmd - The absolute path to the binary/script to run
+     * @param args - A list of arguments for @p cmd
+     * @param includeStderr - When true stderr is included in the Result.output
+     * @param timeout - How long in seconds the command should run before timing out
+     * @return A Result containing the exit code and the output from the running the command
      */
-
-    static const Result runCmd(const QStringList &cmdList, bool includeStderr, int timeout = 60);
+    static const Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout = 60);
 
     /** @brief Starts the systemd unit with the unit name of @p unit
      *
      *  Returns a Result struct from runCmd()
      *
      */
-    static const Result startUnit(const QString &unit) { return runCmd("systemctl start " + unit, false); }
+    static const Result startUnit(const QString &unit) { return runCmd("systemctl", {"start", unit}, false); }
 
   private:
     // This class contains only static functions.  There is no reason to instantiate it.

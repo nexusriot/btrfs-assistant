@@ -218,7 +218,7 @@ void Snapper::loadSubvols() {
         if (mountpoint.isEmpty()) {
             continue;
         }
-        QString output = System::runCmd("btrfs subvolume list " + mountpoint, false).output;
+        QString output = System::runCmd("btrfs", {"subvolume", "list", mountpoint}, false).output;
 
         if (output.isEmpty()) {
             continue;
@@ -368,8 +368,10 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     }
 
     // Place a snapshot of the source where the target was
-    System::runCmd("btrfs subvolume snapshot " + QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume) + " " +
-                       QDir::cleanPath(mountpoint + QDir::separator() + targetName),
+    System::runCmd("btrfs",
+                   QStringList() << "subvolume"
+                                 << "snapshot" << QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume)
+                                 << QDir::cleanPath(mountpoint + QDir::separator() + targetName),
                    false);
 
     // Make sure it worked
