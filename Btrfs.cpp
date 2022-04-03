@@ -3,6 +3,7 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QTemporaryDir>
 #include <QUuid>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { reloadVolumes(); }
@@ -146,8 +147,15 @@ const QString Btrfs::mountRoot(const QString &uuid) {
 
     // If it isn't mounted we need to mount it
     if (mountpoint.isEmpty()) {
-        // Format a temp mountpoint using a GUID
-        mountpoint = QDir::cleanPath(QDir::tempPath() + QDir::separator() + QUuid::createUuid().toString());
+        // Get a temp mountpoint
+        QTemporaryDir tempDir;
+        tempDir.setAutoRemove(false);
+        if (!tempDir.isValid()) {
+            qWarning() << "Failed to create temporary directory" << Qt::endl;
+            return QString();
+        }
+
+        mountpoint = tempDir.path();
 
         // Create the mountpoint and mount the volume if successful
         QDir tempMount;
