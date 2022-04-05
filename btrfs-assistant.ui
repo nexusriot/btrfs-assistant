@@ -417,6 +417,13 @@
                 </spacer>
                </item>
                <item>
+                <widget class="QPushButton" name="pushButton_enableQuota">
+                 <property name="text">
+                  <string>Enable Quotas</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QPushButton" name="pushButton_btrfsRefreshData">
                  <property name="text">
                   <string>Refresh Btrfs Data</string>
@@ -449,9 +456,6 @@
            <bool>false</bool>
           </property>
          </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QListWidget" name="listWidget_subvols"/>
         </item>
         <item row="0" column="3">
          <widget class="QGroupBox" name="groupBox">
@@ -487,6 +491,16 @@
             </widget>
            </item>
           </layout>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QTableView" name="tableView_subvols">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
          </widget>
         </item>
        </layout>

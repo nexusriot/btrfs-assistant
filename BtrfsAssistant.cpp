@@ -1,9 +1,9 @@
 #include "BtrfsAssistant.h"
+#include "FileBrowser.h"
+#include "Settings.h"
+#include "System.h"
 #include "config.h"
 #include "ui_btrfs-assistant.h"
-
-#include "FileBrowser.h"
-#include "System.h"
 
 #include <QDebug>
 #include <QThread>
@@ -31,23 +31,8 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
     }
 }
 
-/**
- * @brief Converts a number to a human readable string for displaying data storage amounts
- * @param number - A double containing the number to convert
- * @return A string containing the converted value
- */
-static const QString toHumanReadable(double number) {
-    int i = 0;
-    const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
-    while (number > 1024) {
-        number /= 1024;
-        i++;
-    }
-    return QString::number(number) + " " + units[i];
-}
-
 BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent)
-    : QMainWindow(parent), m_ui(new Ui::BtrfsAssistant) {
+    : QMainWindow(parent), m_ui(new Ui::BtrfsAssistant), m_btrfs(btrfs), m_snapper(snapper), m_btrfsMaint(btrfsMaintenance) {
     m_ui->setupUi(this);
 
     // Ensure the application is running as root
@@ -56,10 +41,6 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
         exit(1);
     }
 
-    //
-    m_btrfs = btrfs;
-    m_snapper = snapper;
-    m_btrfsMaint = btrfsMaintenance;
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
@@ -93,7 +74,7 @@ void BtrfsAssistant::enableRestoreMode(bool enable) {
 
 void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString balanceStatus = m_btrfs->checkBalanceStatus(m_btrfs->mountRoot(uuid));
+    QString balanceStatus = m_btrfs->balanceStatus(m_btrfs->mountRoot(uuid));
 
     // if balance is running currently, make sure you can stop it and we monitor progress
     if (!balanceStatus.contains("No balance found")) {
@@ -114,7 +95,7 @@ void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
 
 void BtrfsAssistant::btrfsScrubStatusUpdateUI() {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString scrubStatus = m_btrfs->checkScrubStatus(m_btrfs->mountRoot(uuid));
+    QString scrubStatus = m_btrfs->scrubStatus(m_btrfs->mountRoot(uuid));
 
     // update status to current scrub operation status
     m_ui->label_btrfsScrubStatus->setText(scrubStatus);
@@ -221,6 +202,8 @@ void BtrfsAssistant::populateBmTab() {
 
 void BtrfsAssistant::populateBtrfsUi(const QString &uuid) {
 
+    setEnableQuotaButtonStatus();
+
     BtrfsMeta btrfsVolume = m_btrfs->btrfsVolume(uuid);
 
     if (!btrfsVolume.populated) {
@@ -234,10 +217,10 @@ void BtrfsAssistant::populateBtrfsUi(const QString &uuid) {
     m_ui->progressBar_btrfssys->setValue(((double)btrfsVolume.sysUsed / btrfsVolume.sysSize) * 100);
 
     // The information section
-    m_ui->label_btrfsAllocatedValue->setText(toHumanReadable(btrfsVolume.allocatedSize));
-    m_ui->label_btrfsUsedValue->setText(toHumanReadable(btrfsVolume.usedSize));
-    m_ui->label_btrfsSizeValue->setText(toHumanReadable(btrfsVolume.totalSize));
-    m_ui->label_btrfsFreeValue->setText(toHumanReadable(btrfsVolume.freeSize));
+    m_ui->label_btrfsAllocatedValue->setText(System::toHumanReadable(btrfsVolume.allocatedSize));
+    m_ui->label_btrfsUsedValue->setText(System::toHumanReadable(btrfsVolume.usedSize));
+    m_ui->label_btrfsSizeValue->setText(System::toHumanReadable(btrfsVolume.totalSize));
+    m_ui->label_btrfsFreeValue->setText(System::toHumanReadable(btrfsVolume.freeSize));
     float freePercent = (double)btrfsVolume.allocatedSize / btrfsVolume.totalSize;
     if (freePercent < 0.70) {
         m_ui->label_btrfsMessage->setText(tr("You have lots of free space, did you overbuy?"));
@@ -385,23 +368,21 @@ void BtrfsAssistant::refreshSnapperServices() {
 }
 
 void BtrfsAssistant::refreshSubvolListUi(const QString &uuid) {
-
     // Reload the subvolumes list
-    m_ui->listWidget_subvols->clear();
-    m_btrfs->reloadSubvols(uuid);
+    m_btrfs->subvolModel()->setIncludeSnapshots(m_ui->checkBox_subvolIncludeSnapshots->isChecked());
+    m_btrfs->loadSubvols(uuid);
+    m_ui->tableView_subvols->horizontalHeader()->setStretchLastSection(true);
+    m_ui->tableView_subvols->resizeColumnsToContents();
+    m_ui->tableView_subvols->resizeRowsToContents();
+    m_ui->tableView_subvols->verticalHeader()->hide();
+    m_ui->tableView_subvols->hideColumn(SubvolHeader::subvolId);
+    m_ui->tableView_subvols->hideColumn(SubvolHeader::parentId);
 
-    QMapIterator<int, Subvolume> i(m_btrfs->listSubvolumes(uuid));
-
-    bool includeSnaps = m_ui->checkBox_subvolIncludeSnapshots->isChecked();
-
-    // Populate list with discovered subvolumes
-    while (i.hasNext()) {
-        i.next();
-        // Include snapshots in list if option checked
-        if (includeSnaps || !(Btrfs::isTimeshift(i.value().subvolName) || Btrfs::isSnapper(i.value().subvolName)))
-            m_ui->listWidget_subvols->addItem(i.value().subvolName);
+    // Check to see if the size related colums should be hidden
+    if (Settings::getInstance().value("allow_temp_quota", "") != "true" && !Btrfs::isQuotaEnabled(Btrfs::mountRoot(uuid))) {
+        m_ui->tableView_subvols->hideColumn(SubvolHeader::size);
+        m_ui->tableView_subvols->hideColumn(SubvolHeader::exclusive);
     }
-    m_ui->listWidget_subvols->sortItems();
 }
 
 void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolume) {
@@ -411,7 +392,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
     }
 
     // Ensure the list of subvolumes is not out-of-date
-    m_btrfs->reloadSubvols(uuid);
+    m_btrfs->loadSubvols(uuid);
 
     const int subvolId = m_btrfs->subvolId(uuid, subvolume);
     const QString snapshotSubvol = Snapper::findSnapshotSubvolume(subvolume);
@@ -457,6 +438,9 @@ bool BtrfsAssistant::setup() {
         m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_general), false);
         m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_settings), false);
     }
+
+    // Connect the subvolume view
+    m_ui->tableView_subvols->setModel(m_btrfs->subvolModel());
 
     // Populate the UI
     refreshBtrfsUi();
@@ -618,8 +602,14 @@ void BtrfsAssistant::on_pushButton_btrfsScrub_clicked() {
 }
 
 void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
-    QString subvol = m_ui->listWidget_subvols->currentItem()->text();
-    QString uuid = m_ui->comboBox_btrfsDevice->currentText();
+    if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
+        displayError(tr("Please select a subvolume to delete first!"));
+        m_ui->pushButton_subvolDelete->clearFocus();
+        return;
+    }
+    QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
+    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::subvolName)).toString();
+    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::uuid)).toString();
 
     // Make sure the everything is good in the UI
     if (subvol.isEmpty() || uuid.isEmpty()) {
@@ -669,7 +659,7 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
 }
 
 void BtrfsAssistant::on_pushButton_btrfsRefreshData_clicked() {
-    m_btrfs->reloadVolumes();
+    m_btrfs->loadVolumes();
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
@@ -968,4 +958,32 @@ void BtrfsAssistant::on_pushButton_snapperUnitsApply_clicked() {
     QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
     m_ui->pushButton_snapperUnitsApply->clearFocus();
+}
+
+void BtrfsAssistant::setEnableQuotaButtonStatus() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
+    } else {
+        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
+    }
+}
+
+void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        Btrfs::setQgroupEnabled(mountpoint, false);
+    } else {
+        Btrfs::setQgroupEnabled(mountpoint, true);
+    }
+
+    setEnableQuotaButtonStatus();
 }

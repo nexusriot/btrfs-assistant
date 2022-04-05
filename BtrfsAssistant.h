@@ -180,6 +180,7 @@ class BtrfsAssistant : public QMainWindow {
      * @brief Btrfs scrub button handler
      */
     void on_pushButton_btrfsScrub_clicked();
+    void on_pushButton_enableQuota_clicked();
     /**
      * @brief Repopulate the grid when a different config is selected
      */
@@ -239,5 +240,10 @@ class BtrfsAssistant : public QMainWindow {
      * @brief Snapper Settings apply systemd changes button handler
      */
     void on_pushButton_snapperUnitsApply_clicked();
+
+    /**
+     * @brief Changes the text on the Enable Quota button to Disable Quota when appropriate
+     */
+    void setEnableQuotaButtonStatus();
 };
 #endif // BTRFSASSISTANT_H

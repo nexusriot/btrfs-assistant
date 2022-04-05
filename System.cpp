@@ -8,9 +8,9 @@ bool System::enableService(QString serviceName, bool enable) {
     int exitCode;
 
     if (enable) {
-        exitCode = System::runCmd("systemctl enable --now " + serviceName, false).exitCode;
+        exitCode = System::runCmd("systemctl", {"enable", "--now", serviceName}, false).exitCode;
     } else {
-        exitCode = System::runCmd("systemctl disable --now " + serviceName, false).exitCode;
+        exitCode = System::runCmd("systemctl", {"disable", "--now", serviceName}, false).exitCode;
     }
 
     return exitCode == 0;
@@ -29,26 +29,27 @@ QStringList System::findEnabledUnits() {
 }
 
 const Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {
+    return runCmd("/bin/bash", QStringList() << "-c" << cmd, includeStderr, timeout);
+}
+
+const Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout) {
     QProcess proc;
 
     if (includeStderr)
         proc.setProcessChannelMode(QProcess::MergedChannels);
 
-    proc.start("/bin/bash", QStringList() << "-c" << cmd);
+    proc.start(cmd, args);
 
     proc.waitForFinished(1000 * 60);
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
-const Result System::runCmd(const QStringList &cmdList, bool includeStderr, int timeout) {
-    QString fullCommand;
-    for (const QString &command : qAsConst(cmdList)) {
-        if (fullCommand == "")
-            fullCommand = command;
-        else
-            fullCommand += "; " + command;
+const QString System::toHumanReadable(double number) {
+    int i = 0;
+    const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
+    while (number > 1024) {
+        number /= 1024;
+        i++;
     }
-
-    // Run the composite command as a single command
-    return runCmd(fullCommand, includeStderr, timeout);
+    return QString::number(number, 'f', 2) + " " + units[i];
 }

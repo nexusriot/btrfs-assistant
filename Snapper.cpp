@@ -1,3 +1,4 @@
+#include "Settings.h"
 #include "Snapper.h"
 
 #include <unistd.h>
@@ -5,10 +6,8 @@
 #include <QDebug>
 #include <QDir>
 
-Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, const QMap<QString, QString> &subvolMap, QObject *parent) : QObject{parent} {
-    m_btrfs = btrfs;
-    m_snapperCommand = snapperCommand;
-    m_subvolMap = subvolMap;
+Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
+    m_subvolMap = Settings::getInstance().subvolMap();
     load();
 }
 
@@ -24,7 +23,7 @@ void Snapper::createSubvolMap() {
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString uuid = subvol.at(0).uuid;
-        if (!m_subvolMap.value(snapshotSubvol, "").endsWith(uuid)) {
+        if (!m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
             const int snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
             int targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
             QString targetSubvol = m_btrfs->subvolName(uuid, targetId);
@@ -39,7 +38,7 @@ void Snapper::createSubvolMap() {
                 targetSubvol = "";
             }
 
-            m_subvolMap.insert(snapshotSubvol, targetSubvol + "," + uuid);
+            m_subvolMap->insert(snapshotSubvol, targetSubvol + "," + uuid);
         }
     }
 }
@@ -84,8 +83,8 @@ const QString Snapper::findTargetPath(const QString &snapshotPath, const QString
 }
 
 const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const {
-    if (m_subvolMap.value(snapshotSubvol, "").endsWith(uuid)) {
-        return m_subvolMap[snapshotSubvol].split(",").at(0);
+    if (m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
+        return m_subvolMap->value(snapshotSubvol, "").split(",").at(0);
     } else {
         return QString();
     }
@@ -218,7 +217,7 @@ void Snapper::loadSubvols() {
         if (mountpoint.isEmpty()) {
             continue;
         }
-        QString output = System::runCmd("btrfs subvolume list " + mountpoint, false).output;
+        QString output = System::runCmd("btrfs", {"subvolume", "list", mountpoint}, false).output;
 
         if (output.isEmpty()) {
             continue;
@@ -368,8 +367,10 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     }
 
     // Place a snapshot of the source where the target was
-    System::runCmd("btrfs subvolume snapshot " + QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume) + " " +
-                       QDir::cleanPath(mountpoint + QDir::separator() + targetName),
+    System::runCmd("btrfs",
+                   QStringList() << "subvolume"
+                                 << "snapshot" << QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume)
+                                 << QDir::cleanPath(mountpoint + QDir::separator() + targetName),
                    false);
 
     // Make sure it worked

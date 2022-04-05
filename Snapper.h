@@ -32,7 +32,7 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
-    explicit Snapper(Btrfs *btrfs, QString snapperCommand, const QMap<QString, QString> &subvolMap, QObject *parent = nullptr);
+    explicit Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
     /**
      * @brief Gets the list of configuration settings for a given config
@@ -191,7 +191,7 @@ class Snapper : public QObject {
     QMap<QString, QVector<SnapperSubvolume>> m_subvols;
 
     // Maps the subvolumes to their snapshot directories.  key is the snapshot subvol path
-    QMap<QString, QString> m_subvolMap;
+    QMap<QString, QString> *m_subvolMap;
 
     const QStringList runSnapper(const QString &command, const QString &name = "") const;
 

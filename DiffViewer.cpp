@@ -47,7 +47,7 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
     static QRegularExpression re("\\/[0-9]*\\/snapshot$");
     const QStringList subvolSplit = rootPath.split(re);
     const QDir stemPath(subvolSplit.at(0));
-    const QString wildcardPath = QDir::cleanPath(stemPath.canonicalPath() + "/*/snapshot/" + relPath);
+    const QString wildcardPath = QDir::cleanPath(stemPath.canonicalPath() + "/*/snapshot/" + relPath).replace(" ", "\\ ");
 
     const QStringList resultList = System::runCmd("ls " + wildcardPath, false).output.split("\n");
 
@@ -107,7 +107,7 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
 
 void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged() {
     const QString filePath = m_twSnapshot->item(m_twSnapshot->currentRow(), DiffColumn::filePath)->text();
-    const QStringList diffOutput = System::runCmd("diff -u " + m_targetPath + " " + filePath, false).output.split("\n");
+    const QStringList diffOutput = System::runCmd("diff", {"-u", m_targetPath, filePath}, false).output.split("\n");
 
     if (diffOutput.isEmpty() || diffOutput.at(0).isEmpty()) {
         m_ui->textEdit_diff->setText(tr("There are no differences between the selected files"));
