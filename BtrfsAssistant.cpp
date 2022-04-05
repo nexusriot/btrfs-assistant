@@ -202,6 +202,8 @@ void BtrfsAssistant::populateBmTab() {
 
 void BtrfsAssistant::populateBtrfsUi(const QString &uuid) {
 
+    setEnableQuotaButtonStatus();
+
     BtrfsMeta btrfsVolume = m_btrfs->btrfsVolume(uuid);
 
     if (!btrfsVolume.populated) {
@@ -956,4 +958,32 @@ void BtrfsAssistant::on_pushButton_snapperUnitsApply_clicked() {
     QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
     m_ui->pushButton_snapperUnitsApply->clearFocus();
+}
+
+void BtrfsAssistant::setEnableQuotaButtonStatus() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
+    } else {
+        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
+    }
+}
+
+void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        Btrfs::setQgroupEnabled(mountpoint, false);
+    } else {
+        Btrfs::setQgroupEnabled(mountpoint, true);
+    }
+
+    setEnableQuotaButtonStatus();
 }
