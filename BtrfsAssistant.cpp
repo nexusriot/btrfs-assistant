@@ -74,7 +74,7 @@ void BtrfsAssistant::enableRestoreMode(bool enable) {
 
 void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString balanceStatus = m_btrfs->checkBalanceStatus(m_btrfs->mountRoot(uuid));
+    QString balanceStatus = m_btrfs->balanceStatus(m_btrfs->mountRoot(uuid));
 
     // if balance is running currently, make sure you can stop it and we monitor progress
     if (!balanceStatus.contains("No balance found")) {
@@ -95,7 +95,7 @@ void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
 
 void BtrfsAssistant::btrfsScrubStatusUpdateUI() {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString scrubStatus = m_btrfs->checkScrubStatus(m_btrfs->mountRoot(uuid));
+    QString scrubStatus = m_btrfs->scrubStatus(m_btrfs->mountRoot(uuid));
 
     // update status to current scrub operation status
     m_ui->label_btrfsScrubStatus->setText(scrubStatus);

@@ -9,6 +9,10 @@
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
+const QString Btrfs::balanceStatus(const QString &mountpoint) const {
+    return System::runCmd("btrfs", {"balance", "status", mountpoint}, false).output;
+}
+
 const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     // If the uuid isn't found return a default constructed btrfsMeta
     if (!m_volumes.contains(uuid)) {
@@ -16,14 +20,6 @@ const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     }
 
     return m_volumes[uuid];
-}
-
-const QString Btrfs::checkBalanceStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs", {"balance", "status", mountpoint}, false).output;
-}
-
-const QString Btrfs::checkScrubStatus(const QString &mountpoint) const {
-    return System::runCmd("btrfs", {"scrub", "status", mountpoint}, false).output;
 }
 
 const QStringList Btrfs::children(const int subvolId, const QString &uuid) const {
@@ -290,6 +286,10 @@ bool Btrfs::renameSubvolume(const QString &source, const QString &target) {
         dir.rmdir(target);
     }
     return dir.rename(source, target);
+}
+
+const QString Btrfs::scrubStatus(const QString &mountpoint) const {
+    return System::runCmd("btrfs", {"scrub", "status", mountpoint}, false).output;
 }
 
 void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable) {

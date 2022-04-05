@@ -40,6 +40,13 @@ class Btrfs : public QObject {
   public:
     explicit Btrfs(QObject *parent = nullptr);
 
+    /**
+     * @brief Checks the balance status of a given subvolume.
+     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
+     * @return Qstring that contains the output from the btrfs balance command.
+     */
+    const QString balanceStatus(const QString &mountpoint) const;
+
     /** @brief Returns the data for the Btrfs volume identified by @p UUID
      *
      * Returns a BtrfsMeta struct that represents the btrfs filesystem identified by @p UUID.
@@ -47,20 +54,6 @@ class Btrfs : public QObject {
      *
      */
     const BtrfsMeta btrfsVolume(const QString &uuid) const;
-
-    /**
-     * @brief Checks the balance status of a given subvolume.
-     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
-     * @return Qstring that contains the output from the btrfs balance command.
-     */
-    const QString checkBalanceStatus(const QString &mountpoint) const;
-
-    /**
-     * @brief Checks the scrub status of a given subvolume.
-     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
-     * @return Qstring that contains the output from the btrfs scrub command.
-     */
-    const QString checkScrubStatus(const QString &mountpoint) const;
 
     /** @brief Returns the direct children for a given subvolume
      *
@@ -154,6 +147,13 @@ class Btrfs : public QObject {
      *  Returns true on success, false otherwise
      */
     static bool renameSubvolume(const QString &source, const QString &target);
+
+    /**
+     * @brief Checks the scrub status of a given subvolume.
+     * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
+     * @return Qstring that contains the output from the btrfs scrub command.
+     */
+    const QString scrubStatus(const QString &mountpoint) const;
 
     /**
      * @brief Enables or disables btrfs qgroup support on @p mountpoint
