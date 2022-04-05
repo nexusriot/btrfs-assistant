@@ -43,3 +43,13 @@ const Result System::runCmd(const QString &cmd, const QStringList &args, bool in
     proc.waitForFinished(1000 * 60);
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
+
+const QString System::toHumanReadable(double number) {
+    int i = 0;
+    const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
+    while (number > 1024) {
+        number /= 1024;
+        i++;
+    }
+    return QString::number(number, 'f', 2) + " " + units[i];
+}

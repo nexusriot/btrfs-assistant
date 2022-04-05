@@ -450,9 +450,6 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="0">
-         <widget class="QListWidget" name="listWidget_subvols"/>
-        </item>
         <item row="0" column="3">
          <widget class="QGroupBox" name="groupBox">
           <property name="title">
@@ -487,6 +484,16 @@
             </widget>
            </item>
           </layout>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QTableView" name="tableView_subvols">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::SingleSelection</enum>
+          </property>
+          <property name="selectionBehavior">
+           <enum>QAbstractItemView::SelectRows</enum>
+          </property>
          </widget>
         </item>
        </layout>

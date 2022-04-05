@@ -16,7 +16,6 @@ struct Result {
 class System : public QObject {
     Q_OBJECT
   public:
-
     /**
      * @brief Checks to see if the user running the application is root
      * @return True is the user has a UID of 0, false otherwise
@@ -62,6 +61,13 @@ class System : public QObject {
      *
      */
     static const Result startUnit(const QString &unit) { return runCmd("systemctl", {"start", unit}, false); }
+
+    /**
+     * @brief Converts a number to a human readable string for displaying data storage amounts
+     * @param number - A double containing the number to convert
+     * @return A string containing the converted value
+     */
+    static const QString toHumanReadable(double number);
 
   private:
     // This class contains only static functions.  There is no reason to instantiate it.

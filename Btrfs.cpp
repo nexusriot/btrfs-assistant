@@ -1,12 +1,13 @@
 #include "Btrfs.h"
+#include "Settings.h"
 #include "System.h"
 
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryDir>
-#include <QUuid>
+#include <QtConcurrent/QtConcurrent>
 
-Btrfs::Btrfs(QObject *parent) : QObject{parent} { reloadVolumes(); }
+Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
 const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     // If the uuid isn't found return a default constructed btrfsMeta
@@ -70,6 +71,10 @@ bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
     return uuid == outputList.at(0).trimmed();
 }
 
+bool Btrfs::isQuotaEnabled(const QString &mountpoint) {
+    return !System::runCmd("btrfs", {QStringLiteral("qgroup"), QStringLiteral("show"), mountpoint}, false).output.isEmpty();
+}
+
 const QStringList Btrfs::listFilesystems() {
     const QStringList outputList = System::runCmd("btrfs filesystem show -m", false).output.split('\n');
     QStringList uuids;
@@ -111,41 +116,73 @@ const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) const {
     return m_volumes[uuid].subvolumes;
 }
 
-const QString Btrfs::mountRoot(const QString &uuid) {
-    // Check to see if it is already mounted
-    QStringList findmntOutput = System::runCmd("findmnt -nO subvolid=5 -o uuid,target", false).output.split('\n');
-    QString mountpoint;
-    for (const QString &line : qAsConst(findmntOutput)) {
-        if (!line.isEmpty() && line.split(' ').at(0).trimmed() == uuid)
-            mountpoint = line.section(' ', 1).trimmed();
+void Btrfs::loadQgroups(const QString &uuid) {
+    // Because of the enabling and disabling of the quotas, we need to ensure only one of these runs at a time
+    QMutexLocker qgroupLock(&m_loadQgroupMutex);
+    if (!isUuidLoaded(uuid)) {
+        return;
     }
 
-    // If it isn't mounted we need to mount it
+    const QString mountpoint = mountRoot(uuid);
     if (mountpoint.isEmpty()) {
-        // Get a temp mountpoint
-        QTemporaryDir tempDir;
-        tempDir.setAutoRemove(false);
-        if (!tempDir.isValid()) {
-            qWarning() << "Failed to create temporary directory" << Qt::endl;
-            return QString();
-        }
+        return;
+    }
 
-        mountpoint = tempDir.path();
-
-        // Create the mountpoint and mount the volume if successful
-        QDir tempMount;
-        if (tempMount.mkpath(mountpoint)) {
-            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=5", "UUID=" + uuid, mountpoint}, false);
+    bool shouldDisableQgroup = false;
+    if (!isQuotaEnabled(mountpoint)) {
+        // Check if we are allowed to enable qgroups
+        if (Settings::getInstance().value("allow_temp_quota", "") == true) {
+            setQgroupEnabled(mountpoint, true);
+            shouldDisableQgroup = true;
+            while (System::runCmd("LANG=C btrfs quota rescan -s \"" + mountpoint + "\"", false).output.contains("running")) {
+                QThread::msleep(250);
+            }
         } else {
-            return QString();
+            // If qgroups aren't enabled and we aren't allowed to enable them, we need to abort
+            return;
         }
     }
 
-    return mountpoint;
+    QStringList outputList = System::runCmd("btrfs", {"qgroup", "show", "--raw", "--sync", mountpoint}, false).output.split("\n");
+
+    // The header takes the first two lines, make sure it is more than two lines and then consume them
+    if (outputList.count() <= 2) {
+        return;
+    }
+    outputList.takeFirst();
+    outputList.takeFirst();
+
+    // Load the data
+    QMutexLocker lock(&m_sizeMutex);
+    for (const QString &line : qAsConst(outputList)) {
+        const QStringList qgroupList = line.split(" ", Qt::SkipEmptyParts);
+        int subvolId;
+        if (qgroupList.at(0).contains("/")) {
+            subvolId = qgroupList.at(0).split("/").at(1).toInt();
+        } else {
+            continue;
+        }
+        long size = qgroupList.at(1).toLong();
+        long exclusive = qgroupList.at(2).toLong();
+
+        QVector<long> sizes;
+        sizes.append(size);
+        sizes.append(exclusive);
+        if (m_subvolSize.contains(uuid)) {
+            m_subvolSize[uuid][subvolId] = sizes;
+        }
+    }
+
+    // If the qgroups were temporarily enabled, disable them
+    if (shouldDisableQgroup) {
+        setQgroupEnabled(mountpoint, false);
+    }
+
+    m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
 }
 
-void Btrfs::reloadSubvols(const QString &uuid) {
-    if (isUuidValid(uuid)) {
+void Btrfs::loadSubvols(const QString &uuid) {
+    if (isUuidLoaded(uuid)) {
         m_volumes[uuid].subvolumes.clear();
 
         QString mountpoint = mountRoot(uuid);
@@ -158,15 +195,23 @@ void Btrfs::reloadSubvols(const QString &uuid) {
                 int subvolId = line.split(' ').at(1).toInt();
                 subvol.subvolName = line.split(' ').at(8).trimmed();
                 subvol.parentId = line.split(' ').at(6).toInt();
+                subvol.subvolId = subvolId;
+                subvol.uuid = uuid;
                 subvols[subvolId] = subvol;
             }
         }
-
         m_volumes[uuid].subvolumes = subvols;
+
+        // Lock access to m_subvolSize while the model is loading
+        m_sizeMutex.lock();
+        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
+        m_sizeMutex.unlock();
+
+        QtConcurrent::run(this, &Btrfs::loadQgroups, uuid);
     }
 }
 
-void Btrfs::reloadVolumes() {
+void Btrfs::loadVolumes() {
     m_volumes.clear();
 
     QStringList uuidList = listFilesystems();
@@ -201,9 +246,41 @@ void Btrfs::reloadVolumes() {
                 }
             }
             m_volumes[uuid] = btrfs;
-            reloadSubvols(uuid);
         }
     }
+}
+
+const QString Btrfs::mountRoot(const QString &uuid) {
+    // Check to see if it is already mounted
+    QStringList findmntOutput = System::runCmd("findmnt -nO subvolid=5 -o uuid,target", false).output.split('\n');
+    QString mountpoint;
+    for (const QString &line : qAsConst(findmntOutput)) {
+        if (!line.isEmpty() && line.split(' ').at(0).trimmed() == uuid)
+            mountpoint = line.section(' ', 1).trimmed();
+    }
+
+    // If it isn't mounted we need to mount it
+    if (mountpoint.isEmpty()) {
+        // Get a temp mountpoint
+        QTemporaryDir tempDir;
+        tempDir.setAutoRemove(false);
+        if (!tempDir.isValid()) {
+            qWarning() << "Failed to create temporary directory" << Qt::endl;
+            return QString();
+        }
+
+        mountpoint = tempDir.path();
+
+        // Create the mountpoint and mount the volume if successful
+        QDir tempMount;
+        if (tempMount.mkpath(mountpoint)) {
+            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=5", "UUID=" + uuid, mountpoint}, false);
+        } else {
+            return QString();
+        }
+    }
+
+    return mountpoint;
 }
 
 bool Btrfs::renameSubvolume(const QString &source, const QString &target) {
@@ -213,6 +290,14 @@ bool Btrfs::renameSubvolume(const QString &source, const QString &target) {
         dir.rmdir(target);
     }
     return dir.rename(source, target);
+}
+
+void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable) {
+    if (enable) {
+        System::runCmd(QStringLiteral("btrfs"), {QStringLiteral("quota"), QStringLiteral("enable"), mountpoint}, false);
+    } else {
+        System::runCmd(QStringLiteral("btrfs"), {QStringLiteral("quota"), QStringLiteral("disable"), mountpoint}, false);
+    }
 }
 
 const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const {
@@ -247,10 +332,10 @@ const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
     }
 }
 
-bool Btrfs::isUuidValid(const QString &uuid) {
+bool Btrfs::isUuidLoaded(const QString &uuid) {
     // First make sure the data we are trying to access exists
     if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
-        reloadVolumes();
+        loadVolumes();
     }
 
     // If it still doesn't exist, we need to bail
@@ -263,7 +348,7 @@ bool Btrfs::isUuidValid(const QString &uuid) {
 }
 
 void Btrfs::startBalanceRoot(const QString &uuid) {
-    if (isUuidValid(uuid)) {
+    if (isUuidLoaded(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         // Run full balance command against UUID top level subvolume.
@@ -272,7 +357,7 @@ void Btrfs::startBalanceRoot(const QString &uuid) {
 }
 
 void Btrfs::startScrubRoot(const QString &uuid) {
-    if (isUuidValid(uuid)) {
+    if (isUuidLoaded(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"scrub", "start", mountpoint}, false);
@@ -280,7 +365,7 @@ void Btrfs::startScrubRoot(const QString &uuid) {
 }
 
 void Btrfs::stopBalanceRoot(const QString &uuid) {
-    if (isUuidValid(uuid)) {
+    if (isUuidLoaded(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"balance", "cancel", mountpoint}, false);
@@ -288,7 +373,7 @@ void Btrfs::stopBalanceRoot(const QString &uuid) {
 }
 
 void Btrfs::stopScrubRoot(const QString &uuid) {
-    if (isUuidValid(uuid)) {
+    if (isUuidLoaded(uuid)) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);

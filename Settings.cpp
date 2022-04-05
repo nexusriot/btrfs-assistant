@@ -23,4 +23,3 @@ Settings::Settings(QObject *parent) : QObject{parent} {
     }
     m_settings->endGroup();
 }
-

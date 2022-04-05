@@ -33,6 +33,7 @@ set(PROJECT_SOURCES
         FileBrowser.h FileBrowser.cpp FileBrowser.ui
         Settings.h Settings.cpp
         Snapper.h Snapper.cpp
+        SubvolModel.h SubvolModel.cpp
         System.h System.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )

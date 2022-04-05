@@ -45,7 +45,7 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
     }
 
     // Ensure the list of subvolumes is not out-of-date
-    btrfs->reloadSubvols(uuid);
+    btrfs->loadSubvols(uuid);
 
     const int subvolId = btrfs->subvolId(uuid, subvolume);
     if (subvolId == 0) {

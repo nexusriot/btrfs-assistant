@@ -1,6 +1,8 @@
 #ifndef BTRFS_H
 #define BTRFS_H
 
+#include "SubvolModel.h"
+
 #include <QDir>
 #include <QMap>
 #include <QObject>
@@ -11,11 +13,6 @@ struct RestoreResult {
     bool success = false;
     QString failureMessage;
     QString backupSubvolName;
-};
-
-struct Subvolume {
-    int parentId = 0;
-    QString subvolName;
 };
 
 struct BtrfsMeta {
@@ -84,19 +81,26 @@ class Btrfs : public QObject {
      */
     const bool deleteSubvol(const QString &uuid, const int subvolid);
 
-    /** @brief Returns true if @p subvolume is a timeshift snapshot
-     *
+    /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
      */
-    static bool isTimeshift(const QString &subvolume) { return subvolume.contains("timeshift-btrfs"); }
+    static bool isMounted(const QString &uuid, const int subvolid);
+
+    /**
+     * @brief Checks if quotas are enables at @p mountpoint
+     * @param mountpoint - The absolute path to a mountpoint to check for quota enablement on
+     * @return true is quotas are enabled, false otherwise
+     */
+    static bool isQuotaEnabled(const QString &mountpoint);
 
     /** @brief Returns true if @p subvolume is a snapper snapshot
      *
      */
     static bool isSnapper(const QString &subvolume);
 
-    /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
+    /** @brief Returns true if @p subvolume is a timeshift snapshot
+     *
      */
-    static bool isMounted(const QString &uuid, const int subvolid);
+    static bool isTimeshift(const QString &subvolume) { return subvolume.contains("timeshift-btrfs"); }
 
     /** @brief Returns a QStringList of UUIDs containing Btrfs filesystems
      */
@@ -117,6 +121,26 @@ class Btrfs : public QObject {
      */
     const QMap<int, Subvolume> listSubvolumes(const QString &uuid) const;
 
+    /**
+     * @brief Reads the qgroup data to populate subvol sizes
+     * @param uuid - The UUID to read the qgroup data from
+     */
+    void loadQgroups(const QString &uuid);
+
+    /** @brief Reloads the btrfs subvolume list for a given volume
+     *
+     *  Updates the subvol list in m_btrfsVolumes for @p uuid
+     *
+     */
+    void loadSubvols(const QString &uuid);
+
+    /** @brief Reloads the btrfs metadata
+     *
+     *  Populates m_btrfsVolumes with data from all the btrfs filesystems
+     *
+     */
+    void loadVolumes();
+
     /** @brief Mounts the root of a given Btrfs volume
      *
      *  Finds the mountpoint of a btrfs volume specified by @p uuid.  If it isn't mounted, it will first mount it.
@@ -125,25 +149,18 @@ class Btrfs : public QObject {
      */
     static const QString mountRoot(const QString &uuid);
 
-    /** @brief Reloads the btrfs subvolume list for a given volume
-     *
-     *  Updates the subvol list in m_btrfsVolumes for @p uuid
-     *
-     */
-    void reloadSubvols(const QString &uuid);
-
-    /** @brief Reloads the btrfs metadata
-     *
-     *  Populates m_btrfsVolumes with data from all the btrfs filesystems
-     *
-     */
-    void reloadVolumes();
-
     /** @brief Renames a btrfs subvolume from @p source to @p target
      *
      *  Returns true on success, false otherwise
      */
     static bool renameSubvolume(const QString &source, const QString &target);
+
+    /**
+     * @brief Enables or disables btrfs qgroup support on @p mountpoint
+     * @param mountpoint - An absolute path to the mountpoint that qgroups will be enabled on
+     * @param enable - A boolean that enables qgroups when true and disables them when false
+     */
+    static void setQgroupEnabled(const QString &mountpoint, bool enable);
 
     /** @brief Returns the subvolid for a given subvol
      *
@@ -151,6 +168,11 @@ class Btrfs : public QObject {
      *  it returns 0
      */
     const int subvolId(const QString &uuid, const QString &subvolName) const;
+
+    /**
+     * @brief Returns a pointer to the subvol model
+     */
+    SubvolModel *subvolModel() { return &m_subvolModel; }
 
     /**
      * @brief Returns the name of the subvol with id @p subvolId
@@ -193,6 +215,12 @@ class Btrfs : public QObject {
     void stopScrubRoot(const QString &uuid);
 
   private:
+    QMutex m_loadQgroupMutex;
+    // Used to lock access to m_subvolSizeMap
+    QMutex m_sizeMutex;
+    SubvolModel m_subvolModel;
+    // Holds the subvol sizes, the outer key is UUID, the inner key is subvolId, element 0 is size and element 1 is exclusive
+    QMap<QString, QMap<int, QVector<long>>> m_subvolSize;
     // A map of BtrfsMeta.  The key is UUID
     QMap<QString, BtrfsMeta> m_volumes;
 
@@ -201,7 +229,7 @@ class Btrfs : public QObject {
      * @param uuid - The UUID of the filesystem to validate
      * @return bool - True if the UUID is a mounted Btrfs filesystem
      */
-    bool isUuidValid(const QString &uuid);
+    bool isUuidLoaded(const QString &uuid);
 
   signals:
 };
