@@ -3,6 +3,7 @@
 1.3 - TBD
 * The subvolume tab now shows the size and exclusive space used by each subvolume
 * Add button to enable and disable Btrfs quota support
+* Allow the Snapper config named "root" to be deleted
 * Add support for handling whitespace in paths
 * Switch from using a GUID in temporary paths to something more easily read
 

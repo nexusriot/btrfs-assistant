@@ -820,12 +820,6 @@ void BtrfsAssistant::on_pushButton_snapperDeleteConfig_clicked() {
         return;
     }
 
-    if (name == "root") {
-        displayError(tr("You may not don't delete the root config"));
-        m_ui->pushButton_snapperDeleteConfig->clearFocus();
-        return;
-    }
-
     // Ask for confirmation
     if (QMessageBox::question(0, tr("Please Confirm"),
                               tr("Are you sure you want to delete ") + name + "\n\n" + tr("This action cannot be undone")) !=
