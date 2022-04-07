@@ -242,6 +242,7 @@ void Btrfs::loadVolumes() {
                 }
             }
             m_volumes[uuid] = btrfs;
+            loadSubvols(uuid);
         }
     }
 }
