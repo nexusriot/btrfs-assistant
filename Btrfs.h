@@ -214,6 +214,12 @@ class Btrfs : public QObject {
      */
     void stopScrubRoot(const QString &uuid);
 
+    /**
+     * @brief Remove this when https://gitlab.com/btrfs-assistant/btrfs-assistant/-/merge_requests/11 is merged
+     * @param uuid
+     */
+    void switchModelUuid(const QString &uuid);
+
   private:
     QMutex m_loadQgroupMutex;
     // Used to lock access to m_subvolSizeMap

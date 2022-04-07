@@ -111,7 +111,7 @@ class BtrfsAssistant : public QMainWindow {
      * @brief Initial application setup.
      * @return
      */
-    bool setup();
+    void setup();
 
     void setupConfigBoxes();
     /**

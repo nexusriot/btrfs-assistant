@@ -380,3 +380,10 @@ void Btrfs::stopScrubRoot(const QString &uuid) {
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
     }
 }
+
+void Btrfs::switchModelUuid(const QString &uuid)
+{
+    if(isUuidLoaded(uuid)) {
+        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
+    }
+}

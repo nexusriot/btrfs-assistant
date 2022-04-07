@@ -370,7 +370,10 @@ void BtrfsAssistant::refreshSnapperServices() {
 void BtrfsAssistant::refreshSubvolListUi(const QString &uuid) {
     // Reload the subvolumes list
     m_btrfs->subvolModel()->setIncludeSnapshots(m_ui->checkBox_subvolIncludeSnapshots->isChecked());
-    m_btrfs->loadSubvols(uuid);
+
+    // Remove this when https://gitlab.com/btrfs-assistant/btrfs-assistant/-/merge_requests/11 is merged!!
+    m_btrfs->switchModelUuid(uuid);
+
     m_ui->tableView_subvols->horizontalHeader()->setStretchLastSection(true);
     m_ui->tableView_subvols->resizeColumnsToContents();
     m_ui->tableView_subvols->resizeRowsToContents();
@@ -382,6 +385,9 @@ void BtrfsAssistant::refreshSubvolListUi(const QString &uuid) {
     if (Settings::getInstance().value("allow_temp_quota", "") != "true" && !Btrfs::isQuotaEnabled(Btrfs::mountRoot(uuid))) {
         m_ui->tableView_subvols->hideColumn(SubvolHeader::size);
         m_ui->tableView_subvols->hideColumn(SubvolHeader::exclusive);
+    } else {
+        m_ui->tableView_subvols->showColumn(SubvolHeader::size);
+        m_ui->tableView_subvols->showColumn(SubvolHeader::exclusive);
     }
 }
 
@@ -429,7 +435,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
     }
 }
 
-bool BtrfsAssistant::setup() {
+void BtrfsAssistant::setup() {
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (m_hasSnapper) {
@@ -456,9 +462,6 @@ bool BtrfsAssistant::setup() {
         m_ui->pushButton_snapperBrowse->setEnabled(false);
     }
 
-    btrfsBalanceStatusUpdateUI();
-    btrfsScrubStatusUpdateUI();
-
     // Populate or hide btrfs maintenance tab depending on if system has btrfs maintenance units
     if (m_hasBtrfsmaintenance) {
         populateBmTab();
@@ -467,7 +470,6 @@ bool BtrfsAssistant::setup() {
         m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_btrfsmaintenance), false);
     }
 
-    return true;
 }
 
 void BtrfsAssistant::snapperTimelineEnable(bool enable) {
@@ -495,7 +497,10 @@ void BtrfsAssistant::on_checkBox_bmDefrag_clicked(bool checked) { m_ui->listWidg
 
 void BtrfsAssistant::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bmScrub->setDisabled(checked); }
 
-void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() { refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText()); }
+void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() {
+    m_btrfs->loadSubvols(m_ui->comboBox_btrfsDevice->currentText());
+    refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText());
+}
 
 void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
@@ -506,10 +511,11 @@ void BtrfsAssistant::on_checkBox_snapperRestoreMode_clicked(bool checked) {
 }
 
 void BtrfsAssistant::on_comboBox_btrfsDevice_activated(int) {
-    QString device = m_ui->comboBox_btrfsDevice->currentText();
-    if (!device.isEmpty()) {
-        populateBtrfsUi(device);
-        refreshSubvolListUi(device);
+    QString uuid = m_ui->comboBox_btrfsDevice->currentText();
+    if (!uuid.isEmpty()) {
+        m_btrfs->loadSubvols(uuid);
+        populateBtrfsUi(uuid);
+        refreshSubvolListUi(uuid);
     }
     m_ui->comboBox_btrfsDevice->clearFocus();
 }
@@ -650,6 +656,7 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
     bool success = m_btrfs->deleteSubvol(uuid, subvolid);
 
     if (success) {
+        m_btrfs->loadSubvols(uuid);
         refreshSubvolListUi(uuid);
     } else {
         displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
@@ -673,6 +680,7 @@ void BtrfsAssistant::on_pushButton_subvolRefresh_clicked() {
         return;
     }
 
+    m_btrfs->loadSubvols(uuid);
     refreshSubvolListUi(uuid);
 
     m_ui->pushButton_subvolRefresh->clearFocus();
