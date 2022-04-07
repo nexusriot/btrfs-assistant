@@ -113,8 +113,6 @@ const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) const {
 }
 
 void Btrfs::loadQgroups(const QString &uuid) {
-    // Because of the enabling and disabling of the quotas, we need to ensure only one of these runs at a time
-    QMutexLocker qgroupLock(&m_loadQgroupMutex);
     if (!isUuidLoaded(uuid)) {
         return;
     }
@@ -126,17 +124,8 @@ void Btrfs::loadQgroups(const QString &uuid) {
 
     bool shouldDisableQgroup = false;
     if (!isQuotaEnabled(mountpoint)) {
-        // Check if we are allowed to enable qgroups
-        if (Settings::getInstance().value("allow_temp_quota", "") == true) {
-            setQgroupEnabled(mountpoint, true);
-            shouldDisableQgroup = true;
-            while (System::runCmd("LANG=C btrfs quota rescan -s \"" + mountpoint + "\"", false).output.contains("running")) {
-                QThread::msleep(250);
-            }
-        } else {
-            // If qgroups aren't enabled and we aren't allowed to enable them, we need to abort
-            return;
-        }
+        // If qgroups aren't enabled we need to abort
+        return;
     }
 
     QStringList outputList = System::runCmd("btrfs", {"qgroup", "show", "--raw", "--sync", mountpoint}, false).output.split("\n");
@@ -149,7 +138,9 @@ void Btrfs::loadQgroups(const QString &uuid) {
     outputList.takeFirst();
 
     // Load the data
-    QMutexLocker lock(&m_sizeMutex);
+    if (!m_subvolSize.contains(uuid)) {
+        m_subvolSize.insert(uuid, QMap<int, QVector<long>>());
+    }
     for (const QString &line : qAsConst(outputList)) {
         const QStringList qgroupList = line.split(" ", Qt::SkipEmptyParts);
         int subvolId;
@@ -164,17 +155,8 @@ void Btrfs::loadQgroups(const QString &uuid) {
         QVector<long> sizes;
         sizes.append(size);
         sizes.append(exclusive);
-        if (m_subvolSize.contains(uuid)) {
-            m_subvolSize[uuid][subvolId] = sizes;
-        }
+        m_subvolSize[uuid][subvolId] = sizes;
     }
-
-    // If the qgroups were temporarily enabled, disable them
-    if (shouldDisableQgroup) {
-        setQgroupEnabled(mountpoint, false);
-    }
-
-    m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
 }
 
 void Btrfs::loadSubvols(const QString &uuid) {
@@ -197,13 +179,8 @@ void Btrfs::loadSubvols(const QString &uuid) {
             }
         }
         m_volumes[uuid].subvolumes = subvols;
-
-        // Lock access to m_subvolSize while the model is loading
-        m_sizeMutex.lock();
+        loadQgroups(uuid);
         m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
-        m_sizeMutex.unlock();
-
-        QtConcurrent::run(this, &Btrfs::loadQgroups, uuid);
     }
 }
 

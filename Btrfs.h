@@ -221,9 +221,6 @@ class Btrfs : public QObject {
     void switchModelUuid(const QString &uuid);
 
   private:
-    QMutex m_loadQgroupMutex;
-    // Used to lock access to m_subvolSizeMap
-    QMutex m_sizeMutex;
     SubvolModel m_subvolModel;
     // Holds the subvol sizes, the outer key is UUID, the inner key is subvolId, element 0 is size and element 1 is exclusive
     QMap<QString, QMap<int, QVector<long>>> m_subvolSize;
