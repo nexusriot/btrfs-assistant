@@ -141,6 +141,7 @@ void Btrfs::loadQgroups(const QString &uuid) {
     if (!m_subvolSize.contains(uuid)) {
         m_subvolSize.insert(uuid, QMap<int, QVector<long>>());
     }
+
     for (const QString &line : qAsConst(outputList)) {
         const QStringList qgroupList = line.split(" ", Qt::SkipEmptyParts);
         int subvolId;
@@ -179,8 +180,9 @@ void Btrfs::loadSubvols(const QString &uuid) {
             }
         }
         m_volumes[uuid].subvolumes = subvols;
+        m_subvolSize.remove(uuid); //  clear existing size information in case it is disabled since app launch
         loadQgroups(uuid);
-        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
+        m_subvolModel.loadModel(m_volumes, m_subvolSize);
     }
 }
 
@@ -355,12 +357,5 @@ void Btrfs::stopScrubRoot(const QString &uuid) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
-    }
-}
-
-void Btrfs::switchModelUuid(const QString &uuid)
-{
-    if(isUuidLoaded(uuid)) {
-        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
     }
 }

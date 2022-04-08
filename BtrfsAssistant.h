@@ -89,10 +89,9 @@ class BtrfsAssistant : public QMainWindow {
      */
     void populateSnapperConfigSettings();
     /**
-     * @brief Populates the Btrfs Subvolumes tab with the selected devices information.
-     * @param uuid
+     * @brief Populates the Btrfs Subvolumes tab with all devices subvolumes.
      */
-    void refreshSubvolListUi(const QString &uuid);
+    void refreshSubvolListUi();
     /**
      * @brief Refresh the Btrfs tab UI.
      */

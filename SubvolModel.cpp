@@ -76,22 +76,28 @@ QVariant SubvolModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-void SubvolModel::loadModel(const QMap<int, Subvolume> &subvolData, const QMap<int, QVector<long>> &subvolSize) {
+void SubvolModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvols) {
     // Ensure that multiple threads don't try to update the model at the same time
     QMutexLocker lock(&m_updateMutex);
 
     beginResetModel();
     m_data.clear();
-    const QList<int> keys = subvolData.keys();
 
-    for (const int key : keys) {
-        if (m_includeSnapshots || !(Btrfs::isSnapper(subvolData[key].subvolName) || Btrfs::isTimeshift(subvolData[key].subvolName))) {
-            Subvolume subvol = subvolData[key];
-            if (subvolSize.contains(key) && subvolSize[key].count() == 2) {
-                subvol.size = subvolSize[key][0];
-                subvol.exclusive = subvolSize[key][1];
+    const QList<QString> volumeIdentifiers = volumeData.keys();
+
+    for (const QString &uuid : volumeIdentifiers) {
+
+        for (Subvolume subvol : volumeData[uuid].subvolumes) {
+
+            if (m_includeSnapshots || !(Btrfs::isSnapper(subvol.subvolName) || Btrfs::isTimeshift(subvol.subvolName))) {
+
+                if (subvols[uuid].contains(subvol.subvolId) && subvols[uuid][subvol.subvolId].count() == 2) {
+                    subvol.size = subvols[uuid][subvol.subvolId][0];
+                    subvol.exclusive = subvols[uuid][subvol.subvolId][1];
+                }
+
+                m_data.append(subvol);
             }
-            m_data.append(subvol);
         }
     }
 
