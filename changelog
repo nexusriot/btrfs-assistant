@@ -1,10 +1,11 @@
 ### Btrfs Assistant
 
-1.3 - TBD
+1.3 - 2022-04-08
 * The subvolume tab now shows the size and exclusive space used by each subvolume
 * Add button to enable and disable Btrfs quota support
 * Allow the Snapper config named "root" to be deleted
 * Add support for handling whitespace in paths
+* Streamline the load process to reduce the number of times data subvolume data is loaded
 * Switch from using a GUID in temporary paths to something more easily read
 
 1.2 - 2022-04-03
