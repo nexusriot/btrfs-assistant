@@ -12,6 +12,7 @@ struct Subvolume {
     long size = 0;
     long exclusive = 0;
 };
+struct BtrfsMeta;
 
 enum SubvolHeader { subvolId, parentId, subvolName, uuid, size, exclusive };
 
@@ -32,8 +33,12 @@ class SubvolModel : public QAbstractTableModel {
      * @param subvolData - A map of Subvolumes with subvolId as the key
      * @param m_subvolSize - A map of QVectors where subvolId is the key and size is at index 0 and exclusize size at index 1
      */
-    void loadModel(const QMap<int, Subvolume> &subvolData, const QMap<int, QVector<long>> &subvolSize);
+    void loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvolSize);
 
+    /**
+     * @brief Sets the boolean used to determine whether to include snapshots in the subvolume model.
+     * @param includeSnapshots Bool value to set.
+     */
     void setIncludeSnapshots(bool includeSnapshots) { m_includeSnapshots = includeSnapshots; }
 
   private:

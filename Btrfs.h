@@ -214,12 +214,6 @@ class Btrfs : public QObject {
      */
     void stopScrubRoot(const QString &uuid);
 
-    /**
-     * @brief Remove this when https://gitlab.com/btrfs-assistant/btrfs-assistant/-/merge_requests/11 is merged
-     * @param uuid
-     */
-    void switchModelUuid(const QString &uuid);
-
   private:
     SubvolModel m_subvolModel;
     // Holds the subvol sizes, the outer key is UUID, the inner key is subvolId, element 0 is size and element 1 is exclusive
