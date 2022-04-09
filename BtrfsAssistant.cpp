@@ -759,6 +759,7 @@ void BtrfsAssistant::on_pushButton_snapperCreate_clicked() {
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
+    populateSnapperRestoreGrid();
 
     m_ui->pushButton_snapperCreate->clearFocus();
 }
@@ -805,6 +806,7 @@ void BtrfsAssistant::on_pushButton_snapperDelete_clicked() {
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
+    populateSnapperRestoreGrid();
 
     m_ui->pushButton_snapperDelete->clearFocus();
 }
@@ -964,19 +966,6 @@ void BtrfsAssistant::on_pushButton_snapperUnitsApply_clicked() {
     m_ui->pushButton_snapperUnitsApply->clearFocus();
 }
 
-void BtrfsAssistant::setEnableQuotaButtonStatus() {
-    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
-        return;
-    }
-    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
-
-    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
-        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
-    } else {
-        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
-    }
-}
-
 void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
@@ -990,4 +979,27 @@ void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
     }
 
     setEnableQuotaButtonStatus();
+}
+
+void BtrfsAssistant::on_toolButton_snapperNewRefresh_clicked() {
+    m_snapper->load();
+    populateSnapperGrid();
+}
+
+void BtrfsAssistant::on_toolButton_snapperRestoreRefresh_clicked() {
+    m_snapper->loadSubvols();
+    populateSnapperRestoreGrid();
+}
+
+void BtrfsAssistant::setEnableQuotaButtonStatus() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
+    } else {
+        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
+    }
 }

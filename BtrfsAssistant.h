@@ -145,6 +145,11 @@ class BtrfsAssistant : public QMainWindow {
      */
     void btrfsDefragStatusUpdateUI();
 
+    /**
+     * @brief Changes the text on the Enable Quota button to Disable Quota when appropriate
+     */
+    void setEnableQuotaButtonStatus();
+
   private slots:
 
     /**
@@ -265,9 +270,7 @@ class BtrfsAssistant : public QMainWindow {
      */
     void on_pushButton_snapperUnitsApply_clicked();
 
-    /**
-     * @brief Changes the text on the Enable Quota button to Disable Quota when appropriate
-     */
-    void setEnableQuotaButtonStatus();
+    void on_toolButton_snapperNewRefresh_clicked();
+    void on_toolButton_snapperRestoreRefresh_clicked();
 };
 #endif // BTRFSASSISTANT_H

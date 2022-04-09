@@ -590,6 +590,32 @@
                  </property>
                 </widget>
                </item>
+               <item>
+                <widget class="QToolButton" name="toolButton_snapperNewRefresh">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Refresh</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="icons.qrc">
+                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
               </layout>
              </widget>
             </item>
@@ -681,6 +707,32 @@
                 <widget class="QToolButton" name="pushButton_snapperRestore">
                  <property name="text">
                   <string>Restore Snapshot</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="icons.qrc">
+                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="toolButton_snapperRestoreRefresh">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Refresh</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">

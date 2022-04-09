@@ -4,6 +4,7 @@
 * Modify the subvolume page so it shows the subvolumes on all devices(Contributed by Austin Horstman)
 * Reworked the Snapper tab into separate tabs for New/Delete and Browse/Restore removing the Restore Mode checkbox
 * Renamed "Btrfs" tab to "Overview" and "Snapper - Settings" to "Snapper Settings"
+* Add refresh buttons to Snapper tabs
 * When snapper commands fail properly report them back to the user
 * Fix Qt warnings when running btrfs-assistant --version
 
