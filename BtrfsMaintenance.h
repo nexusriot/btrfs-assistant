@@ -1,12 +1,10 @@
 #ifndef BTRFSMAINTENANCE_H
 #define BTRFSMAINTENANCE_H
 
-#include <QIODevice>
 #include <QObject>
-#include <QSettings>
 
 #include "Settings.h"
-#include "System.h"
+
 
 /**
  * @brief The BtrfsMaintenance class that handles interfacing with the btrfs maintenance configuration.

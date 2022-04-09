@@ -4,8 +4,6 @@
 #include "Snapper.h"
 #include "ui_DiffViewer.h"
 
-#include <QDialog>
-
 enum DiffColumn { num, dateTime, rootPath, filePath };
 
 namespace Ui {

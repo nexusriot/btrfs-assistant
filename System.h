@@ -2,7 +2,6 @@
 #define SYSTEM_H
 
 #include <QObject>
-#include <QSet>
 
 // Stores the results from runCmd
 struct Result {

@@ -6,6 +6,7 @@
 #include "ui_btrfs-assistant.h"
 
 #include <QDebug>
+#include <QInputDialog>
 #include <QTimer>
 
 /**

@@ -1,12 +1,9 @@
 #ifndef BTRFSASSISTANT_H
 #define BTRFSASSISTANT_H
 
-#include <QInputDialog>
 #include <QMainWindow>
-#include <QMap>
 #include <QMessageBox>
-#include <QSignalMapper>
-#include <QTranslator>
+#include <QSet>
 
 #include "Btrfs.h"
 #include "BtrfsMaintenance.h"

@@ -5,6 +5,8 @@
 
 #include <QDebug>
 #include <QDir>
+#include <QFile>
+#include <QRegularExpression>
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
     : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {

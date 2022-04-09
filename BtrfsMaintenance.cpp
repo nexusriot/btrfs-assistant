@@ -1,4 +1,8 @@
 #include "BtrfsMaintenance.h"
+#include "System.h"
+
+#include <QIODevice>
+#include <QSettings>
 
 /** @brief A QSettings reader for the Btrfs Maintenance config file
  *

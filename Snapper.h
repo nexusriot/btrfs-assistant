@@ -1,10 +1,7 @@
 #ifndef SNAPPER_H
 #define SNAPPER_H
 
-#include <QDir>
-#include <QFile>
 #include <QObject>
-#include <QRegularExpression>
 
 #include "Btrfs.h"
 #include "System.h"
