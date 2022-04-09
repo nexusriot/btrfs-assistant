@@ -18,5 +18,10 @@ for i in "$@"; do
 done
 
 export XDG_CURRENT_DESKTOP
-export XDG_RUNTIME_DIR=$(mktemp -d)
+
+ID=$(id -u)
+if [[ "$ID" == "0" ]]; then
+        export XDG_RUNTIME_DIR=$(mktemp -d)
+fi
+
 btrfs-assistant-bin ${params}
