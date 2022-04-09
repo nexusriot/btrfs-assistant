@@ -748,7 +748,11 @@ void BtrfsAssistant::on_pushButton_snapperCreate_clicked() {
     }
 
     // OK, let's go ahead and take the snapshot
-    m_snapper->createSnapshot(config, snapshotDescription);
+    const SnapperResult result = m_snapper->createSnapshot(config, snapshotDescription);
+
+    if (result.exitCode != 0) {
+        displayError(result.outputList.at(0));
+    }
 
     // Reload the data and refresh the UI
     m_snapper->load();
@@ -790,7 +794,10 @@ void BtrfsAssistant::on_pushButton_snapperDelete_clicked() {
         }
 
         // Delete the snapshot
-        m_snapper->deleteSnapshot(config, number.toInt());
+        SnapperResult result = m_snapper->deleteSnapshot(config, number.toInt());
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        }
     }
 
     // Reload the data and refresh the UI
@@ -820,7 +827,11 @@ void BtrfsAssistant::on_pushButton_snapperDeleteConfig_clicked() {
     }
 
     // Delete the config
-    m_snapper->deleteConfig(name);
+    SnapperResult result = m_snapper->deleteConfig(name);
+
+    if (result.exitCode != 0) {
+        displayError(result.outputList.at(0));
+    }
 
     // Reload the UI with the new list of configs
     m_snapper->loadConfig(name);
@@ -891,9 +902,13 @@ void BtrfsAssistant::on_pushButton_snapperSaveConfig_clicked() {
         configMap.insert("TIMELINE_LIMIT_YEARLY", QString::number(m_ui->spinBox_snapperYearly->value()));
         configMap.insert("NUMBER_LIMIT", QString::number(m_ui->spinBox_snapperNumber->value()));
 
-        m_snapper->setConfig(name, configMap);
+        SnapperResult result = m_snapper->setConfig(name, configMap);
 
-        QMessageBox::information(0, tr("Snapper"), tr("Changes saved"));
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        } else {
+            QMessageBox::information(0, tr("Snapper"), tr("Changes saved"));
+        }
 
         loadSnapperUI();
         populateSnapperGrid();
@@ -917,7 +932,11 @@ void BtrfsAssistant::on_pushButton_snapperSaveConfig_clicked() {
         }
 
         // Create the new config
-        m_snapper->createConfig(name, m_ui->comboBox_snapperPath->currentText());
+        SnapperResult result = m_snapper->createConfig(name, m_ui->comboBox_snapperPath->currentText());
+
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        }
 
         // Reload the UI
         m_snapper->loadConfig(name);

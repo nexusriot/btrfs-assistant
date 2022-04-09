@@ -4,6 +4,7 @@
 * Modify the subvolume page so it shows the subvolumes on all devices(Contributed by Austin Horstman)
 * Reworked the Snapper tab into separate tabs for New/Delete and Browse/Restore removing the Restore Mode checkbox
 * Renamed "Btrfs" tab to "Overview" and "Snapper - Settings" to "Snapper Settings"
+* When snapper commands fail properly report them back to the user
 
 1.3 - 2022-04-08
 * The subvolume tab now shows the size and exclusive space used by each subvolume
