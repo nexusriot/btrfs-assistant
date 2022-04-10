@@ -56,9 +56,7 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 ## Contributing
 Contributions are welcome!
 
-If you want add or change significant functionality it is better to discuss it before beginning work either in an issue or a WIP merge request.
-
-Please use `clang-format` to ensure any contributions enforce the style used throughout Btrfs Assistant
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 
 ### Development Requirements
