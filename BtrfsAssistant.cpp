@@ -44,6 +44,11 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
+    m_subvolumeModel = new SubvolumeFilterModel(this);
+    m_subvolumeModel->setSourceModel(m_btrfs->subvolModel());
+    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
+    connect(m_ui->checkBox_subvolIncludeDocker, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeDocker);
+
     // timers for filesystem operations
     m_balanceTimer = new QTimer(this);
     m_scrubTimer = new QTimer(this);
@@ -365,20 +370,23 @@ void BtrfsAssistant::refreshSubvolListUi() {
     }
 
     // Update table sizes and columns based on subvolumes
-    m_ui->tableView_subvols->horizontalHeader()->setStretchLastSection(true);
-    m_ui->tableView_subvols->resizeColumnsToContents();
-    m_ui->tableView_subvols->resizeRowsToContents();
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
     m_ui->tableView_subvols->verticalHeader()->hide();
-    m_ui->tableView_subvols->hideColumn(SubvolHeader::subvolId);
-    m_ui->tableView_subvols->hideColumn(SubvolHeader::parentId);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Id);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ParentId);
 
     // Hide quota data if no columns supported it
     if (!showQuota) {
-        m_ui->tableView_subvols->hideColumn(SubvolHeader::size);
-        m_ui->tableView_subvols->hideColumn(SubvolHeader::exclusive);
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Size);
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ExclusiveSize);
     } else {
-        m_ui->tableView_subvols->showColumn(SubvolHeader::size);
-        m_ui->tableView_subvols->showColumn(SubvolHeader::exclusive);
+        m_ui->tableView_subvols->showColumn(SubvolumeModel::Column::Size);
+        m_ui->tableView_subvols->showColumn(SubvolumeModel::Column::ExclusiveSize);
+    }
+
+    // If there is only a single filesystem then hide the Uuid column
+    if (m_ui->comboBox_btrfsDevice->count() == 1) {
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Uuid);
     }
 }
 
@@ -437,7 +445,9 @@ void BtrfsAssistant::setup() {
     }
 
     // Connect the subvolume view
-    m_ui->tableView_subvols->setModel(m_btrfs->subvolModel());
+    m_ui->tableView_subvols->setModel(m_subvolumeModel);
+    m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);
+    m_ui->tableView_subvols->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     // Populate the UI
     refreshBtrfsUi();
@@ -485,26 +495,6 @@ void BtrfsAssistant::on_checkBox_bmBalance_clicked(bool checked) { m_ui->listWid
 void BtrfsAssistant::on_checkBox_bmDefrag_clicked(bool checked) { m_ui->listWidget_bmDefrag->setDisabled(checked); }
 
 void BtrfsAssistant::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bmScrub->setDisabled(checked); }
-
-void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() {
-    m_btrfs->subvolModel()->setIncludeSnapshots(m_ui->checkBox_subvolIncludeSnapshots->isChecked());
-
-    for (const QString &uuid : m_btrfs->listFilesystems()) {
-        m_btrfs->loadSubvols(uuid);
-    }
-
-    refreshSubvolListUi();
-}
-
-void BtrfsAssistant::on_checkBox_subvolIncludeDocker_clicked() {
-    m_btrfs->subvolModel()->setIncludeDocker(m_ui->checkBox_subvolIncludeDocker->isChecked());
-
-    for (const QString &uuid : m_btrfs->listFilesystems()) {
-        m_btrfs->loadSubvols(uuid);
-    }
-
-    refreshSubvolListUi();
-}
 
 void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
@@ -617,8 +607,8 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
         return;
     }
     QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
-    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::subvolName)).toString();
-    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::uuid)).toString();
+    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Name)).toString();
+    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Uuid)).toString();
 
     // Make sure the everything is good in the UI
     if (subvol.isEmpty() || uuid.isEmpty()) {

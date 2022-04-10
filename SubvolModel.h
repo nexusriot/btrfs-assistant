@@ -3,10 +3,11 @@
 
 #include <QAbstractTableModel>
 #include <QMutex>
+#include <QSortFilterProxyModel>
 
 struct Subvolume {
     int parentId = 0;
-    int subvolId;
+    int subvolId = 0;
     QString subvolName;
     QString uuid;
     long size = 0;
@@ -14,13 +15,15 @@ struct Subvolume {
 };
 struct BtrfsMeta;
 
-enum SubvolHeader { subvolId, parentId, subvolName, uuid, size, exclusive };
-
-class SubvolModel : public QAbstractTableModel {
+class SubvolumeModel : public QAbstractTableModel {
     Q_OBJECT
 
   public:
-    explicit SubvolModel(QObject *parent = nullptr) : QAbstractTableModel(parent) {}
+    enum Column { Id, ParentId, Name, Uuid, Size, ExclusiveSize, ColumnCount };
+
+    enum Role { Sort = Qt::UserRole };
+
+    explicit SubvolumeModel(QObject *parent = nullptr) : QAbstractTableModel(parent) {}
 
     // Basic model functions
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
@@ -35,21 +38,31 @@ class SubvolModel : public QAbstractTableModel {
      */
     void loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvolSize);
 
-    /**
-     * @brief Sets the boolean used to determine whether to include snapshots in the subvolume model.
-     * @param includeSnapshots Bool value to set.
-     */
-    void setIncludeSnapshots(bool includeSnapshots) { m_includeSnapshots = includeSnapshots; }
-    void setIncludeDocker(bool include) { m_includeDocker = include; }
-
   private:
-    int m_columns = 6;
     // Holds the data for the model
     QVector<Subvolume> m_data;
-    bool m_includeSnapshots = false;
-    bool m_includeDocker = false;
     // Used to ensure only one model update runs at a time
     QMutex m_updateMutex;
+};
+
+class SubvolumeFilterModel : public QSortFilterProxyModel {
+    Q_OBJECT
+  public:
+    SubvolumeFilterModel(QObject *parent = nullptr);
+
+    bool includeSnapshots() const;
+    bool includeDocker() const;
+
+  public slots:
+    void setIncludeSnapshots(bool includeSnapshots);
+    void setIncludeDocker(bool includeDocker);
+
+  protected:
+    bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
+
+  private:
+    bool m_includeSnapshots = false;
+    bool m_includeDocker = false;
 };
 
 #endif // SUBVOLMODEL_H

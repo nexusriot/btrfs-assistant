@@ -41,8 +41,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>896</width>
+             <height>634</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -454,8 +454,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>896</width>
+             <height>634</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
@@ -519,6 +519,9 @@
               </property>
               <property name="selectionBehavior">
                <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <property name="sortingEnabled">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -839,8 +842,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>879</width>
+             <height>682</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1281,8 +1284,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>896</width>
+             <height>634</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
