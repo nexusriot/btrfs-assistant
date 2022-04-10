@@ -34,7 +34,7 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
-    explicit Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
+    Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
     /**
      * @brief Gets the list of configuration settings for a given config

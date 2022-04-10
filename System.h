@@ -12,14 +12,13 @@ struct Result {
 /**
  * @brief The System class used to interact directly with the running operating system.
  */
-class System : public QObject {
-    Q_OBJECT
+class System {
   public:
     /**
      * @brief Checks to see if the user running the application is root
      * @return True is the user has a UID of 0, false otherwise
      */
-    static bool checkRootUid() { return System::runCmd("id -u", false).output == "0"; }
+    static bool checkRootUid();
 
     /** @brief Enables or disables a service
      *
@@ -70,7 +69,7 @@ class System : public QObject {
 
   private:
     // This class contains only static functions.  There is no reason to instantiate it.
-    explicit System(QObject *parent = nullptr);
+    System() = delete;
 };
 
 #endif // SYSTEM_H
