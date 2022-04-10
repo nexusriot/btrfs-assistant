@@ -17,7 +17,7 @@ class DiffViewer : public QDialog {
     Q_OBJECT
 
   public:
-    explicit DiffViewer(Snapper *snapper, const QString &rootPath, const QString &filePath, const QString &uuid, QWidget *parent = nullptr);
+    DiffViewer(Snapper *snapper, const QString &rootPath, const QString &filePath, const QString &uuid, QWidget *parent = nullptr);
 
     ~DiffViewer();
 

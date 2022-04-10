@@ -29,7 +29,7 @@ class BtrfsAssistant : public QMainWindow {
      * @param snapper
      * @param parent
      */
-    explicit BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = 0);
+    BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = nullptr);
     ~BtrfsAssistant();
 
   private:

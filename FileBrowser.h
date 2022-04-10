@@ -18,7 +18,7 @@ class FileBrowser : public QDialog {
     Q_OBJECT
 
   public:
-    explicit FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent = nullptr);
+    FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent = nullptr);
     ~FileBrowser();
 
   private:

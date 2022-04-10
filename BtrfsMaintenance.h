@@ -5,14 +5,13 @@
 
 #include "Settings.h"
 
-
 /**
  * @brief The BtrfsMaintenance class that handles interfacing with the btrfs maintenance configuration.
  */
 class BtrfsMaintenance : public QObject {
     Q_OBJECT
   public:
-    explicit BtrfsMaintenance(const QString &configFile, QObject *parent = nullptr);
+    BtrfsMaintenance(const QString &configFile, QObject *parent = nullptr);
 
     /** @brief Forces Btrfs Maintenance to reload the configuration file
      */
