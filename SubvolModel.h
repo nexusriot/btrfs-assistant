@@ -40,12 +40,14 @@ class SubvolModel : public QAbstractTableModel {
      * @param includeSnapshots Bool value to set.
      */
     void setIncludeSnapshots(bool includeSnapshots) { m_includeSnapshots = includeSnapshots; }
+    void setIncludeDocker(bool include) { m_includeDocker = include; }
 
   private:
     int m_columns = 6;
     // Holds the data for the model
     QVector<Subvolume> m_data;
     bool m_includeSnapshots = false;
+    bool m_includeDocker = false;
     // Used to ensure only one model update runs at a time
     QMutex m_updateMutex;
 };

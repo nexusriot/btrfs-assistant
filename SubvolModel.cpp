@@ -89,15 +89,20 @@ void SubvolModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QM
 
         for (Subvolume subvol : volumeData[uuid].subvolumes) {
 
-            if (m_includeSnapshots || !(Btrfs::isSnapper(subvol.subvolName) || Btrfs::isTimeshift(subvol.subvolName))) {
-
-                if (subvols[uuid].contains(subvol.subvolId) && subvols[uuid][subvol.subvolId].count() == 2) {
-                    subvol.size = subvols[uuid][subvol.subvolId][0];
-                    subvol.exclusive = subvols[uuid][subvol.subvolId][1];
-                }
-
-                m_data.append(subvol);
+            if (!m_includeSnapshots && (Btrfs::isSnapper(subvol.subvolName) || Btrfs::isTimeshift(subvol.subvolName))) {
+                continue;
             }
+
+            if (!m_includeDocker && Btrfs::isDocker(subvol.subvolName)) {
+                continue;
+            }
+
+            if (subvols[uuid].contains(subvol.subvolId) && subvols[uuid][subvol.subvolId].count() == 2) {
+                subvol.size = subvols[uuid][subvol.subvolId][0];
+                subvol.exclusive = subvols[uuid][subvol.subvolId][1];
+            }
+
+            m_data.append(subvol);
         }
     }
 
