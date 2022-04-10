@@ -177,7 +177,7 @@ class Btrfs : public QObject {
     /**
      * @brief Returns a pointer to the subvol model
      */
-    SubvolModel *subvolModel() { return &m_subvolModel; }
+    SubvolumeModel *subvolModel() { return &m_subvolModel; }
 
     /**
      * @brief Returns the name of the subvol with id @p subvolId
@@ -220,7 +220,7 @@ class Btrfs : public QObject {
     void stopScrubRoot(const QString &uuid);
 
   private:
-    SubvolModel m_subvolModel;
+    SubvolumeModel m_subvolModel;
     // Holds the subvol sizes, the outer key is UUID, the inner key is subvolId, element 0 is size and element 1 is exclusive
     QMap<QString, QMap<int, QVector<long>>> m_subvolSize;
     // A map of BtrfsMeta.  The key is UUID

@@ -5,7 +5,6 @@
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryDir>
-#include <QtConcurrent/QtConcurrent>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 

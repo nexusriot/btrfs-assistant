@@ -2,7 +2,7 @@
 #include "Btrfs.h"
 #include "System.h"
 
-QVariant SubvolModel::headerData(int section, Qt::Orientation orientation, int role) const {
+QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role != Qt::DisplayRole) {
         return QAbstractTableModel::headerData(section, orientation, role);
     }
@@ -12,71 +12,90 @@ QVariant SubvolModel::headerData(int section, Qt::Orientation orientation, int r
     }
 
     switch (section) {
-    case SubvolHeader::parentId:
+    case Column::ParentId:
         return tr("Parent ID");
-    case SubvolHeader::subvolId:
+    case Column::Id:
         return tr("Subvol ID");
-    case SubvolHeader::subvolName:
+    case Column::Name:
         return tr("Subvolume");
-    case SubvolHeader::size:
+    case Column::Size:
         return tr("Size");
-    case SubvolHeader::uuid:
+    case Column::Uuid:
         return tr("UUID");
-    case SubvolHeader::exclusive:
+    case Column::ExclusiveSize:
         return tr("Exclusive");
     }
 
     return QString();
 }
 
-int SubvolModel::rowCount(const QModelIndex &parent) const {
+int SubvolumeModel::rowCount(const QModelIndex &parent) const {
     if (parent.isValid())
         return 0;
 
     return m_data.count();
 }
 
-int SubvolModel::columnCount(const QModelIndex &parent) const {
+int SubvolumeModel::columnCount(const QModelIndex &parent) const {
     if (parent.isValid())
         return 0;
 
-    return m_columns;
+    return ColumnCount;
 }
 
-QVariant SubvolModel::data(const QModelIndex &index, int role) const {
-    if (!index.isValid())
-        return QVariant();
-
-    if (role != Qt::DisplayRole) {
-        return QVariant();
+QVariant SubvolumeModel::data(const QModelIndex &index, int role) const {
+    if (!index.isValid() || index.column() >= ColumnCount || index.row() >= m_data.count()) {
+        return {};
     }
 
-    const QVector<Subvolume> *data;
-
-    // Ensure the data is in range
-    if (index.column() >= m_columns || index.row() >= m_data.count()) {
-        return QVariant();
+    if (role == Qt::TextAlignmentRole) {
+        switch (static_cast<Column>(index.column())) {
+        case Column::Id:
+        case Column::ParentId:
+        case Column::Name:
+        case Column::Uuid:
+            return {};
+        case Column::Size:
+        case Column::ExclusiveSize:
+            return static_cast<int>(Qt::AlignRight | Qt::AlignVCenter);
+            break;
+        case Column::ColumnCount:
+            return {};
+        }
     }
 
+    if (role != Qt::DisplayRole && role != Role::Sort && role != Qt::TextAlignmentRole) {
+        return {};
+    }
+
+    const Subvolume &subvol = m_data[index.row()];
     switch (index.column()) {
-    case SubvolHeader::parentId:
-        return m_data.at(index.row()).parentId;
-    case SubvolHeader::subvolId:
-        return m_data.at(index.row()).subvolId;
-    case SubvolHeader::subvolName:
-        return m_data.at(index.row()).subvolName;
-    case SubvolHeader::size:
-        return System::toHumanReadable(m_data.at(index.row()).size);
-    case SubvolHeader::exclusive:
-        return System::toHumanReadable(m_data.at(index.row()).exclusive);
-    case SubvolHeader::uuid:
-        return m_data.at(index.row()).uuid;
+    case Column::ParentId:
+        return subvol.parentId;
+    case Column::Id:
+        return subvol.subvolId;
+    case Column::Name:
+        return subvol.subvolName;
+    case Column::Size:
+        if (role == Qt::DisplayRole) {
+            return System::toHumanReadable(subvol.size);
+        } else {
+            return QVariant::fromValue<qulonglong>(subvol.size);
+        }
+    case Column::ExclusiveSize:
+        if (role == Qt::DisplayRole) {
+            return System::toHumanReadable(subvol.exclusive);
+        } else {
+            return QVariant::fromValue<qulonglong>(subvol.exclusive);
+        }
+    case Column::Uuid:
+        return subvol.uuid;
     }
 
     return QVariant();
 }
 
-void SubvolModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvols) {
+void SubvolumeModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvols) {
     // Ensure that multiple threads don't try to update the model at the same time
     QMutexLocker lock(&m_updateMutex);
 
@@ -89,14 +108,6 @@ void SubvolModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QM
 
         for (Subvolume subvol : volumeData[uuid].subvolumes) {
 
-            if (!m_includeSnapshots && (Btrfs::isSnapper(subvol.subvolName) || Btrfs::isTimeshift(subvol.subvolName))) {
-                continue;
-            }
-
-            if (!m_includeDocker && Btrfs::isDocker(subvol.subvolName)) {
-                continue;
-            }
-
             if (subvols[uuid].contains(subvol.subvolId) && subvols[uuid][subvol.subvolId].count() == 2) {
                 subvol.size = subvols[uuid][subvol.subvolId][0];
                 subvol.exclusive = subvols[uuid][subvol.subvolId][1];
@@ -108,4 +119,40 @@ void SubvolModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QM
 
     std::sort(m_data.begin(), m_data.end(), [](const Subvolume &a, const Subvolume &b) -> bool { return a.subvolName < b.subvolName; });
     endResetModel();
+}
+
+SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyModel(parent) {
+    setSortRole(static_cast<int>(SubvolumeModel::Role::Sort));
+}
+
+bool SubvolumeFilterModel::includeSnapshots() const { return m_includeSnapshots; }
+
+bool SubvolumeFilterModel::includeDocker() const { return m_includeDocker; }
+
+void SubvolumeFilterModel::setIncludeSnapshots(bool includeSnapshots) {
+    if (m_includeSnapshots != includeSnapshots) {
+        m_includeSnapshots = includeSnapshots;
+        invalidateFilter();
+    }
+}
+
+void SubvolumeFilterModel::setIncludeDocker(bool includeDocker) {
+    if (m_includeDocker != includeDocker) {
+        m_includeDocker = includeDocker;
+        invalidateFilter();
+    }
+}
+
+bool SubvolumeFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
+    QModelIndex nameIdx = sourceModel()->index(sourceRow, static_cast<int>(SubvolumeModel::Column::Name), sourceParent);
+    const QString &name = sourceModel()->data(nameIdx).toString();
+
+    if (!m_includeSnapshots && (Btrfs::isSnapper(name) || Btrfs::isTimeshift(name))) {
+        return false;
+    }
+    if (!m_includeDocker && Btrfs::isDocker(name)) {
+        return false;
+    }
+
+    return true;
 }
