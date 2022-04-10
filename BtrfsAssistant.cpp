@@ -496,6 +496,16 @@ void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() {
     refreshSubvolListUi();
 }
 
+void BtrfsAssistant::on_checkBox_subvolIncludeDocker_clicked() {
+    m_btrfs->subvolModel()->setIncludeDocker(m_ui->checkBox_subvolIncludeDocker->isChecked());
+
+    for (const QString &uuid : m_btrfs->listFilesystems()) {
+        m_btrfs->loadSubvols(uuid);
+    }
+
+    refreshSubvolListUi();
+}
+
 void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
 void BtrfsAssistant::on_comboBox_btrfsDevice_activated(int index) {
