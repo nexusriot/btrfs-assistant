@@ -9,13 +9,18 @@
 #include <QTranslator>
 
 int main(int argc, char *argv[]) {
-    QApplication ba(argc, argv);
+    QApplication app(argc, argv);
+    app.setWindowIcon(QIcon(":/btrfs-assistant.png"));
+
+    QTranslator translator;
+    translator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");
+    app.installTranslator(&translator);
+
     QCoreApplication::setApplicationName(QCoreApplication::translate("main", "Btrfs Assistant"));
     QCoreApplication::setApplicationVersion("1.4");
-    ba.setWindowIcon(QIcon(":/btrfs-assistant.png"));
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("An application for managing Btrfs and Snapper");
+    parser.setApplicationDescription(QCoreApplication::translate("main", "An application for managing Btrfs and Snapper"));
     parser.addHelpOption();
     parser.addVersionOption();
 
@@ -29,18 +34,14 @@ int main(int argc, char *argv[]) {
                                      QCoreApplication::translate("main", "Restore the given subvolume/UUID"),
                                      QCoreApplication::translate("main", "subvolume,UUID"));
     parser.addOption(restoreOption);
-    parser.process(ba);
-
-    QTranslator myappTranslator;
-    myappTranslator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");
-    ba.installTranslator(&myappTranslator);
+    parser.process(app);
 
     QString snapperPath = Settings::getInstance().value("snapper", "/usr/bin/snapper").toString();
     QString btrfsMaintenanceConfig = Settings::getInstance().value("bm_config", "/etc/default/btrfsmaintenance").toString();
 
     // Ensure we are running on a system with btrfs
     if (!System::runCmd("findmnt --real -no fstype ", false).output.contains("btrfs")) {
-        QTextStream(stderr) << "Error: No Btrfs filesystems found" << Qt::endl;
+        QTextStream(stderr) << QCoreApplication::translate("main", "Error: No Btrfs filesystems found") << Qt::endl;
         return 1;
     }
 
@@ -66,6 +67,6 @@ int main(int argc, char *argv[]) {
 
         BtrfsAssistant mainWindow(btrfsMaintenance, &btrfs, snapper);
         mainWindow.show();
-        return ba.exec();
+        return app.exec();
     }
 }
