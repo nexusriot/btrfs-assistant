@@ -41,8 +41,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>910</width>
+             <height>652</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -103,6 +103,7 @@
                   <font>
                    <family>Bitstream Vera Sans Mono</family>
                    <pointsize>10</pointsize>
+                   <weight>50</weight>
                    <italic>false</italic>
                    <bold>false</bold>
                   </font>
@@ -454,8 +455,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>910</width>
+             <height>652</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
@@ -781,7 +782,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                   <normaloff>:/assets/assets/restore.png</normaloff>:/assets/assets/restore.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -863,8 +864,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>910</width>
+             <height>652</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1305,8 +1306,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>910</width>
+             <height>652</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
