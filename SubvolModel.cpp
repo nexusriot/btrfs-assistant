@@ -121,7 +121,7 @@ SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyMo
 
 bool SubvolumeFilterModel::includeSnapshots() const { return m_includeSnapshots; }
 
-bool SubvolumeFilterModel::includeDocker() const { return m_includeDocker; }
+bool SubvolumeFilterModel::includeContainer() const { return m_includeContainer; }
 
 void SubvolumeFilterModel::setIncludeSnapshots(bool includeSnapshots) {
     if (m_includeSnapshots != includeSnapshots) {
@@ -130,9 +130,9 @@ void SubvolumeFilterModel::setIncludeSnapshots(bool includeSnapshots) {
     }
 }
 
-void SubvolumeFilterModel::setIncludeDocker(bool includeDocker) {
-    if (m_includeDocker != includeDocker) {
-        m_includeDocker = includeDocker;
+void SubvolumeFilterModel::setIncludeContainer(bool includeContainer) {
+    if (m_includeContainer != includeContainer) {
+        m_includeContainer = includeContainer;
         invalidateFilter();
     }
 }
@@ -144,7 +144,7 @@ bool SubvolumeFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &so
     if (!m_includeSnapshots && (Btrfs::isSnapper(name) || Btrfs::isTimeshift(name))) {
         return false;
     }
-    if (!m_includeDocker && Btrfs::isDocker(name)) {
+    if (!m_includeContainer && Btrfs::isContainer(name)) {
         return false;
     }
 

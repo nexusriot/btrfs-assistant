@@ -102,10 +102,10 @@ class Btrfs : public QObject {
      */
     static bool isTimeshift(const QString &subvolume) { return subvolume.contains("timeshift-btrfs"); }
 
-    /** @brief Returns true if @p subvolume is a docker subvolume
+    /** @brief Returns true if @p subvolume is a docker or podman subvolume
      *
      */
-    static bool isDocker(const QString &subvolume) { return subvolume.contains("docker/btrfs/subvolumes"); }
+    static bool isContainer(const QString &subvolume) { return subvolume.contains("/btrfs/subvolumes"); }
 
     /** @brief Returns a QStringList of UUIDs containing Btrfs filesystems
      */

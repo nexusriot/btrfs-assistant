@@ -43,18 +43,18 @@ class SubvolumeFilterModel : public QSortFilterProxyModel {
     SubvolumeFilterModel(QObject *parent = nullptr);
 
     bool includeSnapshots() const;
-    bool includeDocker() const;
+    bool includeContainer() const;
 
   public slots:
     void setIncludeSnapshots(bool includeSnapshots);
-    void setIncludeDocker(bool includeDocker);
+    void setIncludeContainer(bool includeContainer);
 
   protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const override;
 
   private:
     bool m_includeSnapshots = false;
-    bool m_includeDocker = false;
+    bool m_includeContainer = false;
 };
 
 #endif // SUBVOLMODEL_H

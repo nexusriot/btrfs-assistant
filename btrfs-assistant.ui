@@ -41,8 +41,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>910</width>
-             <height>652</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -103,7 +103,6 @@
                   <font>
                    <family>Bitstream Vera Sans Mono</family>
                    <pointsize>10</pointsize>
-                   <weight>50</weight>
                    <italic>false</italic>
                    <bold>false</bold>
                   </font>
@@ -455,8 +454,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>910</width>
-             <height>652</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
@@ -560,9 +559,9 @@
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_subvolIncludeDocker">
+               <widget class="QCheckBox" name="checkBox_subvolIncludeContainer">
                 <property name="text">
-                 <string>Include Docker Subvolumes</string>
+                 <string>Include Container Subvolumes</string>
                 </property>
                 <property name="checked">
                  <bool>false</bool>
@@ -864,8 +863,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>910</width>
-             <height>652</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1306,8 +1305,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>910</width>
-             <height>652</height>
+             <width>904</width>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">

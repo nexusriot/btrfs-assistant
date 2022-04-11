@@ -49,7 +49,7 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_subvolumeModel = new SubvolumeFilterModel(this);
     m_subvolumeModel->setSourceModel(m_sourceModel);
     connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
-    connect(m_ui->checkBox_subvolIncludeDocker, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeDocker);
+    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeContainer);
 
     // timers for filesystem operations
     m_balanceTimer = new QTimer(this);
