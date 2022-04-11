@@ -484,7 +484,7 @@
                <item>
                 <widget class="QToolButton" name="pushButton_subvolDelete">
                  <property name="text">
-                  <string>Delete Subvolume</string>
+                  <string>Delete</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
@@ -636,7 +636,7 @@
                <item>
                 <widget class="QToolButton" name="pushButton_snapperCreate">
                  <property name="text">
-                  <string>New Snapshot</string>
+                  <string>New</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
@@ -650,7 +650,7 @@
                <item>
                 <widget class="QToolButton" name="pushButton_snapperDelete">
                  <property name="text">
-                  <string>Delete Snapshot</string>
+                  <string>Delete</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
@@ -763,7 +763,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Browse Snapshot</string>
+                  <string>Browse</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
@@ -777,7 +777,7 @@
                <item>
                 <widget class="QToolButton" name="pushButton_snapperRestore">
                  <property name="text">
-                  <string>Restore Snapshot</string>
+                  <string>Restore</string>
                  </property>
                  <property name="icon">
                   <iconset resource="icons.qrc">
@@ -900,14 +900,14 @@
                <item>
                 <widget class="QPushButton" name="pushButton_snapperNewConfig">
                  <property name="text">
-                  <string>New Config</string>
+                  <string>New</string>
                  </property>
                 </widget>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButton_snapperDeleteConfig">
                  <property name="text">
-                  <string>Delete Config</string>
+                  <string>Delete</string>
                  </property>
                 </widget>
                </item>
@@ -927,7 +927,7 @@
                <item>
                 <widget class="QPushButton" name="pushButton_snapperSaveConfig">
                  <property name="text">
-                  <string>Save Config</string>
+                  <string>Save</string>
                  </property>
                 </widget>
                </item>
@@ -1338,7 +1338,7 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Balance Frequency: </string>
+                  <string>Frequency: </string>
                  </property>
                 </widget>
                </item>
@@ -1361,14 +1361,14 @@
                <item row="0" column="4">
                 <widget class="QCheckBox" name="checkBox_bmBalance">
                  <property name="text">
-                  <string>Balance all mountpoints</string>
+                  <string>Select All</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="3">
                 <widget class="QLabel" name="label_bmBalanceSubvols">
                  <property name="text">
-                  <string>Mountpoints to balance: </string>
+                  <string>Mountpoints: </string>
                  </property>
                 </widget>
                </item>
@@ -1419,21 +1419,21 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Scrub Frequency: </string>
+                  <string>Frequency: </string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="4">
                 <widget class="QCheckBox" name="checkBox_bmScrub">
                  <property name="text">
-                  <string>Scrub all mountpoints</string>
+                  <string>Select All</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="3">
                 <widget class="QLabel" name="label_bmScrubSubvols">
                  <property name="text">
-                  <string>Mountpoints to Scrub: </string>
+                  <string>Mountpoints: </string>
                  </property>
                 </widget>
                </item>
@@ -1484,21 +1484,21 @@
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Defrag Frequency: </string>
+                  <string>Frequency: </string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="5">
                 <widget class="QCheckBox" name="checkBox_bmDefrag">
                  <property name="text">
-                  <string>Defrag all mountpoints</string>
+                  <string>Select All</string>
                  </property>
                 </widget>
                </item>
                <item row="0" column="3">
                 <widget class="QLabel" name="label_bmScrubSubvols_2">
                  <property name="text">
-                  <string>Mountpoints to Defrag: </string>
+                  <string>Mountpoints: </string>
                  </property>
                 </widget>
                </item>
