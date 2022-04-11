@@ -1,5 +1,4 @@
 #include "SubvolModel.h"
-#include "Btrfs.h"
 #include "System.h"
 
 QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, int role) const {
@@ -95,29 +94,24 @@ QVariant SubvolumeModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-void SubvolumeModel::loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvols) {
+void SubvolumeModel::load(const QMap<QString, BtrfsMeta> *volumeData) {
     // Ensure that multiple threads don't try to update the model at the same time
     QMutexLocker lock(&m_updateMutex);
 
     beginResetModel();
     m_data.clear();
 
-    const QList<QString> volumeIdentifiers = volumeData.keys();
+    const QList<QString> volumeIdentifiers = volumeData->keys();
 
+    // Extract all the subvolumes
     for (const QString &uuid : volumeIdentifiers) {
-
-        for (Subvolume subvol : volumeData[uuid].subvolumes) {
-
-            if (subvols[uuid].contains(subvol.subvolId) && subvols[uuid][subvol.subvolId].count() == 2) {
-                subvol.size = subvols[uuid][subvol.subvolId][0];
-                subvol.exclusive = subvols[uuid][subvol.subvolId][1];
+        for (const Subvolume &subvol : volumeData->value(uuid).subvolumes) {
+            if (subvol.subvolId != 5 && subvol.subvolId != 0) {
+                m_data.append(subvol);
             }
-
-            m_data.append(subvol);
         }
     }
 
-    std::sort(m_data.begin(), m_data.end(), [](const Subvolume &a, const Subvolume &b) -> bool { return a.subvolName < b.subvolName; });
     endResetModel();
 }
 

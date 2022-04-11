@@ -1,19 +1,11 @@
 #ifndef SUBVOLMODEL_H
 #define SUBVOLMODEL_H
 
+#include "Btrfs.h"
+
 #include <QAbstractTableModel>
 #include <QMutex>
 #include <QSortFilterProxyModel>
-
-struct Subvolume {
-    int parentId = 0;
-    int subvolId = 0;
-    QString subvolName;
-    QString uuid;
-    long size = 0;
-    long exclusive = 0;
-};
-struct BtrfsMeta;
 
 class SubvolumeModel : public QAbstractTableModel {
     Q_OBJECT
@@ -36,7 +28,7 @@ class SubvolumeModel : public QAbstractTableModel {
      * @param subvolData - A map of Subvolumes with subvolId as the key
      * @param m_subvolSize - A map of QVectors where subvolId is the key and size is at index 0 and exclusize size at index 1
      */
-    void loadModel(const QMap<QString, BtrfsMeta> &volumeData, const QMap<QString, QMap<int, QVector<long>>> &subvolSize);
+    void load(const QMap<QString, BtrfsMeta> *volumeData);
 
   private:
     // Holds the data for the model

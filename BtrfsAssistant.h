@@ -8,6 +8,7 @@
 #include "Btrfs.h"
 #include "BtrfsMaintenance.h"
 #include "Snapper.h"
+#include "SubvolModel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -45,6 +46,7 @@ class BtrfsAssistant : public QMainWindow {
     bool m_hasBtrfsmaintenance = false;
     Snapper *m_snapper;
     SubvolumeFilterModel *m_subvolumeModel;
+    SubvolumeModel *m_sourceModel;
     Ui::BtrfsAssistant *m_ui;
 
     /**

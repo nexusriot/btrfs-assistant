@@ -44,8 +44,10 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
+    m_sourceModel = new SubvolumeModel(this);
+    m_sourceModel->load(m_btrfs->volumes());
     m_subvolumeModel = new SubvolumeFilterModel(this);
-    m_subvolumeModel->setSourceModel(m_btrfs->subvolModel());
+    m_subvolumeModel->setSourceModel(m_sourceModel);
     connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
     connect(m_ui->checkBox_subvolIncludeDocker, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeDocker);
 
@@ -370,7 +372,6 @@ void BtrfsAssistant::refreshSubvolListUi() {
     }
 
     // Update table sizes and columns based on subvolumes
-    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
     m_ui->tableView_subvols->verticalHeader()->hide();
     m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Id);
     m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ParentId);
@@ -447,6 +448,8 @@ void BtrfsAssistant::setup() {
     // Connect the subvolume view
     m_ui->tableView_subvols->setModel(m_subvolumeModel);
     m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Uuid, QHeaderView::ResizeToContents);
     m_ui->tableView_subvols->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     // Populate the UI
@@ -501,7 +504,6 @@ void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { s
 void BtrfsAssistant::on_comboBox_btrfsDevice_activated(int index) {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
     if (!uuid.isEmpty()) {
-        m_btrfs->loadSubvols(uuid);
         populateBtrfsUi(uuid);
         refreshSubvolListUi();
     }
@@ -650,6 +652,7 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
 
     if (success) {
         m_btrfs->loadSubvols(uuid);
+        m_sourceModel->load(m_btrfs->volumes());
         refreshSubvolListUi();
     } else {
         displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
@@ -660,6 +663,7 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
 
 void BtrfsAssistant::on_pushButton_btrfsRefreshData_clicked() {
     m_btrfs->loadVolumes();
+    m_sourceModel->load(m_btrfs->volumes());
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
@@ -671,6 +675,7 @@ void BtrfsAssistant::on_pushButton_subvolRefresh_clicked() {
         m_btrfs->loadSubvols(uuid);
     }
 
+    m_sourceModel->load(m_btrfs->volumes());
     refreshSubvolListUi();
 
     m_ui->pushButton_subvolRefresh->clearFocus();
