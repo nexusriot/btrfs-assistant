@@ -271,6 +271,11 @@ void BtrfsAssistant::populateSnapperGrid() {
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Type")));
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperNew->sortByColumn(0, Qt::DescendingOrder);
+
+    // Disabling sorting while populating the grid is required or the grid won't repopulate properly
+    m_ui->tableWidget_snapperNew->setSortingEnabled(false);
+
 
     // Make sure there is something to populate
     QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);
@@ -281,17 +286,21 @@ void BtrfsAssistant::populateSnapperGrid() {
     // Populate the table
     m_ui->tableWidget_snapperNew->setRowCount(snapshots.size());
     for (int i = 0; i < snapshots.size(); i++) {
+        // Ensure proper sorting of numbers and dates
         QTableWidgetItem *number = new QTableWidgetItem(snapshots.at(i).number);
         number->setData(Qt::DisplayRole, snapshots.at(i).number);
+        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(snapshots.at(i).time, QLocale::ShortFormat));
+        snapTime->setData(Qt::DisplayRole, snapshots.at(i).time);
+
         m_ui->tableWidget_snapperNew->setItem(i, 0, number);
-        m_ui->tableWidget_snapperNew->setItem(i, 1, new QTableWidgetItem(locale.toString(snapshots.at(i).time, QLocale::ShortFormat)));
+        m_ui->tableWidget_snapperNew->setItem(i, 1, snapTime);
         m_ui->tableWidget_snapperNew->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
         m_ui->tableWidget_snapperNew->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
     }
 
-    // Resize the colums to make everything fit
+    // Re-enable sorting and resize the colums to make everything fit
+    m_ui->tableWidget_snapperNew->setSortingEnabled(true);
     m_ui->tableWidget_snapperNew->resizeColumnsToContents();
-    m_ui->tableWidget_snapperNew->sortItems(0, Qt::DescendingOrder);
 }
 
 void BtrfsAssistant::populateSnapperRestoreGrid() {
@@ -310,6 +319,10 @@ void BtrfsAssistant::populateSnapperRestoreGrid() {
     m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
     m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Type")));
     m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperRestore->sortByColumn(0, Qt::DescendingOrder);
+
+    // Disabling sorting while populating the grid is required or the grid won't repopulate properly - This must be Qt bug, right?
+    m_ui->tableWidget_snapperRestore->setSortingEnabled(false);
 
     QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
     // Make sure there is something to populate
@@ -317,20 +330,24 @@ void BtrfsAssistant::populateSnapperRestoreGrid() {
         return;
 
     // Populate the table
-    m_ui->tableWidget_snapperRestore->setRowCount(subvols.size());
-    for (int i = 0; i < subvols.size(); i++) {
+    m_ui->tableWidget_snapperRestore->setRowCount(subvols.count());
+    for (int i = 0; i < subvols.count(); i++) {
+        // Ensure proper sorting of numbers and dates
         QTableWidgetItem *number = new QTableWidgetItem(subvols.at(i).snapshotNum);
         number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
+        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(subvols.at(i).time, QLocale::ShortFormat));
+        snapTime->setData(Qt::DisplayRole, subvols.at(i).time);
+
         m_ui->tableWidget_snapperRestore->setItem(i, 0, number);
         m_ui->tableWidget_snapperRestore->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
-        m_ui->tableWidget_snapperRestore->setItem(i, 2, new QTableWidgetItem(locale.toString(subvols.at(i).time, QLocale::ShortFormat)));
+        m_ui->tableWidget_snapperRestore->setItem(i, 2, snapTime);
         m_ui->tableWidget_snapperRestore->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
         m_ui->tableWidget_snapperRestore->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
     }
 
-    // Resize the colums to make everything fit
+    // Re-enable sorting and resize the colums to make everything fit
+    m_ui->tableWidget_snapperRestore->setSortingEnabled(true);
     m_ui->tableWidget_snapperRestore->resizeColumnsToContents();
-    m_ui->tableWidget_snapperRestore->sortItems(0, Qt::DescendingOrder);
 }
 
 void BtrfsAssistant::refreshBtrfsUi() {
