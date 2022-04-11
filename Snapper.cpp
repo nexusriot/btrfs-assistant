@@ -1,12 +1,15 @@
-#include "Settings.h"
 #include "Snapper.h"
+#include "Settings.h"
 
 #include <unistd.h>
 
 #include <QDebug>
 #include <QDir>
+#include <QFile>
+#include <QRegularExpression>
 
-Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
+Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
+    : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
     m_subvolMap = Settings::getInstance().subvolMap();
     load();
 }
@@ -95,19 +98,28 @@ void Snapper::load() {
     // Load the list of valid configs
     m_configs.clear();
     m_snapshots.clear();
-    const QStringList outputList = runSnapper("list-configs --columns config");
+    const SnapperResult result = runSnapper("list-configs --columns config");
 
-    for (const QString &line : qAsConst(outputList)) {
+    if (result.exitCode != 0 || result.outputList.isEmpty()) {
+        return;
+    }
+
+    for (const QString &line : qAsConst(result.outputList)) {
         // for each config, add to the map and add it's snapshots to the vector
-        QStringList list;
+        SnapperResult listResult;
         QString name = line.trimmed();
 
         loadConfig(name);
 
         // The root needs special handling because we may be booted off a snapshot
         if (name == "root") {
-            list = runSnapper("list --columns number,date,description,type");
-            if (list.isEmpty()) {
+            listResult = runSnapper("list --columns number,date,description,type");
+
+            if (listResult.exitCode != 0) {
+                continue;
+            }
+
+            if (listResult.outputList.isEmpty()) {
                 // This means that either there are no snapshots or the root is mounted on non-btrfs filesystem like an overlayfs
                 // Let's check the latter case first
                 QString findmntOutput = System::runCmd("findmnt -no uuid,options /.snapshots", false).output;
@@ -157,20 +169,21 @@ void Snapper::load() {
                     mountpoint += "/";
                 }
 
-                list = runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + prefix) + " list --columns number,date,description,type");
-                if (list.isEmpty()) {
+                listResult =
+                    runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + prefix) + " list --columns number,date,description,type");
+                if (listResult.exitCode != 0 || listResult.outputList.isEmpty()) {
                     // If this is still empty, give up
                     continue;
                 }
             }
         } else {
-            list = runSnapper("list --columns number,date,description,type", name);
-            if (list.isEmpty()) {
+            listResult = runSnapper("list --columns number,date,description,type", name);
+            if (listResult.exitCode != 0 || listResult.outputList.isEmpty()) {
                 continue;
             }
         }
 
-        for (const QString &snap : qAsConst(list)) {
+        for (const QString &snap : qAsConst(listResult.outputList)) {
             m_snapshots[name].append({snap.split(',').at(0).trimmed().toInt(),
                                       QDateTime::fromString(snap.split(',').at(1).trimmed(), Qt::ISODate), snap.split(',').at(2).trimmed(),
                                       snap.split(',').at(3).trimmed()});
@@ -186,11 +199,15 @@ void Snapper::loadConfig(const QString &name) {
     }
 
     // Call Snapper to get the config data
-    const QStringList outputList = runSnapper("get-config", name);
+    const SnapperResult result = runSnapper("get-config", name);
+
+    if (result.exitCode != 0) {
+        return;
+    }
 
     // Iterate over the data adding the name/value pairs to the map
     QMap<QString, QString> config;
-    for (const QString &line : outputList) {
+    for (const QString &line : result.outputList) {
         if (line.trimmed().isEmpty()) {
             continue;
         }
@@ -404,7 +421,9 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     return restoreResult;
 }
 
-void Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {
+SnapperResult Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {
+    SnapperResult result;
+
     const QStringList keys = configMap.keys();
 
     QString command;
@@ -416,11 +435,16 @@ void Snapper::setConfig(const QString &name, const QMap<QString, QString> config
         command += " " + key + "=" + configMap[key];
     }
 
-    if (!command.isEmpty()) {
-        runSnapper("set-config" + command, name);
+    if (command.isEmpty()) {
+        result.exitCode = -1;
+        result.outputList = QStringList() << tr("Failed to set config");
+    } else {
+        result = runSnapper("set-config" + command, name);
     }
 
     loadConfig(name);
+
+    return result;
 }
 
 const QVector<SnapperSnapshots> Snapper::snapshots(const QString &config) {
@@ -445,23 +469,28 @@ const QVector<SnapperSubvolume> Snapper::subvols(const QString &config) {
  *
  */
 
-const QStringList Snapper::runSnapper(const QString &command, const QString &name) const {
-    QString output;
+const SnapperResult Snapper::runSnapper(const QString &command, const QString &name) const {
+    Result result;
+    SnapperResult snapperResult;
 
     if (name.isEmpty()) {
-        output = System::runCmd(m_snapperCommand + " --machine-readable csv -q " + command, false).output;
+        result = System::runCmd(m_snapperCommand + " --machine-readable csv -q " + command, true);
     } else {
-        output = System::runCmd(m_snapperCommand + " -c " + name + " --machine-readable csv -q " + command, false).output;
+        result = System::runCmd(m_snapperCommand + " -c " + name + " --machine-readable csv -q " + command, true);
     }
 
-    if (output.isEmpty()) {
-        return QStringList();
+    snapperResult.exitCode = result.exitCode;
+
+    if (result.exitCode != 0 || result.output.isEmpty()) {
+        snapperResult.outputList = QStringList() << result.output;
+    } else {
+        QStringList outputList = result.output.split('\n');
+
+        // Remove the header
+        outputList.removeFirst();
+
+        snapperResult.outputList = outputList;
     }
 
-    QStringList outputList = output.split('\n');
-
-    // Remove the header
-    outputList.removeFirst();
-
-    return outputList;
+    return snapperResult;
 }

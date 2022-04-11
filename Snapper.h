@@ -1,13 +1,15 @@
 #ifndef SNAPPER_H
 #define SNAPPER_H
 
-#include <QDir>
-#include <QFile>
 #include <QObject>
-#include <QRegularExpression>
 
 #include "Btrfs.h"
 #include "System.h"
+
+struct SnapperResult {
+    int exitCode;
+    QStringList outputList;
+};
 
 struct SnapperSnapshots {
     int number;
@@ -32,7 +34,7 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
-    explicit Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
+    Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
     /**
      * @brief Gets the list of configuration settings for a given config
@@ -54,14 +56,14 @@ class Snapper : public QObject {
      * @param name - The name of the new config
      * @param path - The absolute path to the mountpoint of the subvolume that will be snapshotted by the config
      */
-    void createConfig(const QString &name, const QString &path) const { runSnapper("create-config " + path, name); }
+    SnapperResult createConfig(const QString &name, const QString &path) const { return runSnapper("create-config " + path, name); }
 
     /**
      * @brief Creates a new manual snapshot with the given description
      * @param name - The name of the Snapper config
      * @param description - A string holding the description to be saved
      */
-    void createSnapshot(const QString &name, const QString &description) const { runSnapper("create -d '" + description + "'", name); }
+    SnapperResult createSnapshot(const QString &name, const QString &desc) const { return runSnapper("create -d '" + desc + "'", name); }
 
     /**
      * @brief Reads the list of subvols to create mapping between the snapshot subvolume and the source subvolume
@@ -72,14 +74,14 @@ class Snapper : public QObject {
      * @brief Deletes the given snapper config
      * @param name - The name of the Snapper config to delete
      */
-    void deleteConfig(const QString &name) const { runSnapper("delete-config", name); }
+    SnapperResult deleteConfig(const QString &name) const { return runSnapper("delete-config", name); }
 
     /**
      * @brief Deletes a given Snapper snapshot
      * @param name - The name of the config that contains the snapshot to delete
      * @param num - The number of the snapshot to delete
      */
-    void deleteSnapshot(const QString &name, const int num) const { runSnapper("delete " + QString::number(num), name); }
+    SnapperResult deleteSnapshot(const QString &name, const int num) const { return runSnapper("delete " + QString::number(num), name); }
 
     /**
      * @brief Finds the subvolume that is used by snapper to hold the snapshots for @p subvol
@@ -154,7 +156,7 @@ class Snapper : public QObject {
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update
      */
-    void setConfig(const QString &name, const QMap<QString, QString> configMap);
+    SnapperResult setConfig(const QString &name, const QMap<QString, QString> configMap);
 
     /**
      * @brief Returns a list of metadata for each snapshot in @p config
@@ -193,7 +195,7 @@ class Snapper : public QObject {
     // Maps the subvolumes to their snapshot directories.  key is the snapshot subvol path
     QMap<QString, QString> *m_subvolMap;
 
-    const QStringList runSnapper(const QString &command, const QString &name = "") const;
+    const SnapperResult runSnapper(const QString &command, const QString &name = "") const;
 
   signals:
 };

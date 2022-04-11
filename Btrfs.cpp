@@ -5,7 +5,6 @@
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryDir>
-#include <QtConcurrent/QtConcurrent>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
@@ -138,24 +137,18 @@ void Btrfs::loadQgroups(const QString &uuid) {
     outputList.takeFirst();
 
     // Load the data
-    if (!m_subvolSize.contains(uuid)) {
-        m_subvolSize.insert(uuid, QMap<int, QVector<long>>());
-    }
+
     for (const QString &line : qAsConst(outputList)) {
         const QStringList qgroupList = line.split(" ", Qt::SkipEmptyParts);
         int subvolId;
-        if (qgroupList.at(0).contains("/")) {
-            subvolId = qgroupList.at(0).split("/").at(1).toInt();
-        } else {
+        if (!qgroupList.at(0).contains("/")) {
             continue;
         }
-        long size = qgroupList.at(1).toLong();
-        long exclusive = qgroupList.at(2).toLong();
 
-        QVector<long> sizes;
-        sizes.append(size);
-        sizes.append(exclusive);
-        m_subvolSize[uuid][subvolId] = sizes;
+        subvolId = qgroupList.at(0).split("/").at(1).toInt();
+
+        m_volumes[uuid].subvolumes[subvolId].size = qgroupList.at(1).toLong();
+        m_volumes[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toLong();
     }
 }
 
@@ -180,7 +173,6 @@ void Btrfs::loadSubvols(const QString &uuid) {
         }
         m_volumes[uuid].subvolumes = subvols;
         loadQgroups(uuid);
-        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
     }
 }
 
@@ -355,12 +347,5 @@ void Btrfs::stopScrubRoot(const QString &uuid) {
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
-    }
-}
-
-void Btrfs::switchModelUuid(const QString &uuid)
-{
-    if(isUuidLoaded(uuid)) {
-        m_subvolModel.loadModel(m_volumes[uuid].subvolumes, m_subvolSize[uuid]);
     }
 }

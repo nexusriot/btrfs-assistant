@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QSettings>
-#include <QString>
 
 /**
  * @brief The Settings class is a singleton that allows read access to the settings file

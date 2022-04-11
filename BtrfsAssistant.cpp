@@ -6,7 +6,7 @@
 #include "ui_btrfs-assistant.h"
 
 #include <QDebug>
-#include <QThread>
+#include <QInputDialog>
 #include <QTimer>
 
 /**
@@ -44,6 +44,13 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
+    m_sourceModel = new SubvolumeModel(this);
+    m_sourceModel->load(m_btrfs->volumes());
+    m_subvolumeModel = new SubvolumeFilterModel(this);
+    m_subvolumeModel->setSourceModel(m_sourceModel);
+    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
+    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeContainer);
+
     // timers for filesystem operations
     m_balanceTimer = new QTimer(this);
     m_scrubTimer = new QTimer(this);
@@ -55,22 +62,6 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
 }
 
 BtrfsAssistant::~BtrfsAssistant() { delete m_ui; }
-void BtrfsAssistant::enableRestoreMode(bool enable) {
-    m_ui->pushButton_snapperCreate->setEnabled(!enable);
-    m_ui->pushButton_snapperDelete->setEnabled(!enable);
-    m_ui->pushButton_snapperRestore->setEnabled(enable);
-    m_ui->pushButton_snapperBrowse->setEnabled(enable);
-
-    if (enable) {
-        m_ui->label_snapperSelect->setText(tr("Select Subvolume:"));
-        loadSnapperRestoreMode();
-        populateSnapperGrid();
-    } else {
-        m_ui->label_snapperSelect->setText(tr("Select Config:"));
-        loadSnapperUI();
-        populateSnapperGrid();
-    }
-}
 
 void BtrfsAssistant::btrfsBalanceStatusUpdateUI() {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
@@ -111,21 +102,6 @@ void BtrfsAssistant::btrfsScrubStatusUpdateUI() {
     }
 }
 
-void BtrfsAssistant::loadSnapperRestoreMode() {
-    // Sanity check
-    if (!m_ui->checkBox_snapperRestoreMode->isChecked()) {
-        return;
-    }
-
-    // Clear the existing info
-    m_ui->comboBox_snapperConfigs->clear();
-
-    // Load snapper subvolumes into combobox.
-    const QStringList configs = m_snapper->subvolKeys();
-    for (const QString &config : configs) {
-        m_ui->comboBox_snapperConfigs->addItem(config);
-    }
-}
 void BtrfsAssistant::loadSnapperUI() {
     // If snapper isn't installed, no need to continue
     if (!m_hasSnapper)
@@ -133,12 +109,20 @@ void BtrfsAssistant::loadSnapperUI() {
 
     // Load the list of valid configs
     m_ui->comboBox_snapperConfigs->clear();
+    m_ui->comboBox_snapperSubvols->clear();
     m_ui->comboBox_snapperConfigSettings->clear();
 
+    // Load the configs in the snapper new subtab and the snapper settings tabs
     const QStringList configs = m_snapper->configs();
     for (const QString &config : configs) {
         m_ui->comboBox_snapperConfigs->addItem(config);
         m_ui->comboBox_snapperConfigSettings->addItem(config);
+    }
+
+    // Load the subvols in the snapper restore subtab
+    const QStringList subvols = m_snapper->subvolKeys();
+    for (const QString &subvol : subvols) {
+        m_ui->comboBox_snapperSubvols->addItem(subvol);
     }
 }
 
@@ -276,68 +260,94 @@ void BtrfsAssistant::populateSnapperConfigSettings() {
 
 void BtrfsAssistant::populateSnapperGrid() {
     // We need to the locale for displaying the date/time
-    QLocale locale = QLocale::system();
+    const QLocale locale = QLocale::system();
 
-    if (m_ui->checkBox_snapperRestoreMode->isChecked()) {
-        QString config = m_ui->comboBox_snapperConfigs->currentText();
+    const QString config = m_ui->comboBox_snapperConfigs->currentText();
 
-        // Clear the table and set the headers
-        m_ui->tableWidget_snapper->clear();
-        m_ui->tableWidget_snapper->setColumnCount(5);
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Subvolume")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Type")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
+    // Clear the table and set the headers
+    m_ui->tableWidget_snapperNew->clear();
+    m_ui->tableWidget_snapperNew->setColumnCount(4);
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Type")));
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperNew->sortByColumn(0, Qt::DescendingOrder);
 
-        QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
-        // Make sure there is something to populate
-        if (subvols.isEmpty())
-            return;
+    // Disabling sorting while populating the grid is required or the grid won't repopulate properly
+    m_ui->tableWidget_snapperNew->setSortingEnabled(false);
 
-        // Populate the table
-        m_ui->tableWidget_snapper->setRowCount(subvols.size());
-        for (int i = 0; i < subvols.size(); i++) {
-            QTableWidgetItem *number = new QTableWidgetItem(subvols.at(i).snapshotNum);
-            number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
-            m_ui->tableWidget_snapper->setItem(i, 0, number);
-            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
-            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(locale.toString(subvols.at(i).time, QLocale::ShortFormat)));
-            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
-            m_ui->tableWidget_snapper->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
-        }
-    } else {
-        QString config = m_ui->comboBox_snapperConfigs->currentText();
 
-        // Clear the table and set the headers
-        m_ui->tableWidget_snapper->clear();
-        m_ui->tableWidget_snapper->setColumnCount(4);
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Type")));
-        m_ui->tableWidget_snapper->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
-
-        // Make sure there is something to populate
-        QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);
-        if (snapshots.isEmpty()) {
-            return;
-        }
-
-        // Populate the table
-        m_ui->tableWidget_snapper->setRowCount(snapshots.size());
-        for (int i = 0; i < snapshots.size(); i++) {
-            QTableWidgetItem *number = new QTableWidgetItem(snapshots.at(i).number);
-            number->setData(Qt::DisplayRole, snapshots.at(i).number);
-            m_ui->tableWidget_snapper->setItem(i, 0, number);
-            m_ui->tableWidget_snapper->setItem(i, 1, new QTableWidgetItem(locale.toString(snapshots.at(i).time, QLocale::ShortFormat)));
-            m_ui->tableWidget_snapper->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
-            m_ui->tableWidget_snapper->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
-        }
+    // Make sure there is something to populate
+    QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);
+    if (snapshots.isEmpty()) {
+        return;
     }
 
-    // Resize the colums to make everything fit
-    m_ui->tableWidget_snapper->resizeColumnsToContents();
-    m_ui->tableWidget_snapper->sortItems(0, Qt::DescendingOrder);
+    // Populate the table
+    m_ui->tableWidget_snapperNew->setRowCount(snapshots.size());
+    for (int i = 0; i < snapshots.size(); i++) {
+        // Ensure proper sorting of numbers and dates
+        QTableWidgetItem *number = new QTableWidgetItem(snapshots.at(i).number);
+        number->setData(Qt::DisplayRole, snapshots.at(i).number);
+        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(snapshots.at(i).time, QLocale::ShortFormat));
+        snapTime->setData(Qt::DisplayRole, snapshots.at(i).time);
+
+        m_ui->tableWidget_snapperNew->setItem(i, 0, number);
+        m_ui->tableWidget_snapperNew->setItem(i, 1, snapTime);
+        m_ui->tableWidget_snapperNew->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
+        m_ui->tableWidget_snapperNew->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
+    }
+
+    // Re-enable sorting and resize the colums to make everything fit
+    m_ui->tableWidget_snapperNew->setSortingEnabled(true);
+    m_ui->tableWidget_snapperNew->resizeColumnsToContents();
+}
+
+void BtrfsAssistant::populateSnapperRestoreGrid() {
+    // We need to the locale for displaying the date/time
+    const QLocale locale = QLocale::system();
+
+    // Get the name of the subvolume to list in the grid
+    const QString config = m_ui->comboBox_snapperSubvols->currentText();
+
+    // Clear the table and set the headers
+    m_ui->tableWidget_snapperRestore->clear();
+    m_ui->tableWidget_snapperRestore->setColumnCount(5);
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(0,
+                                                              new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Subvolume")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Type")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperRestore->sortByColumn(0, Qt::DescendingOrder);
+
+    // Disabling sorting while populating the grid is required or the grid won't repopulate properly - This must be Qt bug, right?
+    m_ui->tableWidget_snapperRestore->setSortingEnabled(false);
+
+    QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
+    // Make sure there is something to populate
+    if (subvols.isEmpty())
+        return;
+
+    // Populate the table
+    m_ui->tableWidget_snapperRestore->setRowCount(subvols.count());
+    for (int i = 0; i < subvols.count(); i++) {
+        // Ensure proper sorting of numbers and dates
+        QTableWidgetItem *number = new QTableWidgetItem(subvols.at(i).snapshotNum);
+        number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
+        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(subvols.at(i).time, QLocale::ShortFormat));
+        snapTime->setData(Qt::DisplayRole, subvols.at(i).time);
+
+        m_ui->tableWidget_snapperRestore->setItem(i, 0, number);
+        m_ui->tableWidget_snapperRestore->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
+        m_ui->tableWidget_snapperRestore->setItem(i, 2, snapTime);
+        m_ui->tableWidget_snapperRestore->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
+        m_ui->tableWidget_snapperRestore->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
+    }
+
+    // Re-enable sorting and resize the colums to make everything fit
+    m_ui->tableWidget_snapperRestore->setSortingEnabled(true);
+    m_ui->tableWidget_snapperRestore->resizeColumnsToContents();
 }
 
 void BtrfsAssistant::refreshBtrfsUi() {
@@ -351,7 +361,7 @@ void BtrfsAssistant::refreshBtrfsUi() {
 
     // Repopulate data using the first detected btrfs filesystem.
     populateBtrfsUi(m_ui->comboBox_btrfsDevice->currentText());
-    refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText());
+    refreshSubvolListUi();
 }
 
 void BtrfsAssistant::refreshSnapperServices() {
@@ -367,27 +377,34 @@ void BtrfsAssistant::refreshSnapperServices() {
     }
 }
 
-void BtrfsAssistant::refreshSubvolListUi(const QString &uuid) {
-    // Reload the subvolumes list
-    m_btrfs->subvolModel()->setIncludeSnapshots(m_ui->checkBox_subvolIncludeSnapshots->isChecked());
+void BtrfsAssistant::refreshSubvolListUi() {
 
-    // Remove this when https://gitlab.com/btrfs-assistant/btrfs-assistant/-/merge_requests/11 is merged!!
-    m_btrfs->switchModelUuid(uuid);
+    bool showQuota = false;
 
-    m_ui->tableView_subvols->horizontalHeader()->setStretchLastSection(true);
-    m_ui->tableView_subvols->resizeColumnsToContents();
-    m_ui->tableView_subvols->resizeRowsToContents();
+    for (const QString &uuid : m_btrfs->listFilesystems()) {
+        // Check to see if the size related colums should be hidden
+        if (Btrfs::isQuotaEnabled(Btrfs::mountRoot(uuid))) {
+            showQuota = true;
+        }
+    }
+
+    // Update table sizes and columns based on subvolumes
     m_ui->tableView_subvols->verticalHeader()->hide();
-    m_ui->tableView_subvols->hideColumn(SubvolHeader::subvolId);
-    m_ui->tableView_subvols->hideColumn(SubvolHeader::parentId);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Id);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ParentId);
 
-    // Check to see if the size related colums should be hidden
-    if (Settings::getInstance().value("allow_temp_quota", "") != "true" && !Btrfs::isQuotaEnabled(Btrfs::mountRoot(uuid))) {
-        m_ui->tableView_subvols->hideColumn(SubvolHeader::size);
-        m_ui->tableView_subvols->hideColumn(SubvolHeader::exclusive);
+    // Hide quota data if no columns supported it
+    if (!showQuota) {
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Size);
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ExclusiveSize);
     } else {
-        m_ui->tableView_subvols->showColumn(SubvolHeader::size);
-        m_ui->tableView_subvols->showColumn(SubvolHeader::exclusive);
+        m_ui->tableView_subvols->showColumn(SubvolumeModel::Column::Size);
+        m_ui->tableView_subvols->showColumn(SubvolumeModel::Column::ExclusiveSize);
+    }
+
+    // If there is only a single filesystem then hide the Uuid column
+    if (m_ui->comboBox_btrfsDevice->count() == 1) {
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Uuid);
     }
 }
 
@@ -446,7 +463,11 @@ void BtrfsAssistant::setup() {
     }
 
     // Connect the subvolume view
-    m_ui->tableView_subvols->setModel(m_btrfs->subvolModel());
+    m_ui->tableView_subvols->setModel(m_subvolumeModel);
+    m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Uuid, QHeaderView::ResizeToContents);
+    m_ui->tableView_subvols->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     // Populate the UI
     refreshBtrfsUi();
@@ -457,9 +478,8 @@ void BtrfsAssistant::setup() {
             m_ui->comboBox_snapperConfigs->setCurrentText("root");
         }
         populateSnapperGrid();
+        populateSnapperRestoreGrid();
         populateSnapperConfigSettings();
-        m_ui->pushButton_snapperRestore->setEnabled(false);
-        m_ui->pushButton_snapperBrowse->setEnabled(false);
     }
 
     // Populate or hide btrfs maintenance tab depending on if system has btrfs maintenance units
@@ -469,7 +489,6 @@ void BtrfsAssistant::setup() {
         // Hide the btrfs maintenance tab
         m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_btrfsmaintenance), false);
     }
-
 }
 
 void BtrfsAssistant::snapperTimelineEnable(bool enable) {
@@ -497,38 +516,31 @@ void BtrfsAssistant::on_checkBox_bmDefrag_clicked(bool checked) { m_ui->listWidg
 
 void BtrfsAssistant::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bmScrub->setDisabled(checked); }
 
-void BtrfsAssistant::on_checkBox_subvolIncludeSnapshots_clicked() {
-    m_btrfs->loadSubvols(m_ui->comboBox_btrfsDevice->currentText());
-    refreshSubvolListUi(m_ui->comboBox_btrfsDevice->currentText());
-}
-
 void BtrfsAssistant::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
-void BtrfsAssistant::on_checkBox_snapperRestoreMode_clicked(bool checked) {
-    enableRestoreMode(checked);
-
-    m_ui->checkBox_snapperRestoreMode->clearFocus();
-}
-
-void BtrfsAssistant::on_comboBox_btrfsDevice_activated(int) {
+void BtrfsAssistant::on_comboBox_btrfsDevice_activated(int index) {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
     if (!uuid.isEmpty()) {
-        m_btrfs->loadSubvols(uuid);
         populateBtrfsUi(uuid);
-        refreshSubvolListUi(uuid);
+        refreshSubvolListUi();
     }
     m_ui->comboBox_btrfsDevice->clearFocus();
 }
 
-void BtrfsAssistant::on_comboBox_snapperConfigSettings_activated(int) {
+void BtrfsAssistant::on_comboBox_snapperConfigSettings_activated(int index) {
     populateSnapperConfigSettings();
 
     m_ui->comboBox_snapperConfigSettings->clearFocus();
 }
 
-void BtrfsAssistant::on_comboBox_snapperConfigs_activated(int) {
+void BtrfsAssistant::on_comboBox_snapperConfigs_activated(int index) {
     populateSnapperGrid();
     m_ui->comboBox_snapperConfigs->clearFocus();
+}
+
+void BtrfsAssistant::on_comboBox_snapperSubvols_activated(int index) {
+    populateSnapperRestoreGrid();
+    m_ui->comboBox_snapperSubvols->clearFocus();
 }
 
 void BtrfsAssistant::on_pushButton_bmApply_clicked() {
@@ -614,8 +626,8 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
         return;
     }
     QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
-    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::subvolName)).toString();
-    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolHeader::uuid)).toString();
+    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Name)).toString();
+    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Uuid)).toString();
 
     // Make sure the everything is good in the UI
     if (subvol.isEmpty() || uuid.isEmpty()) {
@@ -657,7 +669,8 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
 
     if (success) {
         m_btrfs->loadSubvols(uuid);
-        refreshSubvolListUi(uuid);
+        m_sourceModel->load(m_btrfs->volumes());
+        refreshSubvolListUi();
     } else {
         displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
     }
@@ -667,39 +680,32 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
 
 void BtrfsAssistant::on_pushButton_btrfsRefreshData_clicked() {
     m_btrfs->loadVolumes();
+    m_sourceModel->load(m_btrfs->volumes());
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
 }
 
 void BtrfsAssistant::on_pushButton_subvolRefresh_clicked() {
-    QString uuid = m_ui->comboBox_btrfsDevice->currentText();
 
-    if (uuid.isEmpty()) {
-        displayError(tr("No device selected") + "\n" + tr("Please Select a device first"));
-        return;
+    for (const QString &uuid : m_btrfs->listFilesystems()) {
+        m_btrfs->loadSubvols(uuid);
     }
 
-    m_btrfs->loadSubvols(uuid);
-    refreshSubvolListUi(uuid);
+    m_sourceModel->load(m_btrfs->volumes());
+    refreshSubvolListUi();
 
     m_ui->pushButton_subvolRefresh->clearFocus();
 }
 
 void BtrfsAssistant::on_pushButton_snapperRestore_clicked() {
-    // First lets double check to ensure we are in restore mode
-    if (!m_ui->checkBox_snapperRestoreMode->isChecked()) {
-        displayError(tr("Please enter restore mode before trying to restore a snapshot"));
-        return;
-    }
-
-    if (m_ui->tableWidget_snapper->currentRow() == -1) {
+    if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
         return;
     }
 
-    QString config = m_ui->comboBox_snapperConfigs->currentText();
-    QString subvol = m_ui->tableWidget_snapper->item(m_ui->tableWidget_snapper->currentRow(), 1)->text();
+    QString config = m_ui->comboBox_snapperSubvols->currentText();
+    QString subvol = m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), 1)->text();
 
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(config);
 
@@ -718,19 +724,19 @@ void BtrfsAssistant::on_pushButton_snapperRestore_clicked() {
 }
 
 void BtrfsAssistant::on_pushButton_snapperBrowse_clicked() {
-    QString target = m_ui->comboBox_snapperConfigs->currentText();
-    if (m_ui->tableWidget_snapper->currentRow() == -1) {
+    QString target = m_ui->comboBox_snapperSubvols->currentText();
+    if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError("You must select snapshot to browse!");
         return;
     }
 
-    QString subvolPath = m_ui->tableWidget_snapper->item(m_ui->tableWidget_snapper->currentRow(), 1)->text();
+    QString subvolPath = m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), 1)->text();
 
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(target);
 
     // This shouldn't be possible but check anyway
     if (snapperSubvols.isEmpty()) {
-        displayError(tr("Failed to restore snapshot"));
+        displayError(tr("Failed to find snapshot to browse"));
         return;
     }
 
@@ -765,31 +771,36 @@ void BtrfsAssistant::on_pushButton_snapperCreate_clicked() {
     }
 
     // OK, let's go ahead and take the snapshot
-    m_snapper->createSnapshot(config, snapshotDescription);
+    const SnapperResult result = m_snapper->createSnapshot(config, snapshotDescription);
+
+    if (result.exitCode != 0) {
+        displayError(result.outputList.at(0));
+    }
 
     // Reload the data and refresh the UI
     m_snapper->load();
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
+    populateSnapperRestoreGrid();
 
     m_ui->pushButton_snapperCreate->clearFocus();
 }
 
 void BtrfsAssistant::on_pushButton_snapperDelete_clicked() {
-    if (m_ui->tableWidget_snapper->currentRow() == -1) {
+    if (m_ui->tableWidget_snapperNew->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
         return;
     }
 
     // Get all the rows that were selected
-    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapper->selectedItems();
+    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapperNew->selectedItems();
 
     QSet<QString> numbers;
 
     // Get the snapshot numbers for the selected rows
     for (const QTableWidgetItem *item : list) {
-        numbers.insert(m_ui->tableWidget_snapper->item(item->row(), 0)->text());
+        numbers.insert(m_ui->tableWidget_snapperNew->item(item->row(), 0)->text());
     }
 
     // Ask for confirmation
@@ -807,7 +818,10 @@ void BtrfsAssistant::on_pushButton_snapperDelete_clicked() {
         }
 
         // Delete the snapshot
-        m_snapper->deleteSnapshot(config, number.toInt());
+        SnapperResult result = m_snapper->deleteSnapshot(config, number.toInt());
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        }
     }
 
     // Reload the data and refresh the UI
@@ -815,6 +829,7 @@ void BtrfsAssistant::on_pushButton_snapperDelete_clicked() {
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
+    populateSnapperRestoreGrid();
 
     m_ui->pushButton_snapperDelete->clearFocus();
 }
@@ -837,7 +852,11 @@ void BtrfsAssistant::on_pushButton_snapperDeleteConfig_clicked() {
     }
 
     // Delete the config
-    m_snapper->deleteConfig(name);
+    SnapperResult result = m_snapper->deleteConfig(name);
+
+    if (result.exitCode != 0) {
+        displayError(result.outputList.at(0));
+    }
 
     // Reload the UI with the new list of configs
     m_snapper->loadConfig(name);
@@ -908,9 +927,13 @@ void BtrfsAssistant::on_pushButton_snapperSaveConfig_clicked() {
         configMap.insert("TIMELINE_LIMIT_YEARLY", QString::number(m_ui->spinBox_snapperYearly->value()));
         configMap.insert("NUMBER_LIMIT", QString::number(m_ui->spinBox_snapperNumber->value()));
 
-        m_snapper->setConfig(name, configMap);
+        SnapperResult result = m_snapper->setConfig(name, configMap);
 
-        QMessageBox::information(0, tr("Snapper"), tr("Changes saved"));
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        } else {
+            QMessageBox::information(0, tr("Snapper"), tr("Changes saved"));
+        }
 
         loadSnapperUI();
         populateSnapperGrid();
@@ -934,7 +957,11 @@ void BtrfsAssistant::on_pushButton_snapperSaveConfig_clicked() {
         }
 
         // Create the new config
-        m_snapper->createConfig(name, m_ui->comboBox_snapperPath->currentText());
+        SnapperResult result = m_snapper->createConfig(name, m_ui->comboBox_snapperPath->currentText());
+
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        }
 
         // Reload the UI
         m_snapper->loadConfig(name);
@@ -962,19 +989,6 @@ void BtrfsAssistant::on_pushButton_snapperUnitsApply_clicked() {
     m_ui->pushButton_snapperUnitsApply->clearFocus();
 }
 
-void BtrfsAssistant::setEnableQuotaButtonStatus() {
-    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
-        return;
-    }
-    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
-
-    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
-        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
-    } else {
-        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
-    }
-}
-
 void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
@@ -988,4 +1002,27 @@ void BtrfsAssistant::on_pushButton_enableQuota_clicked() {
     }
 
     setEnableQuotaButtonStatus();
+}
+
+void BtrfsAssistant::on_toolButton_snapperNewRefresh_clicked() {
+    m_snapper->load();
+    populateSnapperGrid();
+}
+
+void BtrfsAssistant::on_toolButton_snapperRestoreRefresh_clicked() {
+    m_snapper->loadSubvols();
+    populateSnapperRestoreGrid();
+}
+
+void BtrfsAssistant::setEnableQuotaButtonStatus() {
+    if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
+        return;
+    }
+    const QString mountpoint = Btrfs::mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+
+    if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
+        m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));
+    } else {
+        m_ui->pushButton_enableQuota->setText(tr("Enable Btrfs Quotas"));
+    }
 }

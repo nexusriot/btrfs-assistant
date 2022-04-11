@@ -1,8 +1,9 @@
 #include "System.h"
 
 #include <QProcess>
+#include <unistd.h>
 
-System::System(QObject *parent) : QObject{parent} {}
+bool System::checkRootUid() { return geteuid() == 0; }
 
 bool System::enableService(QString serviceName, bool enable) {
     int exitCode;

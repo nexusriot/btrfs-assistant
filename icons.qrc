@@ -1,11 +1,12 @@
 <RCC>
-    <qresource prefix="/assets">
-        <file>assets/plus.png</file>
-        <file>assets/filebrowse.png</file>
-        <file>assets/minus.png</file>
-        <file>assets/reload.png</file>
-    </qresource>
-    <qresource prefix="/">
-        <file>btrfs-assistant.png</file>
-    </qresource>
+  <qresource prefix="/assets">
+    <file>assets/restore.png</file>
+    <file>assets/plus.png</file>
+    <file>assets/filebrowse.png</file>
+    <file>assets/minus.png</file>
+    <file>assets/reload.png</file>
+  </qresource>
+  <qresource prefix="/">
+    <file>btrfs-assistant.png</file>
+  </qresource>
 </RCC>

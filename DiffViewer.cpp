@@ -1,5 +1,6 @@
 #include "DiffViewer.h"
 
+#include <QDialog>
 #include <QDir>
 #include <QMessageBox>
 

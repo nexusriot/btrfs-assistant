@@ -1,8 +1,6 @@
 #ifndef BTRFS_H
 #define BTRFS_H
 
-#include "SubvolModel.h"
-
 #include <QDir>
 #include <QMap>
 #include <QObject>
@@ -13,6 +11,15 @@ struct RestoreResult {
     bool success = false;
     QString failureMessage;
     QString backupSubvolName;
+};
+
+struct Subvolume {
+    int parentId = 0;
+    int subvolId = 0;
+    QString subvolName;
+    QString uuid;
+    long size = 0;
+    long exclusive = 0;
 };
 
 struct BtrfsMeta {
@@ -95,6 +102,11 @@ class Btrfs : public QObject {
      */
     static bool isTimeshift(const QString &subvolume) { return subvolume.contains("timeshift-btrfs"); }
 
+    /** @brief Returns true if @p subvolume is a docker or podman subvolume
+     *
+     */
+    static bool isContainer(const QString &subvolume) { return subvolume.contains("/btrfs/subvolumes"); }
+
     /** @brief Returns a QStringList of UUIDs containing Btrfs filesystems
      */
     static const QStringList listFilesystems();
@@ -170,11 +182,6 @@ class Btrfs : public QObject {
     const int subvolId(const QString &uuid, const QString &subvolName) const;
 
     /**
-     * @brief Returns a pointer to the subvol model
-     */
-    SubvolModel *subvolModel() { return &m_subvolModel; }
-
-    /**
      * @brief Returns the name of the subvol with id @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
      * @param subvolId - An int with the ID of the subvolume to find the name for
@@ -215,15 +222,12 @@ class Btrfs : public QObject {
     void stopScrubRoot(const QString &uuid);
 
     /**
-     * @brief Remove this when https://gitlab.com/btrfs-assistant/btrfs-assistant/-/merge_requests/11 is merged
-     * @param uuid
+     * @brief Provides access to the full metadata for all btrfs volumes
+     * @return A pointer to the volume data
      */
-    void switchModelUuid(const QString &uuid);
+    const QMap<QString, BtrfsMeta> *volumes() { return &m_volumes; }
 
   private:
-    SubvolModel m_subvolModel;
-    // Holds the subvol sizes, the outer key is UUID, the inner key is subvolId, element 0 is size and element 1 is exclusive
-    QMap<QString, QMap<int, QVector<long>>> m_subvolSize;
     // A map of BtrfsMeta.  The key is UUID
     QMap<QString, BtrfsMeta> m_volumes;
 

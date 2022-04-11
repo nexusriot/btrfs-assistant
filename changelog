@@ -1,5 +1,17 @@
 ### Btrfs Assistant
 
+1.4 - TBD
+* Redesign the layout of the Subvolume tab(Contributed by Austin Horstman)
+* Modify the subvolume tab so it shows the subvolumes on all devices(Contributed by Austin Horstman)
+* The subvolume tab now can filter container subvolumes(With contributions from Adam Sowa)
+* The Subvolume grid is now sortable and the backend was optimized(Contributed by Adam Sowa)
+* Reworked the Snapper tab into separate tabs for New/Delete and Browse/Restore removing the Restore Mode checkbox
+* The grids on the Snapper tab now support sorting by any field
+* Renamed "Btrfs" tab to "Overview" and "Snapper - Settings" to "Snapper Settings"
+* Add refresh buttons to Snapper tabs
+* When snapper commands fail properly report them back to the user
+* Fix Qt warnings when running btrfs-assistant --version
+
 1.3 - 2022-04-08
 * The subvolume tab now shows the size and exclusive space used by each subvolume
 * Add button to enable and disable Btrfs quota support
