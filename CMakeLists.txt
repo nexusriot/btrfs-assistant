@@ -17,6 +17,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt5 COMPONENTS Widgets LinguistTools REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools REQUIRED)
 
+find_library(BTRFSUTIL_LIB btrfsutil)
+
 file(GLOB TS_FILES ${PROJECT_SOURCE_DIR}/translations/*.ts)
 
 configure_file(config.h.in config.h @ONLY)
@@ -52,4 +54,4 @@ install(FILES org.btrfs-assistant.pkexec.policy DESTINATION ${CMAKE_INSTALL_DATA
 install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-target_link_libraries(btrfs-assistant-bin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(btrfs-assistant-bin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${BTRFSUTIL_LIB})

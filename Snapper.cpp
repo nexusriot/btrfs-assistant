@@ -29,7 +29,7 @@ void Snapper::createSubvolMap() {
         if (!m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
             const int snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
             int targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
-            QString targetSubvol = m_btrfs->subvolName(uuid, targetId);
+            QString targetSubvol = m_btrfs->subvolumeName(uuid, targetId);
 
             // Get the subvolid of the target and do some additional error checking
             if (targetId == 0 || targetSubvol.isEmpty()) {
@@ -291,7 +291,7 @@ void Snapper::loadSubvols() {
                 if (snapshotSubvol.endsWith(".snapshots")) {
                     const int targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
                     const int parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
-                    targetSubvol = m_btrfs->subvolName(uuid, parentId);
+                    targetSubvol = m_btrfs->subvolumeName(uuid, parentId);
                 } else {
                     continue;
                 }
@@ -351,8 +351,8 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     RestoreResult restoreResult;
 
     // Get the subvol names associated with the IDs
-    const QString sourceName = m_btrfs->subvolName(uuid, sourceId);
-    const QString targetName = m_btrfs->subvolName(uuid, targetId);
+    const QString sourceName = m_btrfs->subvolumeName(uuid, sourceId);
+    const QString targetName = m_btrfs->subvolumeName(uuid, targetId);
 
     // Ensure the root of the partition is mounted and get the mountpoint
     QString mountpoint = Btrfs::mountRoot(uuid);
@@ -362,8 +362,6 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     // We are out of excuses, time to do the restore....carefully
     QString targetBackup = "restore_backup_" + targetName + "_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
     restoreResult.backupSubvolName = targetBackup;
-
-    QDir dirWorker;
 
     // Find the children before we start
     const QStringList children = m_btrfs->children(targetId, uuid);
@@ -384,14 +382,11 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     }
 
     // Place a snapshot of the source where the target was
-    System::runCmd("btrfs",
-                   QStringList() << "subvolume"
-                                 << "snapshot" << QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume)
-                                 << QDir::cleanPath(mountpoint + QDir::separator() + targetName),
-                   false);
+    btrfs_util_error returnCode =
+        btrfs_util_create_snapshot(QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume).toUtf8(),
+                                   QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8(), 0, NULL, NULL);
 
-    // Make sure it worked
-    if (!dirWorker.exists(QDir::cleanPath(mountpoint + QDir::separator() + targetName))) {
+    if (returnCode != BTRFS_UTIL_OK) {
         // That failed, try to put the old one back
         Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetBackup),
                                QDir::cleanPath(mountpoint + QDir::separator() + targetName));

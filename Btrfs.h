@@ -7,6 +7,10 @@
 #include <QRegularExpression>
 #include <QTime>
 
+#include "btrfsutil.h"
+
+#define MAX_PATH 4096
+
 struct RestoreResult {
     bool success = false;
     QString failureMessage;
@@ -187,7 +191,7 @@ class Btrfs : public QObject {
      * @param subvolId - An int with the ID of the subvolume to find the name for
      * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
      */
-    const QString subvolName(const QString &uuid, const int subvolId) const;
+    const QString subvolumeName(const QString &uuid, const int subvolId) const;
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId

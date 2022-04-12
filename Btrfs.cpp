@@ -22,16 +22,27 @@ const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
 }
 
 const QStringList Btrfs::children(const int subvolId, const QString &uuid) const {
-    QStringList children;
-    if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        const QList<int> keys = m_volumes[uuid].subvolumes.keys();
-        for (const int &key : keys) {
-            if (m_volumes[uuid].subvolumes[key].parentId == subvolId) {
-                children.append(m_volumes[uuid].subvolumes[key].subvolName);
-            }
-        }
+    const QString mountpoint = mountRoot(uuid);
+    btrfs_util_subvolume_iterator *iter;
+
+    btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toUtf8(), 5, 0, &iter);
+    if (returnCode != BTRFS_UTIL_OK) {
+        return QStringList();
     }
 
+    QStringList children;
+
+    while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
+        char *path = new char[MAX_PATH];
+        struct btrfs_util_subvolume_info subvolInfo;
+        returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
+        if (returnCode == BTRFS_UTIL_OK && subvolInfo.parent_id == subvolId) {
+            children.append(path);
+        }
+        delete[] path;
+    }
+
+    btrfs_util_destroy_subvolume_iterator(iter);
     return children;
 }
 
@@ -44,8 +55,8 @@ const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
 
             // Everything checks out, lets delete the subvol
             const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvol.subvolName);
-            Result result = System::runCmd("btrfs", {"subvolume", "delete", subvolPath}, true);
-            if (result.exitCode == 0) {
+            btrfs_util_error returnCode = btrfs_util_delete_subvolume(subvolPath.toUtf8(), 0);
+            if (returnCode == BTRFS_UTIL_OK) {
                 return true;
             }
         }
@@ -89,8 +100,6 @@ const QStringList Btrfs::listMountpoints() {
     for (const QString &line : output) {
         if (line.startsWith("btrfs")) {
             QString mountpoint = line.simplified().split(' ').at(1).trimmed();
-            QStringList crap = line.split(' ');
-            qDebug() << crap;
             if (!mountpoint.isEmpty()) {
                 mountpoints.append(mountpoint);
             }
@@ -156,29 +165,36 @@ void Btrfs::loadSubvols(const QString &uuid) {
     if (isUuidLoaded(uuid)) {
         m_volumes[uuid].subvolumes.clear();
 
-        QString mountpoint = mountRoot(uuid);
+        const QString mountpoint = mountRoot(uuid);
+        btrfs_util_subvolume_iterator *iter;
 
-        QStringList output = System::runCmd("btrfs", {"subvolume", "list", mountpoint}, false).output.split('\n');
-        QMap<int, Subvolume> subvols;
-        for (const QString &line : qAsConst(output)) {
-            if (!line.isEmpty()) {
-                Subvolume subvol;
-                int subvolId = line.split(' ').at(1).toInt();
-                subvol.subvolName = line.split(' ').at(8).trimmed();
-                subvol.parentId = line.split(' ').at(6).toInt();
-                subvol.subvolId = subvolId;
-                subvol.uuid = uuid;
-                subvols[subvolId] = subvol;
-            }
+        btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toUtf8(), 5, 0, &iter);
+        if (returnCode != BTRFS_UTIL_OK) {
+            return;
         }
+
+        QMap<int, Subvolume> subvols;
+
+        while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
+            char *path = new char[MAX_PATH];
+            struct btrfs_util_subvolume_info subvolInfo;
+            returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
+            if (returnCode == BTRFS_UTIL_OK) {
+                subvols[subvolInfo.id].subvolName = path;
+                subvols[subvolInfo.id].parentId = subvolInfo.parent_id;
+                subvols[subvolInfo.id].subvolId = subvolInfo.id;
+                subvols[subvolInfo.id].uuid = uuid;
+            }
+            delete[] path;
+        }
+        btrfs_util_destroy_subvolume_iterator(iter);
+
         m_volumes[uuid].subvolumes = subvols;
         loadQgroups(uuid);
     }
 }
 
 void Btrfs::loadVolumes() {
-    m_volumes.clear();
-
     QStringList uuidList = listFilesystems();
 
     // Loop through btrfs devices and retrieve filesystem usage
@@ -271,22 +287,22 @@ void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable) {
 }
 
 const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const {
-    if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
+    const QString mountpoint = mountRoot(uuid);
+    if (mountpoint.isEmpty()) {
         return 0;
     }
 
-    const QMap<int, Subvolume> subvols = m_volumes[uuid].subvolumes;
-    int subvolId = 0;
-    QList<int> subvolIds = subvols.keys();
-    for (const int &subvol : subvolIds) {
-        if (subvols[subvol].subvolName.trimmed() == subvolName.trimmed()) {
-            subvolId = subvol;
-        }
+    const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolName);
+    uint64_t id;
+    btrfs_util_error returnCode = btrfs_util_subvolume_id(subvolPath.toUtf8(), &id);
+    if (returnCode == BTRFS_UTIL_OK) {
+        return id;
+    } else {
+        return 0;
     }
-    return subvolId;
 }
 
-const QString Btrfs::subvolName(const QString &uuid, const int subvolId) const {
+const QString Btrfs::subvolumeName(const QString &uuid, const int subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
         return m_volumes[uuid].subvolumes[subvolId].subvolName;
     } else {
