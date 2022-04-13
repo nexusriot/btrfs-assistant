@@ -1,6 +1,7 @@
 #ifndef SNAPPER_H
 #define SNAPPER_H
 
+#include <QDateTime>
 #include <QObject>
 
 #include "Btrfs.h"

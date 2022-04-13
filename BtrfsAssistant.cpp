@@ -1,12 +1,17 @@
 #include "BtrfsAssistant.h"
+#include "Btrfs.h"
+#include "BtrfsMaintenance.h"
 #include "FileBrowser.h"
 #include "Settings.h"
+#include "Snapper.h"
+#include "SubvolModel.h"
 #include "System.h"
 #include "config.h"
 #include "ui_btrfs-assistant.h"
 
 #include <QDebug>
 #include <QInputDialog>
+#include <QMessageBox>
 #include <QTimer>
 
 /**
@@ -275,7 +280,6 @@ void BtrfsAssistant::populateSnapperGrid() {
 
     // Disabling sorting while populating the grid is required or the grid won't repopulate properly
     m_ui->tableWidget_snapperNew->setSortingEnabled(false);
-
 
     // Make sure there is something to populate
     QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);

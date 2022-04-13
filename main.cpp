@@ -1,4 +1,5 @@
 #include "BtrfsAssistant.h"
+#include "BtrfsMaintenance.h"
 #include "Cli.h"
 #include "Settings.h"
 
