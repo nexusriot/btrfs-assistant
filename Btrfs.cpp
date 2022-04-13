@@ -3,8 +3,11 @@
 #include "System.h"
 #include "btrfsutil.h"
 
+#include <btrfsutil.h>
+#include <limits.h> // for PATH_MAX
 #include <QDebug>
 #include <QDir>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QRegularExpression>
 
@@ -35,7 +38,7 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
     QStringList children;
 
     while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-        char *path = new char[MAX_PATH];
+        char *path = new char[PATH_MAX];
         struct btrfs_util_subvolume_info subvolInfo;
         returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
         if (returnCode == BTRFS_UTIL_OK && subvolInfo.parent_id == subvolId) {
@@ -178,7 +181,7 @@ void Btrfs::loadSubvols(const QString &uuid) {
         QMap<int, Subvolume> subvols;
 
         while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-            char *path = new char[MAX_PATH];
+            char *path = new char[PATH_MAX];
             struct btrfs_util_subvolume_info subvolInfo;
             returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
             if (returnCode == BTRFS_UTIL_OK) {

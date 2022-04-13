@@ -3,9 +3,6 @@
 
 #include <QMap>
 #include <QObject>
-#include <QTime>
-
-#define MAX_PATH 4096
 
 struct RestoreResult {
     bool success = false;

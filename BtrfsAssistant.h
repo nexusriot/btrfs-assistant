@@ -2,13 +2,15 @@
 #define BTRFSASSISTANT_H
 
 #include <QMainWindow>
-#include <QMessageBox>
 #include <QSet>
 
-#include "Btrfs.h"
-#include "BtrfsMaintenance.h"
-#include "Snapper.h"
-#include "SubvolModel.h"
+class QCheckBox;
+
+class Btrfs;
+class BtrfsMaintenance;
+class Snapper;
+class SubvolumeFilterModel;
+class SubvolumeModel;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
