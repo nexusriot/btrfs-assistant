@@ -6,6 +6,8 @@
 #include "Btrfs.h"
 #include "System.h"
 
+#define DEFAULT_SNAP_PATH "/.snapshots"
+
 struct SnapperResult {
     int exitCode;
     QStringList outputList;

@@ -6,6 +6,7 @@
 #include <QCommandLineParser>
 #include <QDebug>
 #include <QDesktopWidget>
+#include <QFile>
 #include <QTranslator>
 
 int main(int argc, char *argv[]) {

@@ -1,10 +1,12 @@
 #include "Btrfs.h"
 #include "Settings.h"
 #include "System.h"
+#include "btrfsutil.h"
 
 #include <QDebug>
 #include <QDir>
 #include <QTemporaryDir>
+#include <QRegularExpression>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
@@ -310,12 +312,32 @@ const QString Btrfs::subvolumeName(const QString &uuid, const int subvolId) cons
     }
 }
 
+const QString Btrfs::subvolumeName(const QString &path) const {
+    auto subvolNamePtr = std::make_unique<char[]>(MAX_PATH);
+    auto subvolName = subvolNamePtr.get();
+    btrfs_util_error returnCode = btrfs_util_subvolume_path(path.toLocal8Bit(), 0, &subvolName);
+    if (returnCode != BTRFS_UTIL_OK) {
+        return QString();
+    }
+    return QString(subvolName);
+}
+
 const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
         return m_volumes[uuid].subvolumes[subvolId].parentId;
     } else {
         return 0;
     }
+}
+
+const int Btrfs::subvolParent(const QString &path) const {
+    struct btrfs_util_subvolume_info subvolInfo;
+    btrfs_util_error returnCode = btrfs_util_subvolume_info(path.toLocal8Bit(), 0, &subvolInfo);
+    if (returnCode != BTRFS_UTIL_OK) {
+        return 0;
+    }
+
+    return subvolInfo.parent_id;
 }
 
 bool Btrfs::isUuidLoaded(const QString &uuid) {

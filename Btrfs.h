@@ -1,13 +1,9 @@
 #ifndef BTRFS_H
 #define BTRFS_H
 
-#include <QDir>
 #include <QMap>
 #include <QObject>
-#include <QRegularExpression>
 #include <QTime>
-
-#include "btrfsutil.h"
 
 #define MAX_PATH 4096
 
@@ -194,12 +190,26 @@ class Btrfs : public QObject {
     const QString subvolumeName(const QString &uuid, const int subvolId) const;
 
     /**
+     * @brief Returns the name of the subvol at @p path
+     * @param path - An absolute path to a subvolume
+     * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
+     */
+    const QString subvolumeName(const QString &path) const;
+
+    /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
      * @param subvolId - An int with the ID of the subvolume to find the parent of
      * @return An int with parent ID or 0 if the subvolId is not found
      */
     const int subvolParent(const QString &uuid, const int subvolId) const;
+
+    /**
+     * @brief Finds the ID of the subvolume that is the parent of the subvol at @p path
+     * @param path - An absolute path to a subvolume
+     * @return An int with parent ID or 0 if the subvolId is not found
+     */
+    const int subvolParent(const QString &path) const;
 
     /**
      * @brief Performs a balance operation on top level subvolume for device.

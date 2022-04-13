@@ -8,6 +8,8 @@
 #include <QFile>
 #include <QRegularExpression>
 
+#include "btrfsutil.h"
+
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
     : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
     m_subvolMap = Settings::getInstance().subvolMap();
@@ -122,55 +124,32 @@ void Snapper::load() {
             if (listResult.outputList.isEmpty()) {
                 // This means that either there are no snapshots or the root is mounted on non-btrfs filesystem like an overlayfs
                 // Let's check the latter case first
-                QString findmntOutput = System::runCmd("findmnt -no uuid,options /.snapshots", false).output;
-                if (findmntOutput.isEmpty()) {
-                    // This probably means there are just no snapshots
+                QString subvolName = m_btrfs->subvolumeName(DEFAULT_SNAP_PATH);
+                if (subvolName.isEmpty()) {
+                    // This probably means there are just no snapshots or we are using a nested subvol in another place
                     continue;
-                }
-
-                // We found something mounted at /.snapshots, now we need to figure out what it is.
-
-                QString uuid = findmntOutput.split(' ').at(0).trimmed();
-                QString options = findmntOutput.right(findmntOutput.length() - uuid.length()).trimmed();
-                if (options.isEmpty() || uuid.isEmpty()) {
-                    continue;
-                }
-
-                QString subvol;
-                const QStringList optionsList = options.split(',');
-                for (const QString &option : optionsList) {
-                    if (option.startsWith("subvol=")) {
-                        subvol = option.split("subvol=").at(1);
-                    }
-                }
-
-                if (subvol.isEmpty() || !subvol.contains(".snapshots")) {
-                    continue;
-                }
-
-                // Make sure subvolume doesn't have a leading slash
-                if (subvol.startsWith("/")) {
-                    subvol = subvol.right(subvol.length() - 1);
                 }
 
                 // Now we need to find out where the snapshots are actually stored
-                QString prefix = subvol.split(".snapshots").at(0);
+                int parentId = m_btrfs->subvolParent(DEFAULT_SNAP_PATH);
 
-                // It shouldn't be possible for the prefix to empty when booted off a snapshot but we check anyway
-                if (prefix.isEmpty()) {
+                // It shouldn't be possible for the parent to not exist but we check anyway
+                if (parentId == 0) {
                     continue;
                 }
 
+                const QString uuid = System::runCmd("findmnt", {"-no", "uuid", DEFAULT_SNAP_PATH}, false).output;
+
                 // Make sure the root of the partition is mounted
                 QString mountpoint = Btrfs::mountRoot(uuid);
-
-                // Make sure we have a trailing /
-                if (mountpoint.right(1) != "/") {
-                    mountpoint += "/";
+                if (mountpoint.isEmpty()) {
+                    continue;
                 }
 
-                listResult =
-                    runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + prefix) + " list --columns number,date,description,type");
+                const QString parentName = m_btrfs->subvolumeName(uuid, parentId);
+
+                listResult = runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + QDir::separator() + parentName) +
+                                        " list --columns number,date,description,type");
                 if (listResult.exitCode != 0 || listResult.outputList.isEmpty()) {
                     // If this is still empty, give up
                     continue;
@@ -234,38 +213,27 @@ void Snapper::loadSubvols() {
         if (mountpoint.isEmpty()) {
             continue;
         }
-        QString output = System::runCmd("btrfs", {"subvolume", "list", mountpoint}, false).output;
 
-        if (output.isEmpty()) {
-            continue;
-        }
+        const QMap<int, Subvolume> &subvols = m_btrfs->listSubvolumes(uuid);
 
-        // Ensure it has a trailing /
-        if (mountpoint.right(1) != "/") {
-            mountpoint += "/";
-        }
-
-        QStringList outputList = output.split('\n');
-        for (const QString &line : outputList) {
-            SnapperSubvolume subvol;
-            if (line.isEmpty()) {
-                continue;
-            }
-
-            subvol.uuid = uuid;
-            subvol.subvolid = line.split(' ').at(1).trimmed().toInt();
-            subvol.subvol = line.split(' ').at(8).trimmed();
+        for (const auto &subvol : subvols) {
 
             // Check if it is snapper snapshot
-            if (!Btrfs::isSnapper(subvol.subvol)) {
+            if (!Btrfs::isSnapper(subvol.subvolName)) {
                 continue;
             }
+
+            SnapperSubvolume snapperSubvol;
+
+            snapperSubvol.uuid = uuid;
+            snapperSubvol.subvolid = subvol.subvolId;
+            snapperSubvol.subvol = subvol.subvolName;
 
             // It is a snapshot so now we parse it and read the snapper XML
             const QString end = "snapshot";
-            QString filename = subvol.subvol.left(subvol.subvol.length() - end.length()) + "info.xml";
+            QString filename = snapperSubvol.subvol.left(snapperSubvol.subvol.length() - end.length()) + "info.xml";
 
-            filename = QDir::cleanPath(mountpoint + filename);
+            filename = QDir::cleanPath(mountpoint + QDir::separator() + filename);
 
             SnapperSnapshots snap = readSnapperMeta(filename);
 
@@ -273,12 +241,12 @@ void Snapper::loadSubvols() {
                 continue;
             }
 
-            subvol.desc = snap.desc;
-            subvol.time = snap.time;
-            subvol.snapshotNum = snap.number;
-            subvol.type = snap.type;
+            snapperSubvol.desc = snap.desc;
+            snapperSubvol.time = snap.time;
+            snapperSubvol.snapshotNum = snap.number;
+            snapperSubvol.type = snap.type;
 
-            const QString snapshotSubvol = findSnapshotSubvolume(subvol.subvol);
+            const QString snapshotSubvol = findSnapshotSubvolume(snapperSubvol.subvol);
             if (snapshotSubvol.isEmpty()) {
                 continue;
             }
@@ -297,7 +265,7 @@ void Snapper::loadSubvols() {
                 }
             }
 
-            m_subvols[targetSubvol].append(subvol);
+            m_subvols[targetSubvol].append(snapperSubvol);
         }
     }
     createSubvolMap();
