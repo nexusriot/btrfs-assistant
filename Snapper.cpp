@@ -360,7 +360,7 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
     QString snapshotSubvol = findSnapshotSubvolume(sourceName);
 
     // We are out of excuses, time to do the restore....carefully
-    QString targetBackup = "restore_backup_" + targetName + "_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
+    QString targetBackup = targetName + "_backup_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
     restoreResult.backupSubvolName = targetBackup;
 
     // Find the children before we start
