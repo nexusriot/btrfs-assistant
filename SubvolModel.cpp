@@ -106,7 +106,7 @@ void SubvolumeModel::load(const QMap<QString, BtrfsMeta> *volumeData) {
     // Extract all the subvolumes
     for (const QString &uuid : volumeIdentifiers) {
         for (const Subvolume &subvol : volumeData->value(uuid).subvolumes) {
-            if (subvol.subvolId != 5 && subvol.subvolId != 0) {
+            if (subvol.subvolId != BTRFS_ROOT_ID && subvol.subvolId != 0) {
                 m_data.append(subvol);
             }
         }

@@ -1,7 +1,6 @@
 #include "Btrfs.h"
 #include "Settings.h"
 #include "System.h"
-#include "btrfsutil.h"
 
 #include <btrfsutil.h>
 #include <limits.h> // for PATH_MAX
@@ -9,7 +8,6 @@
 #include <QDir>
 #include <QRegularExpression>
 #include <QTemporaryDir>
-#include <QRegularExpression>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
@@ -30,7 +28,7 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
     const QString mountpoint = mountRoot(uuid);
     btrfs_util_subvolume_iterator *iter;
 
-    btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), 5, 0, &iter);
+    btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, 0, &iter);
     if (returnCode != BTRFS_UTIL_OK) {
         return QStringList();
     }
@@ -173,7 +171,7 @@ void Btrfs::loadSubvols(const QString &uuid) {
         const QString mountpoint = mountRoot(uuid);
         btrfs_util_subvolume_iterator *iter;
 
-        btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), 5, 0, &iter);
+        btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, 0, &iter);
         if (returnCode != BTRFS_UTIL_OK) {
             return;
         }
@@ -239,7 +237,8 @@ void Btrfs::loadVolumes() {
 
 const QString Btrfs::mountRoot(const QString &uuid) {
     // Check to see if it is already mounted
-    QStringList findmntOutput = System::runCmd("findmnt -nO subvolid=5 -o uuid,target", false).output.split('\n');
+    QStringList findmntOutput =
+        System::runCmd("findmnt", {"-nO", "subvolid=" + QString::number(BTRFS_ROOT_ID), "-o", "uuid,target"}, false).output.split('\n');
     QString mountpoint;
     for (const QString &line : qAsConst(findmntOutput)) {
         if (!line.isEmpty() && line.split(' ').at(0).trimmed() == uuid)
@@ -261,7 +260,7 @@ const QString Btrfs::mountRoot(const QString &uuid) {
         // Create the mountpoint and mount the volume if successful
         QDir tempMount;
         if (tempMount.mkpath(mountpoint)) {
-            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=5", "UUID=" + uuid, mountpoint}, false);
+            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=" + QString::number(BTRFS_ROOT_ID), "UUID=" + uuid, mountpoint}, false);
         } else {
             return QString();
         }

@@ -4,6 +4,8 @@
 #include <QMap>
 #include <QObject>
 
+#define BTRFS_ROOT_ID 5
+
 struct RestoreResult {
     bool success = false;
     QString failureMessage;
