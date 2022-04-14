@@ -1,5 +1,6 @@
 #include "Snapper.h"
 #include "Settings.h"
+#include "System.h"
 
 #include <btrfsutil.h>
 #include <limits.h> // for PATH_MAX

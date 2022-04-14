@@ -5,7 +5,6 @@
 #include <QObject>
 
 #include "Btrfs.h"
-#include "System.h"
 
 #define DEFAULT_SNAP_PATH "/.snapshots"
 
