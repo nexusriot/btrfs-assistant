@@ -3,7 +3,6 @@
 #include "System.h"
 
 #include <btrfsutil.h>
-#include <limits.h> // for PATH_MAX
 #include <QDebug>
 #include <QDir>
 #include <QRegularExpression>
@@ -36,12 +35,12 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
     QStringList children;
 
     while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-        auto pathPtr = std::make_unique<char[]>(PATH_MAX);
-        auto path = pathPtr.get();
+        char *path = nullptr;
         struct btrfs_util_subvolume_info subvolInfo;
         returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
         if (returnCode == BTRFS_UTIL_OK && subvolInfo.parent_id == subvolId) {
-            children.append(path);
+            children.append(QString::fromLocal8Bit(path));
+            free(path);
         }
     }
 
@@ -179,15 +178,15 @@ void Btrfs::loadSubvols(const QString &uuid) {
         QMap<int, Subvolume> subvols;
 
         while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-            auto pathPtr = std::make_unique<char[]>(PATH_MAX);
-            auto path = pathPtr.get();
+            char *path = nullptr;
             struct btrfs_util_subvolume_info subvolInfo;
             returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
             if (returnCode == BTRFS_UTIL_OK) {
-                subvols[subvolInfo.id].subvolName = path;
+                subvols[subvolInfo.id].subvolName = QString::fromLocal8Bit(path);
                 subvols[subvolInfo.id].parentId = subvolInfo.parent_id;
                 subvols[subvolInfo.id].subvolId = subvolInfo.id;
                 subvols[subvolInfo.id].uuid = uuid;
+                free(path);
             }
         }
         btrfs_util_destroy_subvolume_iterator(iter);
@@ -315,13 +314,14 @@ const QString Btrfs::subvolumeName(const QString &uuid, const int subvolId) cons
 }
 
 const QString Btrfs::subvolumeName(const QString &path) const {
-    auto subvolNamePtr = std::make_unique<char[]>(PATH_MAX);
-    auto subvolName = subvolNamePtr.get();
+    QString ret;
+    char *subvolName = nullptr;
     btrfs_util_error returnCode = btrfs_util_subvolume_path(path.toLocal8Bit(), 0, &subvolName);
-    if (returnCode != BTRFS_UTIL_OK) {
-        return QString();
+    if (returnCode == BTRFS_UTIL_OK) {
+        ret = QString::fromLocal8Bit(subvolName);
+        free(subvolName);
     }
-    return QString(subvolName);
+    return ret;
 }
 
 const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
