@@ -30,7 +30,7 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
     const QString mountpoint = mountRoot(uuid);
     btrfs_util_subvolume_iterator *iter;
 
-    btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toUtf8(), 5, 0, &iter);
+    btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), 5, 0, &iter);
     if (returnCode != BTRFS_UTIL_OK) {
         return QStringList();
     }
@@ -60,7 +60,7 @@ const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
 
             // Everything checks out, lets delete the subvol
             const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvol.subvolName);
-            btrfs_util_error returnCode = btrfs_util_delete_subvolume(subvolPath.toUtf8(), 0);
+            btrfs_util_error returnCode = btrfs_util_delete_subvolume(subvolPath.toLocal8Bit(), 0);
             if (returnCode == BTRFS_UTIL_OK) {
                 return true;
             }
@@ -173,7 +173,7 @@ void Btrfs::loadSubvols(const QString &uuid) {
         const QString mountpoint = mountRoot(uuid);
         btrfs_util_subvolume_iterator *iter;
 
-        btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toUtf8(), 5, 0, &iter);
+        btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), 5, 0, &iter);
         if (returnCode != BTRFS_UTIL_OK) {
             return;
         }
@@ -299,7 +299,7 @@ const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const 
 
     const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolName);
     uint64_t id;
-    btrfs_util_error returnCode = btrfs_util_subvolume_id(subvolPath.toUtf8(), &id);
+    btrfs_util_error returnCode = btrfs_util_subvolume_id(subvolPath.toLocal8Bit(), &id);
     if (returnCode == BTRFS_UTIL_OK) {
         return id;
     } else {
@@ -316,7 +316,7 @@ const QString Btrfs::subvolumeName(const QString &uuid, const int subvolId) cons
 }
 
 const QString Btrfs::subvolumeName(const QString &path) const {
-    auto subvolNamePtr = std::make_unique<char[]>(MAX_PATH);
+    auto subvolNamePtr = std::make_unique<char[]>(PATH_MAX);
     auto subvolName = subvolNamePtr.get();
     btrfs_util_error returnCode = btrfs_util_subvolume_path(path.toLocal8Bit(), 0, &subvolName);
     if (returnCode != BTRFS_UTIL_OK) {
@@ -351,7 +351,7 @@ bool Btrfs::isUuidLoaded(const QString &uuid) {
 
     // If it still doesn't exist, we need to bail
     if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
-        qWarning() << tr("UUID " + uuid.toUtf8() + " not found!");
+        qWarning() << tr("UUID " + uuid.toLocal8Bit() + " not found!");
         return false;
     }
 
