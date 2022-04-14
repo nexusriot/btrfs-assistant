@@ -1342,6 +1342,12 @@
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
              <widget class="QGroupBox" name="groupBox_bmBalance">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="title">
                <string>Balance</string>
               </property>
@@ -1407,6 +1413,12 @@
             </item>
             <item>
              <widget class="QGroupBox" name="groupBox_bmScrub">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="title">
                <string>Scrub</string>
               </property>
@@ -1472,6 +1484,12 @@
             </item>
             <item>
              <widget class="QGroupBox" name="groupBox_bmDefrag">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="title">
                <string>Defrag</string>
               </property>
@@ -1536,9 +1554,12 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_bmApply">
-              <property name="title">
-               <string/>
+             <widget class="QFrame" name="frame_bmApply">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_5">
                <item>
