@@ -38,13 +38,13 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
     QStringList children;
 
     while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-        char *path = new char[PATH_MAX];
+        auto pathPtr = std::make_unique<char[]>(PATH_MAX);
+        auto path = pathPtr.get();
         struct btrfs_util_subvolume_info subvolInfo;
         returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
         if (returnCode == BTRFS_UTIL_OK && subvolInfo.parent_id == subvolId) {
             children.append(path);
         }
-        delete[] path;
     }
 
     btrfs_util_destroy_subvolume_iterator(iter);
@@ -181,7 +181,8 @@ void Btrfs::loadSubvols(const QString &uuid) {
         QMap<int, Subvolume> subvols;
 
         while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
-            char *path = new char[PATH_MAX];
+            auto pathPtr = std::make_unique<char[]>(PATH_MAX);
+            auto path = pathPtr.get();
             struct btrfs_util_subvolume_info subvolInfo;
             returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
             if (returnCode == BTRFS_UTIL_OK) {
@@ -190,7 +191,6 @@ void Btrfs::loadSubvols(const QString &uuid) {
                 subvols[subvolInfo.id].subvolId = subvolInfo.id;
                 subvols[subvolInfo.id].uuid = uuid;
             }
-            delete[] path;
         }
         btrfs_util_destroy_subvolume_iterator(iter);
 
