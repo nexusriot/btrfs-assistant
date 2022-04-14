@@ -2,16 +2,12 @@
 #include "Settings.h"
 #include "System.h"
 
-#include <btrfsutil.h>
-#include <limits.h> // for PATH_MAX
 #include <unistd.h>
 
 #include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
-
-#include "btrfsutil.h"
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
     : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
@@ -259,7 +255,7 @@ void Snapper::loadSubvols() {
 
             // If it is empty, it may mean the the map isn't loaded yet for the nested subvolumes
             if (targetSubvol.isEmpty()) {
-                if (snapshotSubvol.endsWith(".snapshots")) {
+                if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH)) {
                     const int targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
                     const int parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
                     targetSubvol = m_btrfs->subvolumeName(uuid, parentId);
@@ -344,20 +340,19 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int source
         return restoreResult;
     }
 
-    // We moved the snapshot so we need to change the location
+    // If the snapshot subvolume is nested, we need to set the new subvol name to be inside the backup we created
     QString newSubvolume;
-    if (targetName + "/.snapshots" == snapshotSubvol) {
+    if (targetName + DEFAULT_SNAP_PATH == snapshotSubvol) {
         newSubvolume = targetBackup + sourceName.right(sourceName.length() - targetName.length());
     } else {
         newSubvolume = sourceName;
     }
 
     // Place a snapshot of the source where the target was
-    btrfs_util_error returnCode =
-        btrfs_util_create_snapshot(QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume).toUtf8(),
-                                   QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8(), 0, NULL, NULL);
+    bool snapshotSuccess = Btrfs::createSnapshot(QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume).toUtf8(),
+                                                 QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8());
 
-    if (returnCode != BTRFS_UTIL_OK) {
+    if (!snapshotSuccess) {
         // That failed, try to put the old one back
         Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetBackup),
                                QDir::cleanPath(mountpoint + QDir::separator() + targetName));

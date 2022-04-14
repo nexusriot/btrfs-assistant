@@ -2,11 +2,11 @@
 #include "Settings.h"
 #include "System.h"
 
-#include <btrfsutil.h>
 #include <QDebug>
 #include <QDir>
 #include <QRegularExpression>
 #include <QTemporaryDir>
+#include <btrfsutil.h>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
@@ -46,6 +46,10 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
 
     btrfs_util_destroy_subvolume_iterator(iter);
     return children;
+}
+
+const bool Btrfs::createSnapshot(const QString &source, const QString &dest) {
+    return btrfs_util_create_snapshot(source.toLocal8Bit(), dest.toLocal8Bit(), 0, NULL, NULL) == BTRFS_UTIL_OK;
 }
 
 const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {

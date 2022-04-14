@@ -71,6 +71,14 @@ class Btrfs : public QObject {
      */
     const QStringList children(const int subvolid, const QString &uuid) const;
 
+    /**
+     * @brief Creates a btrfs snapshot
+     * @param source - The absolute path to the source subvolume
+     * @param dest - The absolute path where the snapshot will be created
+     * @return True on success, false otherwise
+     */
+    static const bool createSnapshot(const QString &source, const QString &dest);
+
     /** @brief Deletes a given subvolume
      *
      *  Deletes the subvol represented by @p subvolid on @p uuid.
