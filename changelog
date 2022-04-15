@@ -1,6 +1,13 @@
 ### Btrfs Assistant
 
-1.4 - TBD
+1.5 - TBD
+* Use libbtrfsutil instead of calling the btrfs command wherever possible
+* Add the ability to filter subvolumes by name(Contributed by Adam Sowa)
+* Various code quality improvements(Contributed by Adam Sowa)
+* Improve layout of the BtrfsMaintencance tab when resized
+* Change the naming of subvolume backups to support nested subvolumes
+
+1.4 - 2022-04-14
 * Redesign the layout of the Subvolume tab(Contributed by Austin Horstman)
 * Modify the subvolume tab so it shows the subvolumes on all devices(Contributed by Austin Horstman)
 * The subvolume tab now can filter container subvolumes(With contributions from Adam Sowa)
