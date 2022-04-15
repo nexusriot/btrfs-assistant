@@ -29,11 +29,11 @@ QStringList System::findEnabledUnits() {
     return serviceList;
 }
 
-const Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {
+Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {
     return runCmd("/bin/bash", QStringList() << "-c" << cmd, includeStderr, timeout);
 }
 
-const Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout) {
+Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout) {
     QProcess proc;
 
     if (includeStderr)
@@ -45,7 +45,7 @@ const Result System::runCmd(const QString &cmd, const QStringList &args, bool in
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
-const QString System::toHumanReadable(double number) {
+QString System::toHumanReadable(double number) {
     int i = 0;
     const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
     while (number > 1024) {

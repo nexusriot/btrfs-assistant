@@ -41,7 +41,7 @@ class System {
      * @param timeout - How long in seconds the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static const Result runCmd(const QString &cmd, bool includeStderr, int timeout = 60);
+    static Result runCmd(const QString &cmd, bool includeStderr, int timeout = 60);
 
     /**
      * @brief Runs a command on the host system
@@ -51,21 +51,21 @@ class System {
      * @param timeout - How long in seconds the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static const Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout = 60);
+    static Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout = 60);
 
     /** @brief Starts the systemd unit with the unit name of @p unit
      *
      *  Returns a Result struct from runCmd()
      *
      */
-    static const Result startUnit(const QString &unit) { return runCmd("systemctl", {"start", unit}, false); }
+    static Result startUnit(const QString &unit) { return runCmd("systemctl", {"start", unit}, false); }
 
     /**
      * @brief Converts a number to a human readable string for displaying data storage amounts
      * @param number - A double containing the number to convert
      * @return A string containing the converted value
      */
-    static const QString toHumanReadable(double number);
+    static QString toHumanReadable(double number);
 
   private:
     // This class contains only static functions.  There is no reason to instantiate it.

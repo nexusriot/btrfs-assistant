@@ -23,7 +23,7 @@ class BtrfsMaintenance : public QObject {
 
     /** @brief Returns the value associated with @p key from the settings file as a QString
      */
-    const QString value(const QString &key) { return m_settings->value(key).toString(); }
+    QString value(const QString &key) { return m_settings->value(key).toString(); }
 
   private:
     QSettings *m_settings;

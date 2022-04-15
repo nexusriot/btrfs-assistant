@@ -15,13 +15,7 @@ Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
     load();
 }
 
-const QMap<QString, QString> Snapper::config(const QString &name) {
-    if (m_configs.contains(name)) {
-        return m_configs[name];
-    } else {
-        return QMap<QString, QString>();
-    }
-}
+Snapper::ConfigMap Snapper::config(const QString &name) { return m_configs.value(name); }
 
 void Snapper::createSubvolMap() {
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
@@ -184,7 +178,7 @@ void Snapper::loadConfig(const QString &name) {
     }
 
     // Iterate over the data adding the name/value pairs to the map
-    QMap<QString, QString> config;
+    ConfigMap config;
     for (const QString &line : result.outputList) {
         if (line.trimmed().isEmpty()) {
             continue;
@@ -382,7 +376,7 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t s
     return restoreResult;
 }
 
-SnapperResult Snapper::setConfig(const QString &name, const QMap<QString, QString> configMap) {
+SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap) {
     SnapperResult result;
 
     const QStringList keys = configMap.keys();

@@ -30,7 +30,7 @@ class Settings : public QObject {
      * @param defaultValue - A default value if the key is not found
      * @return The value associated with @p key.  If key is not found, returns @p defaultValue or default constructed QVariant
      */
-    const QVariant value(const QString &key, const QVariant &defaultValue) { return m_settings->value(key, defaultValue); }
+    QVariant value(const QString &key, const QVariant &defaultValue) { return m_settings->value(key, defaultValue); }
 
   private:
     explicit Settings(QObject *parent = nullptr);
