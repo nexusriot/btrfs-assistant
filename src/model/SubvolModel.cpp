@@ -1,5 +1,5 @@
-#include "SubvolModel.h"
-#include "System.h"
+#include "model/SubvolModel.h"
+#include "util/System.h"
 
 QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, int role) const {
     if (role != Qt::DisplayRole) {

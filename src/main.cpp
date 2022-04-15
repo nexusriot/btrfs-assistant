@@ -1,7 +1,7 @@
-#include "BtrfsAssistant.h"
-#include "BtrfsMaintenance.h"
-#include "Cli.h"
-#include "Settings.h"
+#include "ui/BtrfsAssistant.h"
+#include "util/BtrfsMaintenance.h"
+#include "ui/Cli.h"
+#include "util/Settings.h"
 
 #include <QApplication>
 #include <QCommandLineParser>
@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[]) {
     QApplication app(argc, argv);
-    app.setWindowIcon(QIcon(":/btrfs-assistant.png"));
+    app.setWindowIcon(QIcon(":/icons/btrfs-assistant.png"));
 
     QTranslator translator;
     translator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");

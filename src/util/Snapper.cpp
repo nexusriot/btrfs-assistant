@@ -1,6 +1,6 @@
-#include "Snapper.h"
-#include "Settings.h"
-#include "System.h"
+#include "util/Snapper.h"
+#include "util/Settings.h"
+#include "util/System.h"
 
 #include <unistd.h>
 

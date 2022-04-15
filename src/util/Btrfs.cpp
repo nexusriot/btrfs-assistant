@@ -1,6 +1,6 @@
-#include "Btrfs.h"
-#include "Settings.h"
-#include "System.h"
+#include "util/Btrfs.h"
+#include "util/Settings.h"
+#include "util/System.h"
 
 #include <QDebug>
 #include <QDir>

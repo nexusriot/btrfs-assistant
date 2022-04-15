@@ -5,7 +5,7 @@
 FilterLineEdit::FilterLineEdit(QWidget *parent) : QLineEdit(parent) {
 
     m_clearButton = new QToolButton(this);
-    QIcon icon = QIcon::fromTheme("edit-clear", QIcon(":/assets/assets/edit-clear.svg"));
+    QIcon icon = QIcon::fromTheme("edit-clear", QIcon(":/icons/edit-clear.svg"));
     m_clearButton->setIcon(icon);
     m_clearButton->setCursor(Qt::ArrowCursor);
     m_clearButton->setStyleSheet("QToolButton { border: none; padding: 0px; }");
