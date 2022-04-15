@@ -70,9 +70,9 @@ QVariant SubvolumeModel::data(const QModelIndex &index, int role) const {
     const Subvolume &subvol = m_data[index.row()];
     switch (index.column()) {
     case Column::ParentId:
-        return subvol.parentId;
+        return QVariant::fromValue(subvol.parentId);
     case Column::Id:
-        return subvol.subvolId;
+        return QVariant::fromValue(subvol.subvolId);
     case Column::Name:
         return subvol.subvolName;
     case Column::Size:

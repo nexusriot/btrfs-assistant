@@ -23,7 +23,7 @@ const BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const {
     return m_volumes[uuid];
 }
 
-const QStringList Btrfs::children(const int subvolId, const QString &uuid) const {
+const QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid) const {
     const QString mountpoint = mountRoot(uuid);
     btrfs_util_subvolume_iterator *iter;
 
@@ -49,10 +49,10 @@ const QStringList Btrfs::children(const int subvolId, const QString &uuid) const
 }
 
 const bool Btrfs::createSnapshot(const QString &source, const QString &dest) {
-    return btrfs_util_create_snapshot(source.toLocal8Bit(), dest.toLocal8Bit(), 0, NULL, NULL) == BTRFS_UTIL_OK;
+    return btrfs_util_create_snapshot(source.toLocal8Bit(), dest.toLocal8Bit(), 0, nullptr, nullptr) == BTRFS_UTIL_OK;
 }
 
-const bool Btrfs::deleteSubvol(const QString &uuid, const int subvolid) {
+const bool Btrfs::deleteSubvol(const QString &uuid, const uint64_t subvolid) {
     Subvolume subvol;
     if (m_volumes.contains(uuid)) {
         subvol = m_volumes[uuid].subvolumes.value(subvolid);
@@ -77,7 +77,7 @@ bool Btrfs::isSnapper(const QString &subvolume) {
     return re.match(subvolume).hasMatch();
 }
 
-bool Btrfs::isMounted(const QString &uuid, const int subvolid) {
+bool Btrfs::isMounted(const QString &uuid, const uint64_t subvolid) {
     const QStringList outputList =
         System::runCmd("findmnt -nO subvolid=" + QString::number(subvolid) + " -o uuid", false).output.trimmed().split("\n");
     return uuid == outputList.at(0).trimmed();
@@ -117,14 +117,7 @@ const QStringList Btrfs::listMountpoints() {
     return mountpoints;
 }
 
-const QMap<int, Subvolume> Btrfs::listSubvolumes(const QString &uuid) const {
-    // If the uuid isn't found return a default constructed QMap
-    if (!m_volumes.contains(uuid)) {
-        return QMap<int, Subvolume>();
-    }
-
-    return m_volumes[uuid].subvolumes;
-}
+SubvolumeMap Btrfs::listSubvolumes(const QString &uuid) const { return m_volumes.value(uuid).subvolumes; }
 
 void Btrfs::loadQgroups(const QString &uuid) {
     if (!isUuidLoaded(uuid)) {
@@ -155,7 +148,7 @@ void Btrfs::loadQgroups(const QString &uuid) {
 
     for (const QString &line : qAsConst(outputList)) {
         const QStringList qgroupList = line.split(" ", Qt::SkipEmptyParts);
-        int subvolId;
+        uint64_t subvolId;
         if (!qgroupList.at(0).contains("/")) {
             continue;
         }
@@ -179,7 +172,7 @@ void Btrfs::loadSubvols(const QString &uuid) {
             return;
         }
 
-        QMap<int, Subvolume> subvols;
+        SubvolumeMap subvols;
 
         while (returnCode != BTRFS_UTIL_ERROR_STOP_ITERATION) {
             char *path = nullptr;
@@ -293,7 +286,7 @@ void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable) {
     }
 }
 
-const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const {
+const uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName) const {
     const QString mountpoint = mountRoot(uuid);
     if (mountpoint.isEmpty()) {
         return 0;
@@ -309,7 +302,7 @@ const int Btrfs::subvolId(const QString &uuid, const QString &subvolName) const 
     }
 }
 
-const QString Btrfs::subvolumeName(const QString &uuid, const int subvolId) const {
+const QString Btrfs::subvolumeName(const QString &uuid, const uint64_t subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
         return m_volumes[uuid].subvolumes[subvolId].subvolName;
     } else {
@@ -328,7 +321,7 @@ const QString Btrfs::subvolumeName(const QString &path) const {
     return ret;
 }
 
-const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
+const uint64_t Btrfs::subvolParent(const QString &uuid, const uint64_t subvolId) const {
     if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
         return m_volumes[uuid].subvolumes[subvolId].parentId;
     } else {
@@ -336,7 +329,7 @@ const int Btrfs::subvolParent(const QString &uuid, const int subvolId) const {
     }
 }
 
-const int Btrfs::subvolParent(const QString &path) const {
+const uint64_t Btrfs::subvolParent(const QString &path) const {
     struct btrfs_util_subvolume_info subvolInfo;
     btrfs_util_error returnCode = btrfs_util_subvolume_info(path.toLocal8Bit(), 0, &subvolInfo);
     if (returnCode != BTRFS_UTIL_OK) {

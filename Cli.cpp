@@ -47,7 +47,7 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
     // Ensure the list of subvolumes is not out-of-date
     btrfs->loadSubvols(uuid);
 
-    const int subvolId = btrfs->subvolId(uuid, subvolume);
+    const uint64_t subvolId = btrfs->subvolId(uuid, subvolume);
     if (subvolId == 0) {
         displayError(tr("Source snapshot not found"));
     }
@@ -60,7 +60,7 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
 
     // Check the map for the target subvolume
     const QString targetSubvol = snapper->findTargetSubvol(snapshotSubvol, uuid);
-    const int targetId = btrfs->subvolId(uuid, targetSubvol);
+    const uint64_t targetId = btrfs->subvolId(uuid, targetSubvol);
 
     if (targetId == 0 || targetSubvol.isEmpty()) {
         displayError(tr("Target not found"));

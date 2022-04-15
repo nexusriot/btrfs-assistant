@@ -22,7 +22,7 @@ struct SnapperSnapshots {
 
 struct SnapperSubvolume {
     QString subvol;
-    int subvolid;
+    uint64_t subvolid;
     int snapshotNum;
     QDateTime time;
     QString desc;
@@ -147,11 +147,11 @@ class Snapper : public QObject {
     /**
      * @brief Restores the source subvolume over the target
      * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
-     * @param sourceId - An int that is the subvolid of the source subvolume
-     * @param targetId - An int that is the subvolid of the target subvolume
+     * @param sourceId - An uint64_t that is the subvolid of the source subvolume
+     * @param targetId - An uint64_t that is the subvolid of the target subvolume
      * @return A RestoreResult struct that contains the results of the operation
      */
-    const RestoreResult restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const;
+    const RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const;
 
     /**
      * @brief Updates the settings for a given Snapper config described by @p name
