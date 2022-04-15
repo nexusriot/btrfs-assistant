@@ -1,9 +1,9 @@
 #ifndef CLI_H
 #define CLI_H
 
-#include "System.h"
-#include "Snapper.h"
-#include "Btrfs.h"
+#include "util/System.h"
+#include "util/Snapper.h"
+#include "util/Btrfs.h"
 
 #include <QObject>
 #include <QTextStream>

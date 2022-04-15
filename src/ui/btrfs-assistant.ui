@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_btrfs">
        <attribute name="title">
@@ -527,8 +527,8 @@
                   <string>Delete</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/minus.png</normaloff>:/assets/assets/minus.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -547,8 +547,8 @@
                   <string>Refresh</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -658,8 +658,8 @@
                   <string>New</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/plus.png</normaloff>:/assets/assets/plus.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -678,8 +678,8 @@
                   <string>Delete</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/minus.png</normaloff>:/assets/assets/minus.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -704,8 +704,8 @@
                   <string>Refresh</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -797,8 +797,8 @@
                   <string>Browse</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/filebrowse.png</normaloff>:/assets/assets/filebrowse.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/filebrowse.png</normaloff>:/icons/filebrowse.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -817,8 +817,8 @@
                   <string>Restore</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/restore.png</normaloff>:/assets/assets/restore.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/restore.png</normaloff>:/icons/restore.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -843,8 +843,8 @@
                   <string>Refresh</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="icons.qrc">
-                   <normaloff>:/assets/assets/reload.png</normaloff>:/assets/assets/reload.png</iconset>
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -1614,7 +1614,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="icons.qrc"/>
+  <include location="../../icons/icons.qrc"/>
  </resources>
  <connections/>
 </ui>

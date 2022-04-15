@@ -1,7 +1,7 @@
 #ifndef DIFFVIEWER_H
 #define DIFFVIEWER_H
 
-#include "Snapper.h"
+#include "util/Snapper.h"
 #include "ui_DiffViewer.h"
 
 enum DiffColumn { num, dateTime, rootPath, filePath };

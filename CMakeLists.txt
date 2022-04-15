@@ -11,48 +11,23 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set_directory_properties(PROPERTIES CLEAN_NO_CUSTOM 1)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_AUTOUIC_SEARCH_PATHS src/ui)
 
 find_package(QT NAMES Qt5 COMPONENTS Widgets LinguistTools REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools REQUIRED)
 
-find_library(BTRFSUTIL_LIB btrfsutil)
+add_subdirectory(src)
+add_subdirectory(icons)
 
-file(GLOB TS_FILES ${PROJECT_SOURCE_DIR}/translations/*.ts)
+# Docs only available if this is the main app
+find_package(Doxygen)
+if(Doxygen_FOUND)
+    add_subdirectory(docs)
+else()
+    message(STATUS "Doxygen not found, not building docs")
+endif()
 
-configure_file(config.h.in config.h @ONLY)
-
-set(PROJECT_SOURCES
-        main.cpp
-        btrfs-assistant.ui
-        icons.qrc
-        Btrfs.h Btrfs.cpp
-        BtrfsAssistant.h BtrfsAssistant.cpp
-        BtrfsMaintenance.h BtrfsMaintenance.cpp
-        Cli.h Cli.cpp
-        DiffViewer.h DiffViewer.cpp DiffViewer.ui
-        FileBrowser.h FileBrowser.cpp FileBrowser.ui
-        Settings.h Settings.cpp
-        Snapper.h Snapper.cpp
-        SubvolModel.h SubvolModel.cpp
-        System.h System.cpp
-        widgets/FilterLineEdit.h widgets/FilterLineEdit.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/config.h
-)
-
-qt5_create_translation(FILES_TS ${PROJECT_SOURCES} ${TS_FILES})
-
-add_executable(btrfs-assistant-bin
-    ${PROJECT_SOURCES} ${FILES_TS}
-)
-
-install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/btrfs-assistant/translations)
-install(FILES btrfs-assistant.conf DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR})
-install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
-install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps/)
-install(FILES org.btrfs-assistant.pkexec.policy DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/actions/)
-install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(TARGETS btrfs-assistant-bin RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-target_link_libraries(btrfs-assistant-bin PRIVATE Qt${QT_VERSION_MAJOR}::Widgets ${BTRFSUTIL_LIB})
+message(STATUS "Btrfs Assistant will be built for install into ${CMAKE_INSTALL_PREFIX}")

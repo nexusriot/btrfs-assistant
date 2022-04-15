@@ -1,7 +1,7 @@
 #ifndef FILEBROWSER_H
 #define FILEBROWSER_H
 
-#include "Snapper.h"
+#include "util/Snapper.h"
 
 #include <QDialog>
 #include <QFileSystemModel>

@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file>restore.png</file>
+    <file>plus.png</file>
+    <file>filebrowse.png</file>
+    <file>minus.png</file>
+    <file>reload.png</file>
+    <file>btrfs-assistant.png</file>
+    <file>edit-clear.svg</file>
+  </qresource>
+</RCC>

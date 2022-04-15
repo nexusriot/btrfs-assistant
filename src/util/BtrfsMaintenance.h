@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-#include "Settings.h"
+#include "util/Settings.h"
 
 /**
  * @brief The BtrfsMaintenance class that handles interfacing with the btrfs maintenance configuration.
