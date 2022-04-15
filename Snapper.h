@@ -36,6 +36,8 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
+    using ConfigMap = QMap<QString, QString>;
+
     Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
     /**
@@ -43,7 +45,7 @@ class Snapper : public QObject {
      * @param name - A QString that is the Snapper config name
      * @return A QMap of name, value pairs for each setting
      */
-    const QMap<QString, QString> config(const QString &name);
+    ConfigMap config(const QString &name);
 
     /**
      * @brief Finds all available Snapper configs
@@ -158,7 +160,7 @@ class Snapper : public QObject {
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update
      */
-    SnapperResult setConfig(const QString &name, const QMap<QString, QString> configMap);
+    SnapperResult setConfig(const QString &name, const ConfigMap &configMap);
 
     /**
      * @brief Returns a list of metadata for each snapshot in @p config
@@ -183,7 +185,7 @@ class Snapper : public QObject {
   private:
     Btrfs *m_btrfs;
     // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
-    QMap<QString, QMap<QString, QString>> m_configs;
+    QMap<QString, ConfigMap> m_configs;
 
     // The absolute path to the snapper command
     QString m_snapperCommand;

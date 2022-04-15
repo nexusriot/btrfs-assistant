@@ -53,7 +53,7 @@ class Btrfs : public QObject {
      * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
      * @return Qstring that contains the output from the btrfs balance command.
      */
-    const QString balanceStatus(const QString &mountpoint) const;
+    QString balanceStatus(const QString &mountpoint) const;
 
     /** @brief Returns the data for the Btrfs volume identified by @p UUID
      *
@@ -61,7 +61,7 @@ class Btrfs : public QObject {
      * If no data is found for the given UUID, it returns a default contructed value
      *
      */
-    const BtrfsMeta btrfsVolume(const QString &uuid) const;
+    BtrfsMeta btrfsVolume(const QString &uuid) const;
 
     /** @brief Returns the direct children for a given subvolume
      *
@@ -71,7 +71,7 @@ class Btrfs : public QObject {
      *  Returns a QStringList containing the subvol names/paths of all the children subvols
      *
      */
-    const QStringList children(const uint64_t subvolid, const QString &uuid) const;
+    QStringList children(const uint64_t subvolid, const QString &uuid) const;
 
     /**
      * @brief Creates a btrfs snapshot
@@ -79,7 +79,7 @@ class Btrfs : public QObject {
      * @param dest - The absolute path where the snapshot will be created
      * @return True on success, false otherwise
      */
-    static const bool createSnapshot(const QString &source, const QString &dest);
+    static bool createSnapshot(const QString &source, const QString &dest);
 
     /** @brief Deletes a given subvolume
      *
@@ -88,7 +88,7 @@ class Btrfs : public QObject {
      *  Returns true if successful and false if it fails for any reason.
      *
      */
-    const bool deleteSubvol(const QString &uuid, const uint64_t subvolid);
+    bool deleteSubvol(const QString &uuid, const uint64_t subvolid);
 
     /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
      */
@@ -118,14 +118,14 @@ class Btrfs : public QObject {
 
     /** @brief Returns a QStringList of UUIDs containing Btrfs filesystems
      */
-    static const QStringList listFilesystems();
+    static QStringList listFilesystems();
 
     /** @brief Returns a mountpoints for each Btrfs subvolume
      *
      *  Finds all mountpoints for each Btrfs subvolume and returns a sorted QStringList
      *  containing all the subvol names
      */
-    static const QStringList listMountpoints();
+    static QStringList listMountpoints();
 
     /** @brief Returns the btrfs subvolume list for a given volume
      *
@@ -161,7 +161,7 @@ class Btrfs : public QObject {
      *  returns the mountpoint or a default constructed string if it fails
      *
      */
-    static const QString mountRoot(const QString &uuid);
+    static QString mountRoot(const QString &uuid);
 
     /** @brief Renames a btrfs subvolume from @p source to @p target
      *
@@ -174,7 +174,7 @@ class Btrfs : public QObject {
      * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
      * @return Qstring that contains the output from the btrfs scrub command.
      */
-    const QString scrubStatus(const QString &mountpoint) const;
+    QString scrubStatus(const QString &mountpoint) const;
 
     /**
      * @brief Enables or disables btrfs qgroup support on @p mountpoint
@@ -188,7 +188,7 @@ class Btrfs : public QObject {
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
      *  it returns 0
      */
-    const uint64_t subvolId(const QString &uuid, const QString &subvolName) const;
+    uint64_t subvolId(const QString &uuid, const QString &subvolName) const;
 
     /**
      * @brief Returns the name of the subvol with id @p subvolId
@@ -196,14 +196,14 @@ class Btrfs : public QObject {
      * @param subvolId - An uint64_t with the ID of the subvolume to find the name for
      * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
      */
-    const QString subvolumeName(const QString &uuid, const uint64_t subvolId) const;
+    QString subvolumeName(const QString &uuid, const uint64_t subvolId) const;
 
     /**
      * @brief Returns the name of the subvol at @p path
      * @param path - An absolute path to a subvolume
      * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
      */
-    const QString subvolumeName(const QString &path) const;
+    QString subvolumeName(const QString &path) const;
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId
@@ -211,14 +211,14 @@ class Btrfs : public QObject {
      * @param subvolId - An uint64_t with the ID of the subvolume to find the parent of
      * @return An uint64_t with parent ID or 0 if the subvolId is not found
      */
-    const uint64_t subvolParent(const QString &uuid, const uint64_t subvolId) const;
+    uint64_t subvolParent(const QString &uuid, const uint64_t subvolId) const;
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of the subvol at @p path
      * @param path - An absolute path to a subvolume
      * @return An uint64_t with parent ID or 0 if the subvolId is not found
      */
-    const uint64_t subvolParent(const QString &path) const;
+    uint64_t subvolParent(const QString &path) const;
 
     /**
      * @brief Performs a balance operation on top level subvolume for device.
@@ -246,9 +246,9 @@ class Btrfs : public QObject {
 
     /**
      * @brief Provides access to the full metadata for all btrfs volumes
-     * @return A pointer to the volume data
+     * @return A const reference to the volume data
      */
-    const QMap<QString, BtrfsMeta> *volumes() { return &m_volumes; }
+    const QMap<QString, BtrfsMeta> &volumes() { return m_volumes; }
 
   private:
     // A map of BtrfsMeta.  The key is UUID

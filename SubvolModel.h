@@ -28,7 +28,7 @@ class SubvolumeModel : public QAbstractTableModel {
      * @param subvolData - A map of Subvolumes with subvolId as the key
      * @param m_subvolSize - A map of QVectors where subvolId is the key and size is at index 0 and exclusize size at index 1
      */
-    void load(const QMap<QString, BtrfsMeta> *volumeData);
+    void load(const QMap<QString, BtrfsMeta> &volumeData);
 
   private:
     // Holds the data for the model
