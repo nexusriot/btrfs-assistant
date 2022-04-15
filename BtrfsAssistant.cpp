@@ -39,6 +39,8 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
 BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent)
     : QMainWindow(parent), m_ui(new Ui::BtrfsAssistant), m_btrfs(btrfs), m_snapper(snapper), m_btrfsMaint(btrfsMaintenance) {
     m_ui->setupUi(this);
+    // Always start on the BTRFS tab, regardless what is the currentIndex in the .ui file
+    m_ui->tabWidget->setCurrentWidget(m_ui->tab_btrfs);
 
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
@@ -53,6 +55,8 @@ BtrfsAssistant::BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs,
     m_sourceModel->load(m_btrfs->volumes());
     m_subvolumeModel = new SubvolumeFilterModel(this);
     m_subvolumeModel->setSourceModel(m_sourceModel);
+
+    connect(m_ui->lineEdit_subvolFilter, &QLineEdit::textChanged, m_subvolumeModel, &SubvolumeFilterModel::setFilterFixedString);
     connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
     connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeContainer);
 

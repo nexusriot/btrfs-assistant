@@ -117,6 +117,8 @@ void SubvolumeModel::load(const QMap<QString, BtrfsMeta> *volumeData) {
 
 SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyModel(parent) {
     setSortRole(static_cast<int>(SubvolumeModel::Role::Sort));
+    setFilterCaseSensitivity(Qt::CaseInsensitive);
+    setFilterKeyColumn(SubvolumeModel::Column::Name);
 }
 
 bool SubvolumeFilterModel::includeSnapshots() const { return m_includeSnapshots; }
@@ -148,5 +150,5 @@ bool SubvolumeFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &so
         return false;
     }
 
-    return true;
+    return QSortFilterProxyModel::filterAcceptsRow(sourceRow, sourceParent);
 }
