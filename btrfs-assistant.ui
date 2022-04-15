@@ -459,6 +459,33 @@
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
+            <item row="2" column="0">
+             <layout class="QHBoxLayout" name="horizontalLayout_includeSubvolumes">
+              <item>
+               <widget class="QCheckBox" name="checkBox_subvolIncludeSnapshots">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Include children subvolumes of .snapshots and timeshift folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Include Timeshift and Snapper Snapshots</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="checkBox_subvolIncludeContainer">
+                <property name="text">
+                 <string>Include Container Subvolumes</string>
+                </property>
+                <property name="checked">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
             <item row="0" column="0">
              <widget class="QFrame" name="frame_subvolumesOptions">
               <layout class="QHBoxLayout" name="horizontalLayout_9">
@@ -468,6 +495,13 @@
                <property name="rightMargin">
                 <number>0</number>
                </property>
+               <item>
+                <widget class="FilterLineEdit" name="lineEdit_subvolFilter">
+                 <property name="placeholderText">
+                  <string>Filter...</string>
+                 </property>
+                </widget>
+               </item>
                <item>
                 <spacer name="horizontalSpacer_9">
                  <property name="orientation">
@@ -548,33 +582,6 @@
                <bool>false</bool>
               </attribute>
              </widget>
-            </item>
-            <item row="2" column="0">
-             <layout class="QHBoxLayout" name="horizontalLayout_includeSubvolumes">
-              <item>
-               <widget class="QCheckBox" name="checkBox_subvolIncludeSnapshots">
-                <property name="toolTip">
-                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Include children subvolumes of .snapshots and timeshift folders.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                </property>
-                <property name="text">
-                 <string>Include Timeshift and Snapper Snapshots</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="checkBox_subvolIncludeContainer">
-                <property name="text">
-                 <string>Include Container Subvolumes</string>
-                </property>
-                <property name="checked">
-                 <bool>false</bool>
-                </property>
-               </widget>
-              </item>
-             </layout>
             </item>
            </layout>
           </widget>
@@ -1599,6 +1606,13 @@
    </layout>
   </widget>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FilterLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>widgets/FilterLineEdit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="icons.qrc"/>
  </resources>

@@ -37,6 +37,7 @@ set(PROJECT_SOURCES
         Snapper.h Snapper.cpp
         SubvolModel.h SubvolModel.cpp
         System.h System.cpp
+        widgets/FilterLineEdit.h widgets/FilterLineEdit.cpp
         ${CMAKE_CURRENT_BINARY_DIR}/config.h
 )
 
