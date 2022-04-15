@@ -28,8 +28,8 @@ void Snapper::createSubvolMap() {
         const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString uuid = subvol.at(0).uuid;
         if (!m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
-            const int snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
-            int targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
+            const uint64_t snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
+            const uint64_t targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
             QString targetSubvol = m_btrfs->subvolumeName(uuid, targetId);
 
             // Get the subvolid of the target and do some additional error checking
@@ -130,7 +130,7 @@ void Snapper::load() {
                 }
 
                 // Now we need to find out where the snapshots are actually stored
-                int parentId = m_btrfs->subvolParent(DEFAULT_SNAP_PATH);
+                const uint64_t parentId = m_btrfs->subvolParent(DEFAULT_SNAP_PATH);
 
                 // It shouldn't be possible for the parent to not exist but we check anyway
                 if (parentId == 0) {
@@ -213,7 +213,7 @@ void Snapper::loadSubvols() {
             continue;
         }
 
-        const QMap<int, Subvolume> &subvols = m_btrfs->listSubvolumes(uuid);
+        const SubvolumeMap &subvols = m_btrfs->listSubvolumes(uuid);
 
         for (const auto &subvol : subvols) {
 
@@ -256,8 +256,8 @@ void Snapper::loadSubvols() {
             // If it is empty, it may mean the the map isn't loaded yet for the nested subvolumes
             if (targetSubvol.isEmpty()) {
                 if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH)) {
-                    const int targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
-                    const int parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
+                    const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
+                    const uint64_t parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
                     targetSubvol = m_btrfs->subvolumeName(uuid, parentId);
                 } else {
                     continue;
@@ -314,7 +314,7 @@ bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) co
     return true;
 }
 
-const RestoreResult Snapper::restoreSubvol(const QString &uuid, const int sourceId, const int targetId) const {
+const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const {
     RestoreResult restoreResult;
 
     // Get the subvol names associated with the IDs

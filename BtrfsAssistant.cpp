@@ -425,7 +425,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
     // Ensure the list of subvolumes is not out-of-date
     m_btrfs->loadSubvols(uuid);
 
-    const int subvolId = m_btrfs->subvolId(uuid, subvolume);
+    const uint64_t subvolId = m_btrfs->subvolId(uuid, subvolume);
     const QString snapshotSubvol = Snapper::findSnapshotSubvolume(subvolume);
     if (snapshotSubvol.isEmpty()) {
         displayError(tr("Snapshot subvolume not found"));
@@ -434,7 +434,7 @@ void BtrfsAssistant::restoreSnapshot(const QString &uuid, const QString &subvolu
 
     // Check the map for the target subvolume
     const QString targetSubvol = m_snapper->findTargetSubvol(snapshotSubvol, uuid);
-    const int targetId = m_btrfs->subvolId(uuid, targetSubvol);
+    const uint64_t targetId = m_btrfs->subvolId(uuid, targetSubvol);
 
     if (targetId == 0 || targetSubvol.isEmpty()) {
         displayError(tr("Target not found"));
@@ -645,7 +645,7 @@ void BtrfsAssistant::on_pushButton_subvolDelete_clicked() {
     }
 
     // get the subvolid, if it isn't found abort
-    int subvolid = m_btrfs->subvolId(uuid, subvol);
+    uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
     if (subvolid == 0) {
         displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("subvolid missing from map"));
         m_ui->pushButton_subvolDelete->clearFocus();

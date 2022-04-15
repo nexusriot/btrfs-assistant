@@ -13,28 +13,30 @@ struct RestoreResult {
 };
 
 struct Subvolume {
-    int parentId = 0;
-    int subvolId = 0;
+    uint64_t parentId = 0;
+    uint64_t subvolId = 0;
     QString subvolName;
     QString uuid;
-    long size = 0;
-    long exclusive = 0;
+    uint64_t size = 0;
+    uint64_t exclusive = 0;
 };
+
+using SubvolumeMap = QMap<uint64_t, Subvolume>;
 
 struct BtrfsMeta {
     bool populated = false;
     QString mountPoint;
-    long totalSize;
-    long allocatedSize;
-    long usedSize;
-    long freeSize;
-    long dataSize;
-    long dataUsed;
-    long metaSize;
-    long metaUsed;
-    long sysSize;
-    long sysUsed;
-    QMap<int, Subvolume> subvolumes;
+    uint64_t totalSize;
+    uint64_t allocatedSize;
+    uint64_t usedSize;
+    uint64_t freeSize;
+    uint64_t dataSize;
+    uint64_t dataUsed;
+    uint64_t metaSize;
+    uint64_t metaUsed;
+    uint64_t sysSize;
+    uint64_t sysUsed;
+    SubvolumeMap subvolumes;
 };
 
 /**
@@ -69,7 +71,7 @@ class Btrfs : public QObject {
      *  Returns a QStringList containing the subvol names/paths of all the children subvols
      *
      */
-    const QStringList children(const int subvolid, const QString &uuid) const;
+    const QStringList children(const uint64_t subvolid, const QString &uuid) const;
 
     /**
      * @brief Creates a btrfs snapshot
@@ -86,11 +88,11 @@ class Btrfs : public QObject {
      *  Returns true if successful and false if it fails for any reason.
      *
      */
-    const bool deleteSubvol(const QString &uuid, const int subvolid);
+    const bool deleteSubvol(const QString &uuid, const uint64_t subvolid);
 
     /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
      */
-    static bool isMounted(const QString &uuid, const int subvolid);
+    static bool isMounted(const QString &uuid, const uint64_t subvolid);
 
     /**
      * @brief Checks if quotas are enables at @p mountpoint
@@ -131,7 +133,7 @@ class Btrfs : public QObject {
      *  returns an empty list
      *
      */
-    const QMap<int, Subvolume> listSubvolumes(const QString &uuid) const;
+    SubvolumeMap listSubvolumes(const QString &uuid) const;
 
     /**
      * @brief Reads the qgroup data to populate subvol sizes
@@ -186,15 +188,15 @@ class Btrfs : public QObject {
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
      *  it returns 0
      */
-    const int subvolId(const QString &uuid, const QString &subvolName) const;
+    const uint64_t subvolId(const QString &uuid, const QString &subvolName) const;
 
     /**
      * @brief Returns the name of the subvol with id @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
-     * @param subvolId - An int with the ID of the subvolume to find the name for
+     * @param subvolId - An uint64_t with the ID of the subvolume to find the name for
      * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
      */
-    const QString subvolumeName(const QString &uuid, const int subvolId) const;
+    const QString subvolumeName(const QString &uuid, const uint64_t subvolId) const;
 
     /**
      * @brief Returns the name of the subvol at @p path
@@ -206,17 +208,17 @@ class Btrfs : public QObject {
     /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
-     * @param subvolId - An int with the ID of the subvolume to find the parent of
-     * @return An int with parent ID or 0 if the subvolId is not found
+     * @param subvolId - An uint64_t with the ID of the subvolume to find the parent of
+     * @return An uint64_t with parent ID or 0 if the subvolId is not found
      */
-    const int subvolParent(const QString &uuid, const int subvolId) const;
+    const uint64_t subvolParent(const QString &uuid, const uint64_t subvolId) const;
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of the subvol at @p path
      * @param path - An absolute path to a subvolume
-     * @return An int with parent ID or 0 if the subvolId is not found
+     * @return An uint64_t with parent ID or 0 if the subvolId is not found
      */
-    const int subvolParent(const QString &path) const;
+    const uint64_t subvolParent(const QString &path) const;
 
     /**
      * @brief Performs a balance operation on top level subvolume for device.
