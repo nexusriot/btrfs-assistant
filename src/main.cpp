@@ -1,6 +1,6 @@
-#include "ui/BtrfsAssistant.h"
-#include "util/BtrfsMaintenance.h"
 #include "ui/Cli.h"
+#include "ui/MainWindow.h"
+#include "util/BtrfsMaintenance.h"
 #include "util/Settings.h"
 
 #include <QApplication>
@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
             btrfsMaintenance = new BtrfsMaintenance(btrfsMaintenanceConfig);
         }
 
-        BtrfsAssistant mainWindow(btrfsMaintenance, &btrfs, snapper);
+        MainWindow mainWindow(btrfsMaintenance, &btrfs, snapper);
         mainWindow.show();
         return app.exec();
     }
