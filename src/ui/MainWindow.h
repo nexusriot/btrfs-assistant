@@ -1,5 +1,5 @@
-#ifndef BTRFSASSISTANT_H
-#define BTRFSASSISTANT_H
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
 
 #include <QMainWindow>
 #include <QSet>
@@ -14,14 +14,14 @@ class SubvolumeModel;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
-class BtrfsAssistant;
+class MainWindow;
 }
 QT_END_NAMESPACE
 
 /**
- * @brief The BtrfsAssistant class handles the custom application logic that ties all the various btrfs and snapper systems together.
+ * @brief The MainWindow class handles the custom application logic that ties all the various btrfs and snapper systems together.
  */
-class BtrfsAssistant : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
   public:
@@ -32,8 +32,14 @@ class BtrfsAssistant : public QMainWindow {
      * @param snapper
      * @param parent
      */
-    BtrfsAssistant(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = nullptr);
-    ~BtrfsAssistant();
+    MainWindow(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = nullptr);
+    ~MainWindow();
+
+    /**
+     * @brief A simple wrapper to QMessageBox for creating consistent error messages
+     * @param errorText - A QString containing the text to display to the user
+     */
+    void displayError(const QString &errorText);
 
   private:
     /**
@@ -49,7 +55,7 @@ class BtrfsAssistant : public QMainWindow {
     Snapper *m_snapper;
     SubvolumeFilterModel *m_subvolumeModel;
     SubvolumeModel *m_sourceModel;
-    Ui::BtrfsAssistant *m_ui;
+    Ui::MainWindow *m_ui;
 
     /**
      * @brief Timer used to periodically update UI on balance progress
@@ -270,4 +276,4 @@ class BtrfsAssistant : public QMainWindow {
     void on_toolButton_snapperNewRefresh_clicked();
     void on_toolButton_snapperRestoreRefresh_clicked();
 };
-#endif // BTRFSASSISTANT_H
+#endif // MAINWINDOW_H
