@@ -6,6 +6,8 @@
 * Various code quality improvements(Contributed by Adam Sowa)
 * Improve layout of the BtrfsMaintencance tab when resized
 * Change the naming of subvolume backups to support nested subvolumes
+* Reorganized the source code to make it more manageable(Contributed by Austin Horstman)
+* Lowered required C++ standard to C++ 17
 
 1.4 - 2022-04-14
 * Redesign the layout of the Subvolume tab(Contributed by Austin Horstman)
