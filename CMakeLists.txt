@@ -22,12 +22,4 @@ find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets LinguistTools REQUIRED)
 add_subdirectory(src)
 add_subdirectory(icons)
 
-# Docs only available if this is the main app
-find_package(Doxygen)
-if(Doxygen_FOUND)
-    add_subdirectory(docs)
-else()
-    message(STATUS "Doxygen not found, not building docs")
-endif()
-
 message(STATUS "Btrfs Assistant will be built for install into ${CMAKE_INSTALL_PREFIX}")
