@@ -111,22 +111,23 @@ void MainWindow::loadSnapperUI() {
     if (!m_hasSnapper)
         return;
 
-    // Load the list of valid configs
-    m_ui->comboBox_snapperConfigs->clear();
-    m_ui->comboBox_snapperSubvols->clear();
-    m_ui->comboBox_snapperConfigSettings->clear();
-
     // Load the configs in the snapper new subtab and the snapper settings tabs
     const QStringList configs = m_snapper->configs();
     for (const QString &config : configs) {
-        m_ui->comboBox_snapperConfigs->addItem(config);
-        m_ui->comboBox_snapperConfigSettings->addItem(config);
+        if (m_ui->comboBox_snapperConfigs->findText(config) == -1) {
+            m_ui->comboBox_snapperConfigs->addItem(config);
+        }
+        if (m_ui->comboBox_snapperConfigSettings->findText(config) == -1) {
+            m_ui->comboBox_snapperConfigSettings->addItem(config);
+        }
     }
 
     // Load the subvols in the snapper restore subtab
     const QStringList subvols = m_snapper->subvolKeys();
     for (const QString &subvol : subvols) {
-        m_ui->comboBox_snapperSubvols->addItem(subvol);
+        if (m_ui->comboBox_snapperSubvols->findText(subvol) == -1) {
+            m_ui->comboBox_snapperSubvols->addItem(subvol);
+        }
     }
 }
 
@@ -356,10 +357,11 @@ void MainWindow::populateSnapperRestoreGrid() {
 void MainWindow::refreshBtrfsUi() {
 
     // Repopulate device selection combo box with detected btrfs filesystems.
-    m_ui->comboBox_btrfsDevice->clear();
     const QStringList uuidList = Btrfs::listFilesystems();
     for (const QString &uuid : uuidList) {
-        m_ui->comboBox_btrfsDevice->addItem(uuid);
+        if (m_ui->comboBox_btrfsDevice->findText(uuid) == -1) {
+            m_ui->comboBox_btrfsDevice->addItem(uuid);
+        }
     }
 
     // Repopulate data using the first detected btrfs filesystem.
