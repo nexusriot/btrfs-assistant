@@ -467,6 +467,11 @@ void MainWindow::setup() {
         m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_settings), false);
     }
 
+    // If the system isn't running systemd, hide the systemd-related elements of the UI
+    if (!System::hasSystemd()) {
+        m_ui->groupBox_snapperUnits->hide();
+    }
+
     // Connect the subvolume view
     m_ui->tableView_subvols->setModel(m_subvolumeModel);
     m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);

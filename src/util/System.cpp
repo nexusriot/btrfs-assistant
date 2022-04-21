@@ -1,5 +1,6 @@
 #include "System.h"
 
+#include <QFile>
 #include <QProcess>
 #include <unistd.h>
 
@@ -27,6 +28,20 @@ QStringList System::findEnabledUnits() {
     }
 
     return serviceList;
+}
+
+bool System::hasSystemd() {
+    // /proc/1/comm contains the command use to run the init system
+    QFile file(QStringLiteral("/proc/1/comm"));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    if (file.readAll().trimmed() != "systemd") {
+        return false;
+    }
+
+    return true;
 }
 
 Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {

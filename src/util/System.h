@@ -35,6 +35,12 @@ class System {
     static QStringList findEnabledUnits();
 
     /**
+     * @brief Checks if the system is running systemd
+     * @return true if the system is running systemd, false otherwise
+     */
+    static bool hasSystemd();
+
+    /**
      * @brief An overloaded version of runCmd which takes a string and runs it with bash -c
      * @param cmd - The command to pass to bash -c
      * @param includeStderr - When true stderr is included in the Result.output
