@@ -67,5 +67,11 @@ BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, QObject *parent) :
 }
 
 void BtrfsMaintenance::refresh() {
-    System::startUnit(Settings::getInstance().value("bm_refresh_service", "btrfsmaintenance-refresh.service").toString());
+    QString script =
+        Settings::getInstance().value("bm_refresh_script", "/usr/share/btrfsmaintenance/btrfsmaintenance-refresh-cron.sh").toString();
+    if (System::hasSystemd()) {
+        System::runCmd(script, QStringList() << "systemd-timer", false);
+    } else {
+        System::runCmd(script, QStringList() << "cron", false);
+    }
 }
