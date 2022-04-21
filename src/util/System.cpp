@@ -2,6 +2,7 @@
 
 #include <QFile>
 #include <QProcess>
+#include <QTextStream>
 #include <unistd.h>
 
 bool System::checkRootUid() { return geteuid() == 0; }
@@ -42,6 +43,23 @@ bool System::hasSystemd() {
     }
 
     return true;
+}
+
+bool System::isSubvolidInFstab() {
+    QFile file(QStringLiteral("/etc/fstab"));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+
+    QTextStream fstabStream(&file);
+    QString line;
+    while (fstabStream.readLineInto(&line)) {
+        if (!line.startsWith("#") && line.contains("subvolid")) {
+            return true;
+        }
+    };
+
+    return false;
 }
 
 Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {

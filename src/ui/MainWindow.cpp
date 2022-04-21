@@ -438,8 +438,15 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume) 
         return;
     }
 
+    if (System::isSubvolidInFstab()) {
+        QMessageBox::warning(
+            this, tr("Warning subvolid mount detected!"),
+            tr("It appears you are currently mounting by subvolid.  Doing a restore in this case may not produce the expected outcome.  "
+               "It is highly recommended you switch to mounting by subvolume path before proceeding!"));
+    }
+
     // We are out of errors to check for, time to ask for confirmation
-    if (QMessageBox::question(0, tr("Confirm"),
+    if (QMessageBox::question(this, tr("Confirm"),
                               tr("Are you sure you want to restore ") + subvolume + tr(" to ", "as in from/to") + targetSubvol) !=
         QMessageBox::Yes)
         return;
@@ -449,7 +456,7 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume) 
 
     // Report the outcome to the end user
     if (restoreResult.success) {
-        QMessageBox::information(0, tr("Snapshot Restore"),
+        QMessageBox::information(this, tr("Snapshot Restore"),
                                  tr("Snapshot restoration complete.") + "\n\n" + tr("A copy of the original subvolume has been saved as ") +
                                      restoreResult.backupSubvolName + "\n\n" + tr("Please reboot immediately"));
     } else {

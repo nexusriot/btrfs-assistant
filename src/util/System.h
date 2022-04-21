@@ -41,6 +41,12 @@ class System {
     static bool hasSystemd();
 
     /**
+     * @brief Checks if any of the lines in /etc/fstab contain a subvolid which could impact restores
+     * @return true is there is a line with subvolid, false otherwise
+     */
+    static bool isSubvolidInFstab();
+
+    /**
      * @brief An overloaded version of runCmd which takes a string and runs it with bash -c
      * @param cmd - The command to pass to bash -c
      * @param includeStderr - When true stderr is included in the Result.output
