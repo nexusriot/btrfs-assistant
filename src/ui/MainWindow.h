@@ -56,8 +56,6 @@ class MainWindow : public QMainWindow {
     SubvolumeFilterModel *m_subvolumeModel = nullptr;
     SubvolumeModel *m_sourceModel = nullptr;
 
-    static const QStringList m_bmFreqValues;
-
     /**
      * @brief Timer used to periodically update UI on balance progress
      */
