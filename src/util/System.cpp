@@ -62,11 +62,11 @@ bool System::isSubvolidInFstab() {
     return false;
 }
 
-Result System::runCmd(const QString &cmd, bool includeStderr, int timeout) {
+Result System::runCmd(const QString &cmd, bool includeStderr, seconds timeout) {
     return runCmd("/bin/bash", QStringList() << "-c" << cmd, includeStderr, timeout);
 }
 
-Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout) {
+Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, seconds timeout) {
     QProcess proc;
 
     if (includeStderr)
@@ -74,7 +74,7 @@ Result System::runCmd(const QString &cmd, const QStringList &args, bool includeS
 
     proc.start(cmd, args);
 
-    proc.waitForFinished(1000 * timeout);
+    proc.waitForFinished(1000 * timeout.count());
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
