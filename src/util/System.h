@@ -15,7 +15,9 @@ struct Result {
  */
 class System {
   public:
+    using milliseconds = std::chrono::milliseconds;
     using seconds = std::chrono::seconds;
+    using minutes = std::chrono::minutes;
 
     /**
      * @brief Checks to see if the user running the application is root
@@ -53,20 +55,20 @@ class System {
      * @brief An overloaded version of runCmd which takes a string and runs it with bash -c
      * @param cmd - The command to pass to bash -c
      * @param includeStderr - When true stderr is included in the Result.output
-     * @param timeout - How long in seconds the command should run before timing out
+     * @param timeout - How long (in milliseconds resolution) the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static Result runCmd(const QString &cmd, bool includeStderr, seconds timeout = seconds(60));
+    static Result runCmd(const QString &cmd, bool includeStderr, milliseconds timeout = minutes(1));
 
     /**
      * @brief Runs a command on the host system
      * @param cmd - The absolute path to the binary/script to run
      * @param args - A list of arguments for @p cmd
      * @param includeStderr - When true stderr is included in the Result.output
-     * @param timeout - How long in seconds the command should run before timing out
+     * @param timeout - How long (in milliseconds resolution) the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, seconds timeout = seconds(60));
+    static Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, milliseconds timeout = minutes(1));
 
     /** @brief Starts the systemd unit with the unit name of @p unit
      *
