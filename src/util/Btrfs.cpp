@@ -129,7 +129,6 @@ void Btrfs::loadQgroups(const QString &uuid) {
         return;
     }
 
-    bool shouldDisableQgroup = false;
     if (!isQuotaEnabled(mountpoint)) {
         // If qgroups aren't enabled we need to abort
         return;

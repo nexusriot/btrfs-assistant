@@ -22,12 +22,12 @@ class FileBrowser : public QDialog {
     ~FileBrowser();
 
   private:
-    Ui::FileBrowser *m_ui;
-    QFileSystemModel *m_fileModel;
-    QTreeView *m_treeView;
+    Ui::FileBrowser *m_ui = nullptr;
     QString m_rootPath;
     QString m_uuid;
-    Snapper *m_snapper;
+    Snapper *m_snapper = nullptr;
+    QTreeView *m_treeView = nullptr;
+    QFileSystemModel *m_fileModel = nullptr;
 
   private slots:
     void on_pushButton_close_clicked();

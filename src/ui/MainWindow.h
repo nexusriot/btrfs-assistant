@@ -32,7 +32,7 @@ class MainWindow : public QMainWindow {
      * @param snapper
      * @param parent
      */
-    MainWindow(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent = nullptr);
+    MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper *snapper, QWidget *parent = nullptr);
     ~MainWindow();
 
     /**
@@ -45,17 +45,18 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Btrfs maintenance frequency values
      */
-    const QStringList m_bmFreqValues = {"none", "daily", "weekly", "monthly"};
-    Btrfs *m_btrfs;
-    BtrfsMaintenance *m_btrfsMaint;
+    Ui::MainWindow *m_ui = nullptr;
+    Btrfs *m_btrfs = nullptr;
+    BtrfsMaintenance *m_btrfsMaint = nullptr;
+    Snapper *m_snapper = nullptr;
     QSet<QCheckBox *> m_changedCheckBoxes;
     QHash<QString, QCheckBox *> m_configCheckBoxes;
     bool m_hasSnapper = false;
     bool m_hasBtrfsmaintenance = false;
-    Snapper *m_snapper;
-    SubvolumeFilterModel *m_subvolumeModel;
-    SubvolumeModel *m_sourceModel;
-    Ui::MainWindow *m_ui;
+    SubvolumeFilterModel *m_subvolumeModel = nullptr;
+    SubvolumeModel *m_sourceModel = nullptr;
+
+    static const QStringList m_bmFreqValues;
 
     /**
      * @brief Timer used to periodically update UI on balance progress

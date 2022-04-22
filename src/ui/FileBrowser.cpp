@@ -6,7 +6,7 @@
 #include <QMessageBox>
 
 FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent)
-    : QDialog(parent), m_ui(new Ui::FileBrowser), m_uuid(uuid), m_rootPath(rootPath), m_snapper(snapper) {
+    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper) {
     m_ui->setupUi(this);
 
     m_treeView = m_ui->treeView_file;
