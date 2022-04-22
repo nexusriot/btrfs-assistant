@@ -29,8 +29,6 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
     }
 }
 
-const QStringList MainWindow::m_bmFreqValues = {"none", "daily", "weekly", "monthly"};
-
 MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper *snapper, QWidget *parent)
     : QMainWindow(parent), m_ui(new Ui::MainWindow), m_btrfs(btrfs), m_btrfsMaint(btrfsMaintenance), m_snapper(snapper) {
     m_ui->setupUi(this);
@@ -134,15 +132,17 @@ void MainWindow::loadSnapperUI() {
 }
 
 void MainWindow::populateBmTab() {
+    const QStringList frequencyValues = {"none", "daily", "weekly", "monthly"};
+
     // Populate the frequency values from maintenance configuration
     m_ui->comboBox_bmBalanceFreq->clear();
-    m_ui->comboBox_bmBalanceFreq->insertItems(0, m_bmFreqValues);
+    m_ui->comboBox_bmBalanceFreq->insertItems(0, frequencyValues);
     m_ui->comboBox_bmBalanceFreq->setCurrentText(m_btrfsMaint->value("BTRFS_BALANCE_PERIOD"));
     m_ui->comboBox_bmScrubFreq->clear();
-    m_ui->comboBox_bmScrubFreq->insertItems(0, m_bmFreqValues);
+    m_ui->comboBox_bmScrubFreq->insertItems(0, frequencyValues);
     m_ui->comboBox_bmScrubFreq->setCurrentText(m_btrfsMaint->value("BTRFS_SCRUB_PERIOD"));
     m_ui->comboBox_bmDefragFreq->clear();
-    m_ui->comboBox_bmDefragFreq->insertItems(0, m_bmFreqValues);
+    m_ui->comboBox_bmDefragFreq->insertItems(0, frequencyValues);
     m_ui->comboBox_bmDefragFreq->setCurrentText(m_btrfsMaint->value("BTRFS_DEFRAG_PERIOD"));
 
     // Populate the balance section
