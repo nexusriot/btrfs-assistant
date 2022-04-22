@@ -29,8 +29,10 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
     }
 }
 
-MainWindow::MainWindow(BtrfsMaintenance *btrfsMaintenance, Btrfs *btrfs, Snapper *snapper, QWidget *parent)
-    : QMainWindow(parent), m_ui(new Ui::MainWindow), m_btrfs(btrfs), m_snapper(snapper), m_btrfsMaint(btrfsMaintenance) {
+const QStringList MainWindow::m_bmFreqValues = {"none", "daily", "weekly", "monthly"};
+
+MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper *snapper, QWidget *parent)
+    : QMainWindow(parent), m_ui(new Ui::MainWindow), m_btrfs(btrfs), m_btrfsMaint(btrfsMaintenance), m_snapper(snapper) {
     m_ui->setupUi(this);
     // Always start on the BTRFS tab, regardless what is the currentIndex in the .ui file
     m_ui->tabWidget->setCurrentWidget(m_ui->tab_btrfs);
@@ -536,6 +538,8 @@ void MainWindow::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bm
 void MainWindow::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
 void MainWindow::on_comboBox_btrfsDevice_activated(int index) {
+    Q_UNUSED(index);
+
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
     if (!uuid.isEmpty()) {
         populateBtrfsUi(uuid);
@@ -545,17 +549,23 @@ void MainWindow::on_comboBox_btrfsDevice_activated(int index) {
 }
 
 void MainWindow::on_comboBox_snapperConfigSettings_activated(int index) {
+    Q_UNUSED(index);
+
     populateSnapperConfigSettings();
 
     m_ui->comboBox_snapperConfigSettings->clearFocus();
 }
 
 void MainWindow::on_comboBox_snapperConfigs_activated(int index) {
+    Q_UNUSED(index);
+
     populateSnapperGrid();
     m_ui->comboBox_snapperConfigs->clearFocus();
 }
 
 void MainWindow::on_comboBox_snapperSubvols_activated(int index) {
+    Q_UNUSED(index);
+
     populateSnapperRestoreGrid();
     m_ui->comboBox_snapperSubvols->clearFocus();
 }

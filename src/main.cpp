@@ -62,12 +62,12 @@ int main(int argc, char *argv[]) {
         return Cli::restore(&btrfs, snapper, parser.value(restoreOption));
     } else {
         // If Btrfs Maintenance is installed, instantiate the btrfsMaintenance object
-        BtrfsMaintenance *btrfsMaintenance = nullptr;
+        std::unique_ptr<BtrfsMaintenance> btrfsMaintenance;
         if (QFile::exists(btrfsMaintenanceConfig)) {
-            btrfsMaintenance = new BtrfsMaintenance(btrfsMaintenanceConfig);
+            btrfsMaintenance.reset(new BtrfsMaintenance(btrfsMaintenanceConfig));
         }
 
-        MainWindow mainWindow(btrfsMaintenance, &btrfs, snapper);
+        MainWindow mainWindow(&btrfs, btrfsMaintenance.get(), snapper);
         mainWindow.show();
         return app.exec();
     }

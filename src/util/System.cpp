@@ -74,7 +74,7 @@ Result System::runCmd(const QString &cmd, const QStringList &args, bool includeS
 
     proc.start(cmd, args);
 
-    proc.waitForFinished(1000 * 60);
+    proc.waitForFinished(1000 * timeout);
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
