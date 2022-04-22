@@ -2,6 +2,7 @@
 #define SYSTEM_H
 
 #include <QObject>
+#include <chrono>
 
 // Stores the results from runCmd
 struct Result {
@@ -14,6 +15,8 @@ struct Result {
  */
 class System {
   public:
+    using seconds = std::chrono::seconds;
+
     /**
      * @brief Checks to see if the user running the application is root
      * @return True is the user has a UID of 0, false otherwise
@@ -53,7 +56,7 @@ class System {
      * @param timeout - How long in seconds the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static Result runCmd(const QString &cmd, bool includeStderr, int timeout = 60);
+    static Result runCmd(const QString &cmd, bool includeStderr, seconds timeout = seconds(60));
 
     /**
      * @brief Runs a command on the host system
@@ -63,7 +66,7 @@ class System {
      * @param timeout - How long in seconds the command should run before timing out
      * @return A Result containing the exit code and the output from the running the command
      */
-    static Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, int timeout = 60);
+    static Result runCmd(const QString &cmd, const QStringList &args, bool includeStderr, seconds timeout = seconds(60));
 
     /** @brief Starts the systemd unit with the unit name of @p unit
      *
