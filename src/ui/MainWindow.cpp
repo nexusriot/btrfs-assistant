@@ -18,7 +18,8 @@
  * @param items - A QStringList which contain the strings to select in @p listWidget
  * @param listWidget - A pointer to a QListWidget where the selections will be made
  */
-static void setListWidgetSelections(const QStringList &items, QListWidget *listWidget) {
+static void setListWidgetSelections(const QStringList &items, QListWidget *listWidget)
+{
     QAbstractItemModel *model = listWidget->model();
     QItemSelectionModel *selectModel = listWidget->selectionModel();
     for (int i = 0; i < model->rowCount(); i++) {
@@ -30,7 +31,8 @@ static void setListWidgetSelections(const QStringList &items, QListWidget *listW
 }
 
 MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper *snapper, QWidget *parent)
-    : QMainWindow(parent), m_ui(new Ui::MainWindow), m_btrfs(btrfs), m_btrfsMaint(btrfsMaintenance), m_snapper(snapper) {
+    : QMainWindow(parent), m_ui(new Ui::MainWindow), m_btrfs(btrfs), m_btrfsMaint(btrfsMaintenance), m_snapper(snapper)
+{
     m_ui->setupUi(this);
     // Always start on the BTRFS tab, regardless what is the currentIndex in the .ui file
     m_ui->tabWidget->setCurrentWidget(m_ui->tab_btrfs);
@@ -67,7 +69,8 @@ MainWindow::~MainWindow() { delete m_ui; }
 
 void MainWindow::displayError(const QString &errorText) { QMessageBox::critical(this, tr("Error"), errorText); }
 
-void MainWindow::btrfsBalanceStatusUpdateUI() {
+void MainWindow::btrfsBalanceStatusUpdateUI()
+{
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
     QString balanceStatus = m_btrfs->balanceStatus(m_btrfs->mountRoot(uuid));
 
@@ -88,7 +91,8 @@ void MainWindow::btrfsBalanceStatusUpdateUI() {
     }
 }
 
-void MainWindow::btrfsScrubStatusUpdateUI() {
+void MainWindow::btrfsScrubStatusUpdateUI()
+{
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
     QString scrubStatus = m_btrfs->scrubStatus(m_btrfs->mountRoot(uuid));
 
@@ -106,7 +110,8 @@ void MainWindow::btrfsScrubStatusUpdateUI() {
     }
 }
 
-void MainWindow::loadSnapperUI() {
+void MainWindow::loadSnapperUI()
+{
     // If snapper isn't installed, no need to continue
     if (!m_hasSnapper)
         return;
@@ -131,7 +136,8 @@ void MainWindow::loadSnapperUI() {
     }
 }
 
-void MainWindow::populateBmTab() {
+void MainWindow::populateBmTab()
+{
     const QStringList frequencyValues = {"none", "daily", "weekly", "monthly"};
 
     // Populate the frequency values from maintenance configuration
@@ -191,7 +197,8 @@ void MainWindow::populateBmTab() {
     }
 }
 
-void MainWindow::populateBtrfsUi(const QString &uuid) {
+void MainWindow::populateBtrfsUi(const QString &uuid)
+{
 
     setEnableQuotaButtonStatus();
 
@@ -226,7 +233,8 @@ void MainWindow::populateBtrfsUi(const QString &uuid) {
     btrfsScrubStatusUpdateUI();
 }
 
-void MainWindow::populateSnapperConfigSettings() {
+void MainWindow::populateSnapperConfigSettings()
+{
     QString name = m_ui->comboBox_snapperConfigSettings->currentText();
     if (name.isEmpty()) {
         return;
@@ -265,7 +273,8 @@ void MainWindow::populateSnapperConfigSettings() {
     snapperTimelineEnable(m_ui->checkBox_snapperEnableTimeline->isChecked());
 }
 
-void MainWindow::populateSnapperGrid() {
+void MainWindow::populateSnapperGrid()
+{
     // We need to the locale for displaying the date/time
     const QLocale locale = QLocale::system();
 
@@ -309,7 +318,8 @@ void MainWindow::populateSnapperGrid() {
     m_ui->tableWidget_snapperNew->resizeColumnsToContents();
 }
 
-void MainWindow::populateSnapperRestoreGrid() {
+void MainWindow::populateSnapperRestoreGrid()
+{
     // We need to the locale for displaying the date/time
     const QLocale locale = QLocale::system();
 
@@ -356,7 +366,8 @@ void MainWindow::populateSnapperRestoreGrid() {
     m_ui->tableWidget_snapperRestore->resizeColumnsToContents();
 }
 
-void MainWindow::refreshBtrfsUi() {
+void MainWindow::refreshBtrfsUi()
+{
 
     // Repopulate device selection combo box with detected btrfs filesystems.
     const QStringList uuidList = Btrfs::listFilesystems();
@@ -371,7 +382,8 @@ void MainWindow::refreshBtrfsUi() {
     refreshSubvolListUi();
 }
 
-void MainWindow::refreshSnapperServices() {
+void MainWindow::refreshSnapperServices()
+{
     const auto enabledUnits = System::findEnabledUnits();
 
     // Loop through the checkboxes and change state to match
@@ -384,7 +396,8 @@ void MainWindow::refreshSnapperServices() {
     }
 }
 
-void MainWindow::refreshSubvolListUi() {
+void MainWindow::refreshSubvolListUi()
+{
 
     bool showQuota = false;
 
@@ -415,7 +428,8 @@ void MainWindow::refreshSubvolListUi() {
     }
 }
 
-void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume) {
+void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
+{
     if (!Btrfs::isSnapper(subvolume)) {
         displayError(tr("This is not a snapshot that can be restored by this application"));
         return;
@@ -466,7 +480,8 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume) 
     }
 }
 
-void MainWindow::setup() {
+void MainWindow::setup()
+{
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (m_hasSnapper) {
@@ -510,7 +525,8 @@ void MainWindow::setup() {
     }
 }
 
-void MainWindow::snapperTimelineEnable(bool enable) {
+void MainWindow::snapperTimelineEnable(bool enable)
+{
     m_ui->spinBox_snapperHourly->setEnabled(enable);
     m_ui->spinBox_snapperDaily->setEnabled(enable);
     m_ui->spinBox_snapperWeekly->setEnabled(enable);
@@ -518,7 +534,8 @@ void MainWindow::snapperTimelineEnable(bool enable) {
     m_ui->spinBox_snapperYearly->setEnabled(enable);
 }
 
-void MainWindow::updateServices(QList<QCheckBox *> checkboxList) {
+void MainWindow::updateServices(QList<QCheckBox *> checkboxList)
+{
     QStringList enabledUnits = System::findEnabledUnits();
 
     for (auto checkbox : checkboxList) {
@@ -537,7 +554,8 @@ void MainWindow::on_checkBox_bmScrub_clicked(bool checked) { m_ui->listWidget_bm
 
 void MainWindow::on_checkBox_snapperEnableTimeline_clicked(bool checked) { snapperTimelineEnable(checked); }
 
-void MainWindow::on_comboBox_btrfsDevice_activated(int index) {
+void MainWindow::on_comboBox_btrfsDevice_activated(int index)
+{
     Q_UNUSED(index);
 
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
@@ -548,7 +566,8 @@ void MainWindow::on_comboBox_btrfsDevice_activated(int index) {
     m_ui->comboBox_btrfsDevice->clearFocus();
 }
 
-void MainWindow::on_comboBox_snapperConfigSettings_activated(int index) {
+void MainWindow::on_comboBox_snapperConfigSettings_activated(int index)
+{
     Q_UNUSED(index);
 
     populateSnapperConfigSettings();
@@ -556,21 +575,24 @@ void MainWindow::on_comboBox_snapperConfigSettings_activated(int index) {
     m_ui->comboBox_snapperConfigSettings->clearFocus();
 }
 
-void MainWindow::on_comboBox_snapperConfigs_activated(int index) {
+void MainWindow::on_comboBox_snapperConfigs_activated(int index)
+{
     Q_UNUSED(index);
 
     populateSnapperGrid();
     m_ui->comboBox_snapperConfigs->clearFocus();
 }
 
-void MainWindow::on_comboBox_snapperSubvols_activated(int index) {
+void MainWindow::on_comboBox_snapperSubvols_activated(int index)
+{
     Q_UNUSED(index);
 
     populateSnapperRestoreGrid();
     m_ui->comboBox_snapperSubvols->clearFocus();
 }
 
-void MainWindow::on_pushButton_bmApply_clicked() {
+void MainWindow::on_pushButton_bmApply_clicked()
+{
     // Read and set the Btrfs maintenance settings
     m_btrfsMaint->setValue("BTRFS_BALANCE_PERIOD", m_ui->comboBox_bmBalanceFreq->currentText());
     m_btrfsMaint->setValue("BTRFS_SCRUB_PERIOD", m_ui->comboBox_bmScrubFreq->currentText());
@@ -620,7 +642,8 @@ void MainWindow::on_pushButton_bmApply_clicked() {
     m_ui->pushButton_bmApply->clearFocus();
 }
 
-void MainWindow::on_pushButton_btrfsBalance_clicked() {
+void MainWindow::on_pushButton_btrfsBalance_clicked()
+{
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
 
     // Stop or start balance depending on current operation
@@ -633,7 +656,8 @@ void MainWindow::on_pushButton_btrfsBalance_clicked() {
     }
 }
 
-void MainWindow::on_pushButton_btrfsScrub_clicked() {
+void MainWindow::on_pushButton_btrfsScrub_clicked()
+{
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
 
     // Stop or start scrub depending on current operation
@@ -646,7 +670,8 @@ void MainWindow::on_pushButton_btrfsScrub_clicked() {
     }
 }
 
-void MainWindow::on_pushButton_subvolDelete_clicked() {
+void MainWindow::on_pushButton_subvolDelete_clicked()
+{
     if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
         displayError(tr("Please select a subvolume to delete first!"));
         m_ui->pushButton_subvolDelete->clearFocus();
@@ -705,7 +730,8 @@ void MainWindow::on_pushButton_subvolDelete_clicked() {
     m_ui->pushButton_subvolDelete->clearFocus();
 }
 
-void MainWindow::on_pushButton_btrfsRefreshData_clicked() {
+void MainWindow::on_pushButton_btrfsRefreshData_clicked()
+{
     m_btrfs->loadVolumes();
     m_sourceModel->load(m_btrfs->volumes());
     refreshBtrfsUi();
@@ -713,7 +739,8 @@ void MainWindow::on_pushButton_btrfsRefreshData_clicked() {
     m_ui->pushButton_btrfsRefreshData->clearFocus();
 }
 
-void MainWindow::on_pushButton_subvolRefresh_clicked() {
+void MainWindow::on_pushButton_subvolRefresh_clicked()
+{
 
     for (const QString &uuid : m_btrfs->listFilesystems()) {
         m_btrfs->loadSubvols(uuid);
@@ -725,7 +752,8 @@ void MainWindow::on_pushButton_subvolRefresh_clicked() {
     m_ui->pushButton_subvolRefresh->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperRestore_clicked() {
+void MainWindow::on_pushButton_snapperRestore_clicked()
+{
     if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
         return;
@@ -750,7 +778,8 @@ void MainWindow::on_pushButton_snapperRestore_clicked() {
     m_ui->pushButton_snapperRestore->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperBrowse_clicked() {
+void MainWindow::on_pushButton_snapperBrowse_clicked()
+{
     QString target = m_ui->comboBox_snapperSubvols->currentText();
     if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError("You must select snapshot to browse!");
@@ -776,7 +805,8 @@ void MainWindow::on_pushButton_snapperBrowse_clicked() {
     fb.exec();
 }
 
-void MainWindow::on_pushButton_snapperCreate_clicked() {
+void MainWindow::on_pushButton_snapperCreate_clicked()
+{
     QString config = m_ui->comboBox_snapperConfigs->currentText();
 
     // If snapper isn't installed, we should bail
@@ -814,7 +844,8 @@ void MainWindow::on_pushButton_snapperCreate_clicked() {
     m_ui->pushButton_snapperCreate->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperDelete_clicked() {
+void MainWindow::on_pushButton_snapperDelete_clicked()
+{
     if (m_ui->tableWidget_snapperNew->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
         return;
@@ -861,7 +892,8 @@ void MainWindow::on_pushButton_snapperDelete_clicked() {
     m_ui->pushButton_snapperDelete->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperDeleteConfig_clicked() {
+void MainWindow::on_pushButton_snapperDeleteConfig_clicked()
+{
     QString name = m_ui->comboBox_snapperConfigSettings->currentText();
 
     if (name.isEmpty()) {
@@ -894,7 +926,8 @@ void MainWindow::on_pushButton_snapperDeleteConfig_clicked() {
     m_ui->pushButton_snapperDeleteConfig->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperNewConfig_clicked() {
+void MainWindow::on_pushButton_snapperNewConfig_clicked()
+{
     if (m_ui->groupBox_snapperConfigEdit->isVisible()) {
         m_ui->lineEdit_snapperName->clear();
 
@@ -933,7 +966,8 @@ void MainWindow::on_pushButton_snapperNewConfig_clicked() {
     }
 }
 
-void MainWindow::on_pushButton_snapperSaveConfig_clicked() {
+void MainWindow::on_pushButton_snapperSaveConfig_clicked()
+{
     QString name;
 
     // If the settings box is visible we are changing settings on an existing config
@@ -1007,7 +1041,8 @@ void MainWindow::on_pushButton_snapperSaveConfig_clicked() {
     m_ui->pushButton_snapperSaveConfig->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperUnitsApply_clicked() {
+void MainWindow::on_pushButton_snapperUnitsApply_clicked()
+{
 
     updateServices(m_ui->groupBox_snapperUnits->findChildren<QCheckBox *>());
 
@@ -1016,7 +1051,8 @@ void MainWindow::on_pushButton_snapperUnitsApply_clicked() {
     m_ui->pushButton_snapperUnitsApply->clearFocus();
 }
 
-void MainWindow::on_pushButton_enableQuota_clicked() {
+void MainWindow::on_pushButton_enableQuota_clicked()
+{
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }
@@ -1031,17 +1067,20 @@ void MainWindow::on_pushButton_enableQuota_clicked() {
     setEnableQuotaButtonStatus();
 }
 
-void MainWindow::on_toolButton_snapperNewRefresh_clicked() {
+void MainWindow::on_toolButton_snapperNewRefresh_clicked()
+{
     m_snapper->load();
     populateSnapperGrid();
 }
 
-void MainWindow::on_toolButton_snapperRestoreRefresh_clicked() {
+void MainWindow::on_toolButton_snapperRestoreRefresh_clicked()
+{
     m_snapper->loadSubvols();
     populateSnapperRestoreGrid();
 }
 
-void MainWindow::setEnableQuotaButtonStatus() {
+void MainWindow::setEnableQuotaButtonStatus()
+{
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }

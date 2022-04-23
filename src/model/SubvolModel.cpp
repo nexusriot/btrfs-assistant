@@ -1,7 +1,8 @@
 #include "model/SubvolModel.h"
 #include "util/System.h"
 
-QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, int role) const {
+QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
     if (role != Qt::DisplayRole) {
         return QAbstractTableModel::headerData(section, orientation, role);
     }
@@ -28,21 +29,24 @@ QVariant SubvolumeModel::headerData(int section, Qt::Orientation orientation, in
     return QString();
 }
 
-int SubvolumeModel::rowCount(const QModelIndex &parent) const {
+int SubvolumeModel::rowCount(const QModelIndex &parent) const
+{
     if (parent.isValid())
         return 0;
 
     return m_data.count();
 }
 
-int SubvolumeModel::columnCount(const QModelIndex &parent) const {
+int SubvolumeModel::columnCount(const QModelIndex &parent) const
+{
     if (parent.isValid())
         return 0;
 
     return ColumnCount;
 }
 
-QVariant SubvolumeModel::data(const QModelIndex &index, int role) const {
+QVariant SubvolumeModel::data(const QModelIndex &index, int role) const
+{
     if (!index.isValid() || index.column() >= ColumnCount || index.row() >= m_data.count()) {
         return {};
     }
@@ -94,7 +98,8 @@ QVariant SubvolumeModel::data(const QModelIndex &index, int role) const {
     return QVariant();
 }
 
-void SubvolumeModel::load(const QMap<QString, BtrfsMeta> &volumeData) {
+void SubvolumeModel::load(const QMap<QString, BtrfsMeta> &volumeData)
+{
     // Ensure that multiple threads don't try to update the model at the same time
     QMutexLocker lock(&m_updateMutex);
 
@@ -115,7 +120,8 @@ void SubvolumeModel::load(const QMap<QString, BtrfsMeta> &volumeData) {
     endResetModel();
 }
 
-SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyModel(parent) {
+SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyModel(parent)
+{
     setSortRole(static_cast<int>(SubvolumeModel::Role::Sort));
     setFilterCaseSensitivity(Qt::CaseInsensitive);
     setFilterKeyColumn(SubvolumeModel::Column::Name);
@@ -125,21 +131,24 @@ bool SubvolumeFilterModel::includeSnapshots() const { return m_includeSnapshots;
 
 bool SubvolumeFilterModel::includeContainer() const { return m_includeContainer; }
 
-void SubvolumeFilterModel::setIncludeSnapshots(bool includeSnapshots) {
+void SubvolumeFilterModel::setIncludeSnapshots(bool includeSnapshots)
+{
     if (m_includeSnapshots != includeSnapshots) {
         m_includeSnapshots = includeSnapshots;
         invalidateFilter();
     }
 }
 
-void SubvolumeFilterModel::setIncludeContainer(bool includeContainer) {
+void SubvolumeFilterModel::setIncludeContainer(bool includeContainer)
+{
     if (m_includeContainer != includeContainer) {
         m_includeContainer = includeContainer;
         invalidateFilter();
     }
 }
 
-bool SubvolumeFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
+bool SubvolumeFilterModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
     QModelIndex nameIdx = sourceModel()->index(sourceRow, static_cast<int>(SubvolumeModel::Column::Name), sourceParent);
     const QString &name = sourceModel()->data(nameIdx).toString();
 

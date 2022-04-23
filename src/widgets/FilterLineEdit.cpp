@@ -2,7 +2,8 @@
 #include <QStyle>
 #include <QToolButton>
 
-FilterLineEdit::FilterLineEdit(QWidget *parent) : QLineEdit(parent) {
+FilterLineEdit::FilterLineEdit(QWidget *parent) : QLineEdit(parent)
+{
 
     m_clearButton = new QToolButton(this);
     QIcon icon = QIcon::fromTheme("edit-clear", QIcon(":/icons/edit-clear.svg"));
@@ -21,7 +22,8 @@ FilterLineEdit::FilterLineEdit(QWidget *parent) : QLineEdit(parent) {
                    qMax(msz.height(), m_clearButton->sizeHint().height() + frameWidth * 2 + 2));
 }
 
-void FilterLineEdit::resizeEvent(QResizeEvent *) {
+void FilterLineEdit::resizeEvent(QResizeEvent *)
+{
     QSize sz = m_clearButton->sizeHint();
     int frameWidth = style()->pixelMetric(QStyle::PM_DefaultFrameWidth);
     m_clearButton->move(rect().right() - frameWidth - sz.width(), (rect().bottom() + 1 - sz.height()) / 2);

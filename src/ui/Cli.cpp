@@ -4,7 +4,8 @@ static void displayError(const QString &error) { QTextStream(stderr) << "Error: 
 
 Cli::Cli(QObject *parent) : QObject{parent} {}
 
-int Cli::listSnapshots(Snapper *snapper) {
+int Cli::listSnapshots(Snapper *snapper)
+{
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
         displayError(tr("You must run this application as root"));
@@ -23,7 +24,8 @@ int Cli::listSnapshots(Snapper *snapper) {
     return 0;
 }
 
-int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget) {
+int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget)
+{
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
         displayError(tr("You must run this application as root"));

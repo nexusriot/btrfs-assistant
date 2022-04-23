@@ -9,15 +9,16 @@
 #include <QFile>
 #include <QRegularExpression>
 
-Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent)
-    : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand) {
+Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
+{
     m_subvolMap = Settings::getInstance().subvolMap();
     load();
 }
 
 Snapper::ConfigMap Snapper::config(const QString &name) { return m_configs.value(name); }
 
-void Snapper::createSubvolMap() {
+void Snapper::createSubvolMap()
+{
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString uuid = subvol.at(0).uuid;
@@ -41,7 +42,8 @@ void Snapper::createSubvolMap() {
     }
 }
 
-const QString Snapper::findSnapshotSubvolume(const QString &subvol) {
+const QString Snapper::findSnapshotSubvolume(const QString &subvol)
+{
     static QRegularExpression re("\\/[0-9]*\\/snapshot$");
     QStringList subvolSplit = subvol.split(re);
 
@@ -53,7 +55,8 @@ const QString Snapper::findSnapshotSubvolume(const QString &subvol) {
     }
 }
 
-const QString Snapper::findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid) {
+const QString Snapper::findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid)
+{
     // Make sure it is Snapper snapshot
     if (!Btrfs::isSnapper(snapshotPath)) {
         return QString();
@@ -80,7 +83,8 @@ const QString Snapper::findTargetPath(const QString &snapshotPath, const QString
     return QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
 }
 
-const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const {
+const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
+{
     if (m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
         return m_subvolMap->value(snapshotSubvol, "").split(",").at(0);
     } else {
@@ -88,7 +92,8 @@ const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QSt
     }
 }
 
-void Snapper::load() {
+void Snapper::load()
+{
 
     // Load the list of valid configs
     m_configs.clear();
@@ -164,7 +169,8 @@ void Snapper::load() {
     loadSubvols();
 }
 
-void Snapper::loadConfig(const QString &name) {
+void Snapper::loadConfig(const QString &name)
+{
     // If the config is already loaded, remove the old data
     if (m_configs.contains(name)) {
         m_configs.remove(name);
@@ -194,7 +200,8 @@ void Snapper::loadConfig(const QString &name) {
     }
 }
 
-void Snapper::loadSubvols() {
+void Snapper::loadSubvols()
+{
     // Clear the existing info
     m_subvols.clear();
 
@@ -264,7 +271,8 @@ void Snapper::loadSubvols() {
     createSubvolMap();
 }
 
-SnapperSnapshots Snapper::readSnapperMeta(const QString &filename) {
+SnapperSnapshots Snapper::readSnapperMeta(const QString &filename)
+{
     SnapperSnapshots snap;
     snap.number = 0;
     QFile metaFile(filename);
@@ -288,7 +296,8 @@ SnapperSnapshots Snapper::readSnapperMeta(const QString &filename) {
     return snap;
 }
 
-bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) const {
+bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) const
+{
 
     // QFile won't overwrite an existing file so we need to remove it first
     if (QFile::exists(destPath)) {
@@ -308,7 +317,8 @@ bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) co
     return true;
 }
 
-const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const {
+const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const
+{
     RestoreResult restoreResult;
 
     // Get the subvol names associated with the IDs
@@ -376,7 +386,8 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t s
     return restoreResult;
 }
 
-SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap) {
+SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap)
+{
     SnapperResult result;
 
     const QStringList keys = configMap.keys();
@@ -402,7 +413,8 @@ SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap
     return result;
 }
 
-const QVector<SnapperSnapshots> Snapper::snapshots(const QString &config) {
+const QVector<SnapperSnapshots> Snapper::snapshots(const QString &config)
+{
     if (m_snapshots.contains(config)) {
         return m_snapshots[config];
     } else {
@@ -410,7 +422,8 @@ const QVector<SnapperSnapshots> Snapper::snapshots(const QString &config) {
     }
 }
 
-const QVector<SnapperSubvolume> Snapper::subvols(const QString &config) {
+const QVector<SnapperSubvolume> Snapper::subvols(const QString &config)
+{
     if (m_subvols.contains(config)) {
         return m_subvols[config];
     } else {
@@ -424,7 +437,8 @@ const QVector<SnapperSubvolume> Snapper::subvols(const QString &config) {
  *
  */
 
-const SnapperResult Snapper::runSnapper(const QString &command, const QString &name) const {
+const SnapperResult Snapper::runSnapper(const QString &command, const QString &name) const
+{
     Result result;
     SnapperResult snapperResult;
 

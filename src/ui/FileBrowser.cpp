@@ -6,7 +6,8 @@
 #include <QMessageBox>
 
 FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent)
-    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper) {
+    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper)
+{
     m_ui->setupUi(this);
 
     m_treeView = m_ui->treeView_file;
@@ -28,7 +29,8 @@ FileBrowser::~FileBrowser() { delete m_ui; }
 
 void FileBrowser::on_pushButton_close_clicked() { this->close(); }
 
-void FileBrowser::on_pushButton_diff_clicked() {
+void FileBrowser::on_pushButton_diff_clicked()
+{
     // Get the selected row and ensure it isn't empty
     QModelIndexList indexes = m_treeView->selectionModel()->selectedIndexes();
     if (indexes.count() == 0) {
@@ -50,7 +52,8 @@ void FileBrowser::on_pushButton_diff_clicked() {
     df.exec();
 }
 
-void FileBrowser::on_pushButton_restore_clicked() {
+void FileBrowser::on_pushButton_restore_clicked()
+{
     // Get the selected row and ensure it isn't empty
     QModelIndexList indexes = m_treeView->selectionModel()->selectedIndexes();
     if (indexes.count() == 0) {

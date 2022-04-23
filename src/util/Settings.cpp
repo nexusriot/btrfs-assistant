@@ -1,11 +1,13 @@
 #include "Settings.h"
 
-Settings &Settings::getInstance() {
+Settings &Settings::getInstance()
+{
     static Settings instance;
     return instance;
 }
 
-Settings::Settings(QObject *parent) : QObject{parent} {
+Settings::Settings(QObject *parent) : QObject{parent}
+{
     // Get the config settings
     m_settings = new QSettings(m_filePath, QSettings::NativeFormat);
 

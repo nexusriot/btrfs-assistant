@@ -6,7 +6,8 @@
 #include <QMessageBox>
 
 DiffViewer::DiffViewer(Snapper *snapper, const QString &rootPath, const QString &filePath, const QString &uuid, QWidget *parent)
-    : QDialog(parent), m_ui(new Ui::DiffViewer), m_snapper(snapper), m_uuid(uuid) {
+    : QDialog(parent), m_ui(new Ui::DiffViewer), m_snapper(snapper), m_uuid(uuid)
+{
 
     m_ui->setupUi(this);
 
@@ -23,7 +24,8 @@ DiffViewer::DiffViewer(Snapper *snapper, const QString &rootPath, const QString 
 
 DiffViewer::~DiffViewer() { delete m_ui; }
 
-void DiffViewer::on_pushButton_restore_clicked() {
+void DiffViewer::on_pushButton_restore_clicked()
+{
     if (QMessageBox::question(0, tr("Confirm"), tr("Are you sure you want to restore this the file over the current file?")) !=
         QMessageBox::Yes) {
         return;
@@ -41,7 +43,8 @@ void DiffViewer::on_pushButton_restore_clicked() {
 }
 
 #include <QDebug>
-void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath) {
+void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
+{
     QDir snapshotDir(rootPath);
 
     QString relPath = snapshotDir.relativeFilePath(filePath);
@@ -107,7 +110,8 @@ void DiffViewer::LoadSnapshots(const QString &rootPath, const QString &filePath)
     m_twSnapshot->sortItems(DiffColumn::num, Qt::DescendingOrder);
 }
 
-void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged() {
+void DiffViewer::on_tableWidget_snapshotList_itemSelectionChanged()
+{
     const QString filePath = m_twSnapshot->item(m_twSnapshot->currentRow(), DiffColumn::filePath)->text();
     const QStringList diffOutput = System::runCmd("diff", {"-u", m_targetPath, filePath}, false).output.split("\n");
 

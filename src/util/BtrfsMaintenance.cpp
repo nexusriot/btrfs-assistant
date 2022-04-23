@@ -13,7 +13,8 @@
  * Returns true
  *
  */
-bool readBmFile(QIODevice &device, QSettings::SettingsMap &map) {
+bool readBmFile(QIODevice &device, QSettings::SettingsMap &map)
+{
     QStringList rawList;
     while (!device.atEnd()) {
         QString line = device.readLine();
@@ -37,7 +38,8 @@ bool readBmFile(QIODevice &device, QSettings::SettingsMap &map) {
  * Returns true
  *
  */
-bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map) {
+bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map)
+{
     QByteArray data;
 
     if (!map.contains("raw")) {
@@ -61,12 +63,14 @@ bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map) {
     return true;
 }
 
-BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, QObject *parent) : QObject{parent} {
+BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, QObject *parent) : QObject{parent}
+{
     QSettings::Format bmFormat = QSettings::registerFormat("btrfsmaintenance", readBmFile, writeBmFile);
     m_settings = new QSettings(configFile, bmFormat);
 }
 
-void BtrfsMaintenance::refresh() {
+void BtrfsMaintenance::refresh()
+{
     QString script =
         Settings::getInstance().value("bm_refresh_script", "/usr/share/btrfsmaintenance/btrfsmaintenance-refresh-cron.sh").toString();
     if (System::hasSystemd()) {

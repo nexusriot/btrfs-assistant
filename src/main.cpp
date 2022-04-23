@@ -10,7 +10,8 @@
 #include <QFile>
 #include <QTranslator>
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
     QApplication app(argc, argv);
     app.setWindowIcon(QIcon(":/icons/btrfs-assistant.png"));
 

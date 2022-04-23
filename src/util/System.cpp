@@ -7,7 +7,8 @@
 
 bool System::checkRootUid() { return geteuid() == 0; }
 
-bool System::enableService(QString serviceName, bool enable) {
+bool System::enableService(QString serviceName, bool enable)
+{
     int exitCode;
 
     if (enable) {
@@ -19,7 +20,8 @@ bool System::enableService(QString serviceName, bool enable) {
     return exitCode == 0;
 }
 
-QStringList System::findEnabledUnits() {
+QStringList System::findEnabledUnits()
+{
 
     const QString bashOutput = System::runCmd("systemctl list-unit-files --state=enabled -q --no-pager", false).output;
     const QStringList outputList = bashOutput.split('\n');
@@ -31,7 +33,8 @@ QStringList System::findEnabledUnits() {
     return serviceList;
 }
 
-bool System::hasSystemd() {
+bool System::hasSystemd()
+{
     // /proc/1/comm contains the command use to run the init system
     QFile file(QStringLiteral("/proc/1/comm"));
     if (!file.open(QIODevice::ReadOnly)) {
@@ -45,7 +48,8 @@ bool System::hasSystemd() {
     return true;
 }
 
-bool System::isSubvolidInFstab() {
+bool System::isSubvolidInFstab()
+{
     QFile file(QStringLiteral("/etc/fstab"));
     if (!file.open(QIODevice::ReadOnly)) {
         return false;
@@ -62,11 +66,13 @@ bool System::isSubvolidInFstab() {
     return false;
 }
 
-Result System::runCmd(const QString &cmd, bool includeStderr, milliseconds timeout) {
+Result System::runCmd(const QString &cmd, bool includeStderr, milliseconds timeout)
+{
     return runCmd("/bin/bash", QStringList() << "-c" << cmd, includeStderr, timeout);
 }
 
-Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, milliseconds timeout) {
+Result System::runCmd(const QString &cmd, const QStringList &args, bool includeStderr, milliseconds timeout)
+{
     QProcess proc;
 
     if (includeStderr)
@@ -78,7 +84,8 @@ Result System::runCmd(const QString &cmd, const QStringList &args, bool includeS
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
-QString System::toHumanReadable(double number) {
+QString System::toHumanReadable(double number)
+{
     int i = 0;
     const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
     while (number > 1024) {
