@@ -98,7 +98,7 @@ QVariant SubvolumeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
-void SubvolumeModel::load(const QMap<QString, BtrfsMeta> &volumeData)
+void SubvolumeModel::load(const QMap<QString, BtrfsFilesystem> &filesystems)
 {
     // Ensure that multiple threads don't try to update the model at the same time
     QMutexLocker lock(&m_updateMutex);
@@ -106,11 +106,11 @@ void SubvolumeModel::load(const QMap<QString, BtrfsMeta> &volumeData)
     beginResetModel();
     m_data.clear();
 
-    const QList<QString> volumeIdentifiers = volumeData.keys();
+    const QList<QString> filesystemUuids = filesystems.keys();
 
     // Extract all the subvolumes
-    for (const QString &uuid : volumeIdentifiers) {
-        for (const Subvolume &subvol : volumeData.value(uuid).subvolumes) {
+    for (const QString &uuid : filesystemUuids) {
+        for (const Subvolume &subvol : filesystems.value(uuid).subvolumes) {
             if (subvol.subvolId != BTRFS_ROOT_ID && subvol.subvolId != 0) {
                 m_data.append(subvol);
             }

@@ -9,9 +9,11 @@
 #include <QFile>
 #include <QRegularExpression>
 
+constexpr const char *DEFAULT_SNAP_PATH = "/.snapshots";
+
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
 {
-    m_subvolMap = Settings::getInstance().subvolMap();
+    m_subvolMap = Settings::instance().subvolMap();
     load();
 }
 
@@ -42,7 +44,7 @@ void Snapper::createSubvolMap()
     }
 }
 
-const QString Snapper::findSnapshotSubvolume(const QString &subvol)
+QString Snapper::findSnapshotSubvolume(const QString &subvol)
 {
     static QRegularExpression re("\\/[0-9]*\\/snapshot$");
     QStringList subvolSplit = subvol.split(re);
@@ -55,7 +57,7 @@ const QString Snapper::findSnapshotSubvolume(const QString &subvol)
     }
 }
 
-const QString Snapper::findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid)
+QString Snapper::findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid)
 {
     // Make sure it is Snapper snapshot
     if (!Btrfs::isSnapper(snapshotPath)) {
@@ -83,7 +85,7 @@ const QString Snapper::findTargetPath(const QString &snapshotPath, const QString
     return QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
 }
 
-const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
+QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
 {
     if (m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
         return m_subvolMap->value(snapshotSubvol, "").split(",").at(0);
@@ -94,7 +96,6 @@ const QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QSt
 
 void Snapper::load()
 {
-
     // Load the list of valid configs
     m_configs.clear();
     m_snapshots.clear();
@@ -161,9 +162,9 @@ void Snapper::load()
         }
 
         for (const QString &snap : qAsConst(listResult.outputList)) {
-            m_snapshots[name].append({snap.split(',').at(0).trimmed().toInt(),
-                                      QDateTime::fromString(snap.split(',').at(1).trimmed(), Qt::ISODate), snap.split(',').at(2).trimmed(),
-                                      snap.split(',').at(3).trimmed()});
+            const QStringList &cols = snap.split(',');
+            m_snapshots[name].append({cols.at(0).trimmed().toUInt(), QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate),
+                                      cols.at(2).trimmed(), cols.at(3).trimmed()});
         }
     }
     loadSubvols();
@@ -235,7 +236,7 @@ void Snapper::loadSubvols()
 
             filename = QDir::cleanPath(mountpoint + QDir::separator() + filename);
 
-            SnapperSnapshots snap = readSnapperMeta(filename);
+            SnapperSnapshot snap = readSnapperMeta(filename);
 
             if (snap.number == 0) {
                 continue;
@@ -271,25 +272,24 @@ void Snapper::loadSubvols()
     createSubvolMap();
 }
 
-SnapperSnapshots Snapper::readSnapperMeta(const QString &filename)
+SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
 {
-    SnapperSnapshots snap;
-    snap.number = 0;
+    SnapperSnapshot snap;
     QFile metaFile(filename);
-    if (!metaFile.open(QIODevice::ReadOnly | QIODevice::Text))
-        return snap;
 
-    while (!metaFile.atEnd()) {
-        QString line = metaFile.readLine();
-        if (line.trimmed().startsWith("<num>")) {
-            snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
-        } else if (line.trimmed().startsWith("<date>")) {
-            snap.time = QDateTime::fromString(line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed(), Qt::ISODate);
-            snap.time = snap.time.addSecs(snap.time.offsetFromUtc());
-        } else if (line.trimmed().startsWith("<description>")) {
-            snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
-        } else if (line.trimmed().startsWith("<type>")) {
-            snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
+    if (metaFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        while (!metaFile.atEnd()) {
+            QString line = metaFile.readLine();
+            if (line.trimmed().startsWith("<num>")) {
+                snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
+            } else if (line.trimmed().startsWith("<date>")) {
+                snap.time = QDateTime::fromString(line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed(), Qt::ISODate);
+                snap.time = snap.time.addSecs(snap.time.offsetFromUtc());
+            } else if (line.trimmed().startsWith("<description>")) {
+                snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
+            } else if (line.trimmed().startsWith("<type>")) {
+                snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
+            }
         }
     }
 
@@ -317,7 +317,7 @@ bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) co
     return true;
 }
 
-const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const
+RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const
 {
     RestoreResult restoreResult;
 
@@ -382,7 +382,7 @@ const RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t s
     }
 
     // If we get to here, it worked!
-    restoreResult.success = true;
+    restoreResult.isSuccess = true;
     return restoreResult;
 }
 
@@ -413,16 +413,16 @@ SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap
     return result;
 }
 
-const QVector<SnapperSnapshots> Snapper::snapshots(const QString &config)
+QVector<SnapperSnapshot> Snapper::snapshots(const QString &config)
 {
     if (m_snapshots.contains(config)) {
         return m_snapshots[config];
     } else {
-        return QVector<SnapperSnapshots>();
+        return QVector<SnapperSnapshot>();
     }
 }
 
-const QVector<SnapperSubvolume> Snapper::subvols(const QString &config)
+QVector<SnapperSubvolume> Snapper::subvols(const QString &config)
 {
     if (m_subvols.contains(config)) {
         return m_subvols[config];
@@ -437,7 +437,7 @@ const QVector<SnapperSubvolume> Snapper::subvols(const QString &config)
  *
  */
 
-const SnapperResult Snapper::runSnapper(const QString &command, const QString &name) const
+SnapperResult Snapper::runSnapper(const QString &command, const QString &name) const
 {
     Result result;
     SnapperResult snapperResult;

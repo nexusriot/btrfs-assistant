@@ -6,7 +6,7 @@
 
 // Stores the results from runCmd
 struct Result {
-    int exitCode;
+    int exitCode = -1;
     QString output;
 };
 
@@ -79,10 +79,10 @@ class System {
 
     /**
      * @brief Converts a number to a human readable string for displaying data storage amounts
-     * @param number - A double containing the number to convert
+     * @param number - A uint64_t containing the number to convert
      * @return A string containing the converted value
      */
-    static QString toHumanReadable(double number);
+    static QString toHumanReadable(uint64_t number);
 
   private:
     // This class contains only static functions.  There is no reason to instantiate it.

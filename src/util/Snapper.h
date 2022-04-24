@@ -6,15 +6,13 @@
 
 #include "Btrfs.h"
 
-#define DEFAULT_SNAP_PATH "/.snapshots"
-
 struct SnapperResult {
-    int exitCode;
+    int exitCode = -1;
     QStringList outputList;
 };
 
-struct SnapperSnapshots {
-    int number;
+struct SnapperSnapshot {
+    uint number = 0;
     QDateTime time;
     QString desc;
     QString type;
@@ -22,8 +20,8 @@ struct SnapperSnapshots {
 
 struct SnapperSubvolume {
     QString subvol;
-    uint64_t subvolid;
-    int snapshotNum;
+    uint64_t subvolid = 0;
+    uint snapshotNum = 0;
     QDateTime time;
     QString desc;
     QString uuid;
@@ -53,7 +51,7 @@ class Snapper : public QObject {
      * @return A QStringList of config names
      *
      */
-    const QStringList configs() { return m_configs.keys(); }
+    QStringList configs() { return m_configs.keys(); }
 
     /**
      * @brief Creates a new Snapper config
@@ -92,7 +90,7 @@ class Snapper : public QObject {
      * @param subvol - A Qstring containg the path of the subvolume relative to the filesystem root
      * @return A QString containing the path to the snapshot subvolume relative to the root or an empty string
      */
-    static const QString findSnapshotSubvolume(const QString &subvol);
+    static QString findSnapshotSubvolume(const QString &subvol);
 
     /**
      * @brief Finds the original path where a file in a snapshot should be restored to
@@ -101,7 +99,7 @@ class Snapper : public QObject {
      * @param uuid - The UUID of the filesystem holding the snapshot
      * @return The absolute path to the file that is the target of the restore
      */
-    const QString findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid);
+    QString findTargetPath(const QString &snapshotPath, const QString &filePath, const QString &uuid);
 
     /**
      * @brief Finds where the snapshots of @p snapshotSubvol should be restored to
@@ -109,7 +107,7 @@ class Snapper : public QObject {
      * @param uuid - The UUID of the btrfs filesystem
      * @return A QString that is the path to the target subvolume relative to the root of the filesystem
      */
-    const QString findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const;
+    QString findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const;
 
     /**
      * @brief Loads all the Snapper meta data from disk
@@ -135,7 +133,7 @@ class Snapper : public QObject {
      * @param filename - The absolute path to the meta file to read
      * @return A SnapperSnapshots struct with the values from the file
      */
-    static SnapperSnapshots readSnapperMeta(const QString &filename);
+    static SnapperSnapshot readSnapperMeta(const QString &filename);
 
     /**
      * @brief Restores a single file identified by @p filePath to it's original location
@@ -153,7 +151,7 @@ class Snapper : public QObject {
      * @param targetId - An uint64_t that is the subvolid of the target subvolume
      * @return A RestoreResult struct that contains the results of the operation
      */
-    const RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const;
+    RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const;
 
     /**
      * @brief Updates the settings for a given Snapper config described by @p name
@@ -167,23 +165,23 @@ class Snapper : public QObject {
      * @param config - The name of the Snapper config to list
      * @return A QVector of SnapperShots for each snapshot
      */
-    const QVector<SnapperSnapshots> snapshots(const QString &config);
+    QVector<SnapperSnapshot> snapshots(const QString &config);
 
     /**
      * @brief Gets the list of targets where a Snapper snapshot can be restored to
      * @return A QStringList that is a list of paths relative to the root of the Btrfs filesystem
      */
-    const QStringList subvolKeys() { return m_subvols.keys(); }
+    QStringList subvolKeys() { return m_subvols.keys(); }
 
     /**
      * @brief Returns a list of metadata for each subvol associated with @p config
      * @param config - The name of the Snapper config to list
      * @return A QVector of SnapperSubvolumes for each subvol
      */
-    const QVector<SnapperSubvolume> subvols(const QString &config);
+    QVector<SnapperSubvolume> subvols(const QString &config);
 
   private:
-    Btrfs *m_btrfs;
+    Btrfs *m_btrfs = nullptr;
     // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
     QMap<QString, ConfigMap> m_configs;
 
@@ -191,17 +189,15 @@ class Snapper : public QObject {
     QString m_snapperCommand;
 
     // A map of snapper snapshots.  The key is the snapper config name
-    QMap<QString, QVector<SnapperSnapshots>> m_snapshots;
+    QMap<QString, QVector<SnapperSnapshot>> m_snapshots;
 
     // A map of btrfs subvolumes that hold snapper snapshots.  The key is the target subvol.
     QMap<QString, QVector<SnapperSubvolume>> m_subvols;
 
     // Maps the subvolumes to their snapshot directories.  key is the snapshot subvol path
-    QMap<QString, QString> *m_subvolMap;
+    QMap<QString, QString> *m_subvolMap = nullptr;
 
-    const SnapperResult runSnapper(const QString &command, const QString &name = "") const;
-
-  signals:
+    SnapperResult runSnapper(const QString &command, const QString &name = "") const;
 };
 
 #endif // SNAPPER_H

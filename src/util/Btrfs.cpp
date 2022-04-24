@@ -15,14 +15,14 @@ QString Btrfs::balanceStatus(const QString &mountpoint) const
     return System::runCmd("btrfs", {"balance", "status", mountpoint}, false).output;
 }
 
-BtrfsMeta Btrfs::btrfsVolume(const QString &uuid) const
+BtrfsFilesystem Btrfs::filesystem(const QString &uuid) const
 {
     // If the uuid isn't found return a default constructed btrfsMeta
-    if (!m_volumes.contains(uuid)) {
-        return BtrfsMeta();
+    if (!m_filesystems.contains(uuid)) {
+        return BtrfsFilesystem();
     }
 
-    return m_volumes[uuid];
+    return m_filesystems[uuid];
 }
 
 QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid) const
@@ -59,8 +59,8 @@ bool Btrfs::createSnapshot(const QString &source, const QString &dest)
 bool Btrfs::deleteSubvol(const QString &uuid, const uint64_t subvolid)
 {
     Subvolume subvol;
-    if (m_volumes.contains(uuid)) {
-        subvol = m_volumes[uuid].subvolumes.value(subvolid);
+    if (m_filesystems.contains(uuid)) {
+        subvol = m_filesystems[uuid].subvolumes.value(subvolid);
         if (subvol.parentId != 0) {
             QString mountpoint = mountRoot(uuid);
 
@@ -127,7 +127,7 @@ QStringList Btrfs::listMountpoints()
     return mountpoints;
 }
 
-SubvolumeMap Btrfs::listSubvolumes(const QString &uuid) const { return m_volumes.value(uuid).subvolumes; }
+SubvolumeMap Btrfs::listSubvolumes(const QString &uuid) const { return m_filesystems.value(uuid).subvolumes; }
 
 void Btrfs::loadQgroups(const QString &uuid)
 {
@@ -163,17 +163,17 @@ void Btrfs::loadQgroups(const QString &uuid)
             continue;
         }
 
-        subvolId = qgroupList.at(0).split("/").at(1).toInt();
+        subvolId = qgroupList.at(0).split("/").at(1).toUInt();
 
-        m_volumes[uuid].subvolumes[subvolId].size = qgroupList.at(1).toLong();
-        m_volumes[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toLong();
+        m_filesystems[uuid].subvolumes[subvolId].size = qgroupList.at(1).toULong();
+        m_filesystems[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toULong();
     }
 }
 
 void Btrfs::loadSubvols(const QString &uuid)
 {
     if (isUuidLoaded(uuid)) {
-        m_volumes[uuid].subvolumes.clear();
+        m_filesystems[uuid].subvolumes.clear();
 
         const QString mountpoint = mountRoot(uuid);
         btrfs_util_subvolume_iterator *iter;
@@ -199,7 +199,7 @@ void Btrfs::loadSubvols(const QString &uuid)
         }
         btrfs_util_destroy_subvolume_iterator(iter);
 
-        m_volumes[uuid].subvolumes = subvols;
+        m_filesystems[uuid].subvolumes = subvols;
         loadQgroups(uuid);
     }
 }
@@ -212,32 +212,33 @@ void Btrfs::loadVolumes()
     for (const QString &uuid : qAsConst(uuidList)) {
         QString mountpoint = mountRoot(uuid);
         if (!mountpoint.isEmpty()) {
-            BtrfsMeta btrfs;
-            btrfs.populated = true;
+            BtrfsFilesystem btrfs;
+            btrfs.isPopulated = true;
             btrfs.mountPoint = mountpoint;
             QStringList usageLines = System::runCmd("LANG=C ; btrfs fi usage -b \"" + mountpoint + "\"", false).output.split('\n');
             for (const QString &line : qAsConst(usageLines)) {
-                QString type = line.split(':').at(0).trimmed();
+                const QStringList &cols = line.split(':');
+                QString type = cols.at(0).trimmed();
                 if (type == "Device size") {
-                    btrfs.totalSize = line.split(':').at(1).trimmed().toLong();
+                    btrfs.totalSize = cols.at(1).trimmed().toULong();
                 } else if (type == "Device allocated") {
-                    btrfs.allocatedSize = line.split(':').at(1).trimmed().toLong();
+                    btrfs.allocatedSize = cols.at(1).trimmed().toULong();
                 } else if (type == "Used") {
-                    btrfs.usedSize = line.split(':').at(1).trimmed().toLong();
+                    btrfs.usedSize = cols.at(1).trimmed().toULong();
                 } else if (type == "Free (estimated)") {
-                    btrfs.freeSize = line.split(':').at(1).split(QRegExp("\\s+"), Qt::SkipEmptyParts).at(0).trimmed().toLong();
+                    btrfs.freeSize = cols.at(1).split(QRegExp("\\s+"), Qt::SkipEmptyParts).at(0).trimmed().toULong();
                 } else if (type.startsWith("Data,")) {
-                    btrfs.dataSize = line.split(':').at(2).split(',').at(0).trimmed().toLong();
-                    btrfs.dataUsed = line.split(':').at(3).split(' ').at(0).trimmed().toLong();
+                    btrfs.dataSize = cols.at(2).split(',').at(0).trimmed().toULong();
+                    btrfs.dataUsed = cols.at(3).split(' ').at(0).trimmed().toULong();
                 } else if (type.startsWith("Metadata,")) {
-                    btrfs.metaSize = line.split(':').at(2).split(',').at(0).trimmed().toLong();
-                    btrfs.metaUsed = line.split(':').at(3).split(' ').at(0).trimmed().toLong();
+                    btrfs.metaSize = cols.at(2).split(',').at(0).trimmed().toULong();
+                    btrfs.metaUsed = cols.at(3).split(' ').at(0).trimmed().toULong();
                 } else if (type.startsWith("System,")) {
-                    btrfs.sysSize = line.split(':').at(2).split(',').at(0).trimmed().toLong();
-                    btrfs.sysUsed = line.split(':').at(3).split(' ').at(0).trimmed().toLong();
+                    btrfs.sysSize = cols.at(2).split(',').at(0).trimmed().toULong();
+                    btrfs.sysUsed = cols.at(3).split(' ').at(0).trimmed().toULong();
                 }
             }
-            m_volumes[uuid] = btrfs;
+            m_filesystems[uuid] = btrfs;
             loadSubvols(uuid);
         }
     }
@@ -321,8 +322,8 @@ uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName) const
 
 QString Btrfs::subvolumeName(const QString &uuid, const uint64_t subvolId) const
 {
-    if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        return m_volumes[uuid].subvolumes[subvolId].subvolName;
+    if (m_filesystems.contains(uuid) && m_filesystems[uuid].subvolumes.contains(subvolId)) {
+        return m_filesystems[uuid].subvolumes[subvolId].subvolName;
     } else {
         return QString();
     }
@@ -342,8 +343,8 @@ QString Btrfs::subvolumeName(const QString &path) const
 
 uint64_t Btrfs::subvolParent(const QString &uuid, const uint64_t subvolId) const
 {
-    if (m_volumes.contains(uuid) && m_volumes[uuid].subvolumes.contains(subvolId)) {
-        return m_volumes[uuid].subvolumes[subvolId].parentId;
+    if (m_filesystems.contains(uuid) && m_filesystems[uuid].subvolumes.contains(subvolId)) {
+        return m_filesystems[uuid].subvolumes[subvolId].parentId;
     } else {
         return 0;
     }
@@ -363,12 +364,12 @@ uint64_t Btrfs::subvolParent(const QString &path) const
 bool Btrfs::isUuidLoaded(const QString &uuid)
 {
     // First make sure the data we are trying to access exists
-    if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
+    if (!m_filesystems.contains(uuid) || !m_filesystems[uuid].isPopulated) {
         loadVolumes();
     }
 
     // If it still doesn't exist, we need to bail
-    if (!m_volumes.contains(uuid) || !m_volumes[uuid].populated) {
+    if (!m_filesystems.contains(uuid) || !m_filesystems[uuid].isPopulated) {
         qWarning() << tr("UUID " + uuid.toLocal8Bit() + " not found!");
         return false;
     }

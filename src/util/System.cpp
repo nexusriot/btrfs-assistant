@@ -80,11 +80,11 @@ Result System::runCmd(const QString &cmd, const QStringList &args, bool includeS
 
     proc.start(cmd, args);
 
-    proc.waitForFinished(timeout.count());
+    proc.waitForFinished(static_cast<int>(timeout.count()));
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
-QString System::toHumanReadable(double number)
+QString System::toHumanReadable(uint64_t number)
 {
     int i = 0;
     const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
@@ -92,5 +92,5 @@ QString System::toHumanReadable(double number)
         number /= 1024;
         i++;
     }
-    return QString::number(number, 'f', 2) + " " + units[i];
+    return QString::number(static_cast<double>(number), 'f', 2) + " " + units[i];
 }

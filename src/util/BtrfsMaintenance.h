@@ -26,9 +26,7 @@ class BtrfsMaintenance : public QObject {
     QString value(const QString &key) { return m_settings->value(key).toString(); }
 
   private:
-    QSettings *m_settings;
-
-  signals:
+    QSettings *m_settings = nullptr;
 };
 
 #endif // BTRFSMAINTENANCE_H
