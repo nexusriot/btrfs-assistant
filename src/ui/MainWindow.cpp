@@ -47,7 +47,7 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
     m_sourceModel = new SubvolumeModel(this);
-    m_sourceModel->load(m_btrfs->volumes());
+    m_sourceModel->load(m_btrfs->filesystems());
     m_subvolumeModel = new SubvolumeFilterModel(this);
     m_subvolumeModel->setSourceModel(m_sourceModel);
 
@@ -202,24 +202,24 @@ void MainWindow::populateBtrfsUi(const QString &uuid)
 
     setEnableQuotaButtonStatus();
 
-    BtrfsMeta btrfsVolume = m_btrfs->btrfsVolume(uuid);
+    const BtrfsFilesystem &filesystem = m_btrfs->filesystem(uuid);
 
-    if (!btrfsVolume.populated) {
+    if (!filesystem.isPopulated) {
         return;
     }
 
     // For the tools section
-    int dataPercent = ((double)btrfsVolume.dataUsed / btrfsVolume.dataSize) * 100;
+    int dataPercent = static_cast<int>((double)filesystem.dataUsed / (double)filesystem.dataSize * 100);
     m_ui->progressBar_btrfsdata->setValue(dataPercent);
-    m_ui->progressBar_btrfsmeta->setValue(((double)btrfsVolume.metaUsed / btrfsVolume.metaSize) * 100);
-    m_ui->progressBar_btrfssys->setValue(((double)btrfsVolume.sysUsed / btrfsVolume.sysSize) * 100);
+    m_ui->progressBar_btrfsmeta->setValue(static_cast<int>((double)filesystem.metaUsed / (double)filesystem.metaSize * 100));
+    m_ui->progressBar_btrfssys->setValue(static_cast<int>((double)filesystem.sysUsed / (double)filesystem.sysSize * 100));
 
     // The information section
-    m_ui->label_btrfsAllocatedValue->setText(System::toHumanReadable(btrfsVolume.allocatedSize));
-    m_ui->label_btrfsUsedValue->setText(System::toHumanReadable(btrfsVolume.usedSize));
-    m_ui->label_btrfsSizeValue->setText(System::toHumanReadable(btrfsVolume.totalSize));
-    m_ui->label_btrfsFreeValue->setText(System::toHumanReadable(btrfsVolume.freeSize));
-    float freePercent = (double)btrfsVolume.allocatedSize / btrfsVolume.totalSize;
+    m_ui->label_btrfsAllocatedValue->setText(System::toHumanReadable(filesystem.allocatedSize));
+    m_ui->label_btrfsUsedValue->setText(System::toHumanReadable(filesystem.usedSize));
+    m_ui->label_btrfsSizeValue->setText(System::toHumanReadable(filesystem.totalSize));
+    m_ui->label_btrfsFreeValue->setText(System::toHumanReadable(filesystem.freeSize));
+    double freePercent = (double)filesystem.allocatedSize / (double)filesystem.totalSize;
     if (freePercent < 0.70) {
         m_ui->label_btrfsMessage->setText(tr("You have lots of free space, did you overbuy?"));
     } else if (freePercent > 0.95) {
@@ -293,7 +293,7 @@ void MainWindow::populateSnapperGrid()
     m_ui->tableWidget_snapperNew->setSortingEnabled(false);
 
     // Make sure there is something to populate
-    QVector<SnapperSnapshots> snapshots = m_snapper->snapshots(config);
+    QVector<SnapperSnapshot> snapshots = m_snapper->snapshots(config);
     if (snapshots.isEmpty()) {
         return;
     }
@@ -302,7 +302,7 @@ void MainWindow::populateSnapperGrid()
     m_ui->tableWidget_snapperNew->setRowCount(snapshots.size());
     for (int i = 0; i < snapshots.size(); i++) {
         // Ensure proper sorting of numbers and dates
-        QTableWidgetItem *number = new QTableWidgetItem(snapshots.at(i).number);
+        QTableWidgetItem *number = new QTableWidgetItem(static_cast<int>(snapshots.at(i).number));
         number->setData(Qt::DisplayRole, snapshots.at(i).number);
         QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(snapshots.at(i).time, QLocale::ShortFormat));
         snapTime->setData(Qt::DisplayRole, snapshots.at(i).time);
@@ -348,17 +348,18 @@ void MainWindow::populateSnapperRestoreGrid()
     // Populate the table
     m_ui->tableWidget_snapperRestore->setRowCount(subvols.count());
     for (int i = 0; i < subvols.count(); i++) {
+        const SnapperSubvolume &subvolume = subvols.at(i);
         // Ensure proper sorting of numbers and dates
-        QTableWidgetItem *number = new QTableWidgetItem(subvols.at(i).snapshotNum);
-        number->setData(Qt::DisplayRole, subvols.at(i).snapshotNum);
-        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(subvols.at(i).time, QLocale::ShortFormat));
-        snapTime->setData(Qt::DisplayRole, subvols.at(i).time);
+        QTableWidgetItem *number = new QTableWidgetItem();
+        number->setData(Qt::DisplayRole, subvolume.snapshotNum);
+        QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(subvolume.time, QLocale::ShortFormat));
+        snapTime->setData(Qt::DisplayRole, subvolume.time);
 
         m_ui->tableWidget_snapperRestore->setItem(i, 0, number);
-        m_ui->tableWidget_snapperRestore->setItem(i, 1, new QTableWidgetItem(subvols.at(i).subvol));
+        m_ui->tableWidget_snapperRestore->setItem(i, 1, new QTableWidgetItem(subvolume.subvol));
         m_ui->tableWidget_snapperRestore->setItem(i, 2, snapTime);
-        m_ui->tableWidget_snapperRestore->setItem(i, 3, new QTableWidgetItem(subvols.at(i).type));
-        m_ui->tableWidget_snapperRestore->setItem(i, 4, new QTableWidgetItem(subvols.at(i).desc));
+        m_ui->tableWidget_snapperRestore->setItem(i, 3, new QTableWidgetItem(subvolume.type));
+        m_ui->tableWidget_snapperRestore->setItem(i, 4, new QTableWidgetItem(subvolume.desc));
     }
 
     // Re-enable sorting and resize the colums to make everything fit
@@ -471,7 +472,7 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, subvolId, targetId);
 
     // Report the outcome to the end user
-    if (restoreResult.success) {
+    if (restoreResult.isSuccess) {
         QMessageBox::information(this, tr("Snapshot Restore"),
                                  tr("Snapshot restoration complete.") + "\n\n" + tr("A copy of the original subvolume has been saved as ") +
                                      restoreResult.backupSubvolName + "\n\n" + tr("Please reboot immediately"));
@@ -721,7 +722,7 @@ void MainWindow::on_pushButton_subvolDelete_clicked()
 
     if (success) {
         m_btrfs->loadSubvols(uuid);
-        m_sourceModel->load(m_btrfs->volumes());
+        m_sourceModel->load(m_btrfs->filesystems());
         refreshSubvolListUi();
     } else {
         displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
@@ -733,7 +734,7 @@ void MainWindow::on_pushButton_subvolDelete_clicked()
 void MainWindow::on_pushButton_btrfsRefreshData_clicked()
 {
     m_btrfs->loadVolumes();
-    m_sourceModel->load(m_btrfs->volumes());
+    m_sourceModel->load(m_btrfs->filesystems());
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
@@ -746,7 +747,7 @@ void MainWindow::on_pushButton_subvolRefresh_clicked()
         m_btrfs->loadSubvols(uuid);
     }
 
-    m_sourceModel->load(m_btrfs->volumes());
+    m_sourceModel->load(m_btrfs->filesystems());
     refreshSubvolListUi();
 
     m_ui->pushButton_subvolRefresh->clearFocus();

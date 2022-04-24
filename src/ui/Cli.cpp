@@ -73,7 +73,7 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget)
     RestoreResult restoreResult = snapper->restoreSubvol(uuid, subvolId, targetId);
 
     // Report the outcome to the end user
-    if (restoreResult.success) {
+    if (restoreResult.isSuccess) {
         QTextStream(stdout) << tr("Snapshot restoration complete.") << Qt::endl
                             << tr("A copy of the original subvolume has been saved as ") << restoreResult.backupSubvolName << Qt::endl
                             << tr("Please reboot immediately");

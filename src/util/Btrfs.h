@@ -4,10 +4,10 @@
 #include <QMap>
 #include <QObject>
 
-#define BTRFS_ROOT_ID 5
+constexpr uint64_t BTRFS_ROOT_ID = 5;
 
 struct RestoreResult {
-    bool success = false;
+    bool isSuccess = false;
     QString failureMessage;
     QString backupSubvolName;
 };
@@ -23,8 +23,8 @@ struct Subvolume {
 
 using SubvolumeMap = QMap<uint64_t, Subvolume>;
 
-struct BtrfsMeta {
-    bool populated = false;
+struct BtrfsFilesystem {
+    bool isPopulated = false;
     QString mountPoint;
     uint64_t totalSize;
     uint64_t allocatedSize;
@@ -57,11 +57,11 @@ class Btrfs : public QObject {
 
     /** @brief Returns the data for the Btrfs volume identified by @p UUID
      *
-     * Returns a BtrfsMeta struct that represents the btrfs filesystem identified by @p UUID.
+     * Returns a BtrfsFilesystem struct that represents the btrfs filesystem identified by @p UUID.
      * If no data is found for the given UUID, it returns a default contructed value
      *
      */
-    BtrfsMeta btrfsVolume(const QString &uuid) const;
+    BtrfsFilesystem filesystem(const QString &uuid) const;
 
     /** @brief Returns the direct children for a given subvolume
      *
@@ -248,11 +248,11 @@ class Btrfs : public QObject {
      * @brief Provides access to the full metadata for all btrfs volumes
      * @return A const reference to the volume data
      */
-    const QMap<QString, BtrfsMeta> &volumes() { return m_volumes; }
+    const QMap<QString, BtrfsFilesystem> &filesystems() { return m_filesystems; }
 
   private:
-    // A map of BtrfsMeta.  The key is UUID
-    QMap<QString, BtrfsMeta> m_volumes;
+    // A map of BtrfsFilesystem.  The key is UUID
+    QMap<QString, BtrfsFilesystem> m_filesystems;
 
     /**
      * @brief Validates the UUID passed in actually exists and is accessible still.
@@ -260,8 +260,6 @@ class Btrfs : public QObject {
      * @return bool - True if the UUID is a mounted Btrfs filesystem
      */
     bool isUuidLoaded(const QString &uuid);
-
-  signals:
 };
 
 #endif // BTRFS_H

@@ -39,8 +39,8 @@ int main(int argc, char *argv[])
     parser.addOption(restoreOption);
     parser.process(app);
 
-    QString snapperPath = Settings::getInstance().value("snapper", "/usr/bin/snapper").toString();
-    QString btrfsMaintenanceConfig = Settings::getInstance().value("bm_config", "/etc/default/btrfsmaintenance").toString();
+    QString snapperPath = Settings::instance().value("snapper", "/usr/bin/snapper").toString();
+    QString btrfsMaintenanceConfig = Settings::instance().value("bm_config", "/etc/default/btrfsmaintenance").toString();
 
     // Ensure we are running on a system with btrfs
     if (!System::runCmd("findmnt --real -no fstype ", false).output.contains("btrfs")) {

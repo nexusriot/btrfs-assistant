@@ -4,6 +4,8 @@
 #include <QIODevice>
 #include <QSettings>
 
+namespace {
+
 /** @brief A QSettings reader for the Btrfs Maintenance config file
  *
  * Populates @p map with all the keys and values from the file.  Adds an additional key
@@ -63,6 +65,8 @@ bool writeBmFile(QIODevice &device, const QSettings::SettingsMap &map)
     return true;
 }
 
+} // namespace
+
 BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, QObject *parent) : QObject{parent}
 {
     QSettings::Format bmFormat = QSettings::registerFormat("btrfsmaintenance", readBmFile, writeBmFile);
@@ -72,7 +76,7 @@ BtrfsMaintenance::BtrfsMaintenance(const QString &configFile, QObject *parent) :
 void BtrfsMaintenance::refresh()
 {
     QString script =
-        Settings::getInstance().value("bm_refresh_script", "/usr/share/btrfsmaintenance/btrfsmaintenance-refresh-cron.sh").toString();
+        Settings::instance().value("bm_refresh_script", "/usr/share/btrfsmaintenance/btrfsmaintenance-refresh-cron.sh").toString();
     if (System::hasSystemd()) {
         System::runCmd(script, QStringList() << "systemd-timer", false);
     } else {

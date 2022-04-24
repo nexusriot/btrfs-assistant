@@ -10,14 +10,10 @@
 class Settings : public QObject {
     Q_OBJECT
   public:
-    // Delete the copy constructor and the assignment operator
-    Settings(Settings const &) = delete;
-    void operator=(Settings const &) = delete;
-
     /**
      * @brief Gets a reference to the Settings object
      */
-    static Settings &getInstance();
+    static Settings &instance();
 
     /**
      * @brief Gets a reference to the subvol mapping
@@ -34,6 +30,10 @@ class Settings : public QObject {
 
   private:
     explicit Settings(QObject *parent = nullptr);
+    // Delete the copy constructor and the assignment operator
+    Settings(Settings const &) = delete;
+    void operator=(Settings const &) = delete;
+
     // The absolute path to the config file
     const QString m_filePath = QStringLiteral("/etc/btrfs-assistant.conf");
     QSettings *m_settings;

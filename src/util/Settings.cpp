@@ -1,6 +1,6 @@
 #include "Settings.h"
 
-Settings &Settings::getInstance()
+Settings &Settings::instance()
 {
     static Settings instance;
     return instance;
