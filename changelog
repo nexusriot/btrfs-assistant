@@ -2,6 +2,7 @@
 
 1.5 - TBD
 * Use libbtrfsutil instead of calling the btrfs command wherever possible
+* Allow opening multiple snapshot browse dialogs at the same time(Contributed by Adam Sowa)
 * Add the ability to filter subvolumes by name(Contributed by Adam Sowa)
 * Ensure the application works with or without systemd present
 * Various code quality improvements(Contributed by Adam Sowa)
