@@ -398,10 +398,10 @@ void MainWindow::refreshSnapperServices()
 
 void MainWindow::refreshSubvolListUi()
 {
-
     bool showQuota = false;
 
-    for (const QString &uuid : m_btrfs->listFilesystems()) {
+    const auto filesystems = m_btrfs->listFilesystems();
+    for (const QString &uuid : filesystems) {
         // Check to see if the size related colums should be hidden
         if (Btrfs::isQuotaEnabled(Btrfs::mountRoot(uuid))) {
             showQuota = true;
@@ -741,8 +741,8 @@ void MainWindow::on_pushButton_btrfsRefreshData_clicked()
 
 void MainWindow::on_pushButton_subvolRefresh_clicked()
 {
-
-    for (const QString &uuid : m_btrfs->listFilesystems()) {
+    const auto filesystems = m_btrfs->listFilesystems();
+    for (const QString &uuid : filesystems) {
         m_btrfs->loadSubvols(uuid);
     }
 
