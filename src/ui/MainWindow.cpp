@@ -13,6 +13,11 @@
 #include <QMessageBox>
 #include <QTimer>
 
+namespace {
+enum class SnapperRestoreTableColumn { Number, Subvolume, DateTime, Type, Description };
+
+}
+
 /**
  * @brief Selects all rows in @p listWidget that match an item in @p items
  * @param items - A QStringList which contain the strings to select in @p listWidget
@@ -329,12 +334,15 @@ void MainWindow::populateSnapperRestoreGrid()
     // Clear the table and set the headers
     m_ui->tableWidget_snapperRestore->clear();
     m_ui->tableWidget_snapperRestore->setColumnCount(5);
-    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(0,
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem((int)SnapperRestoreTableColumn::Number,
                                                               new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
-    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Subvolume")));
-    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Date/Time")));
-    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Type")));
-    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem((int)SnapperRestoreTableColumn::Subvolume,
+                                                              new QTableWidgetItem(tr("Subvolume")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem((int)SnapperRestoreTableColumn::DateTime,
+                                                              new QTableWidgetItem(tr("Date/Time")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem((int)SnapperRestoreTableColumn::Type, new QTableWidgetItem(tr("Type")));
+    m_ui->tableWidget_snapperRestore->setHorizontalHeaderItem((int)SnapperRestoreTableColumn::Description,
+                                                              new QTableWidgetItem(tr("Description")));
     m_ui->tableWidget_snapperRestore->sortByColumn(0, Qt::DescendingOrder);
 
     // Disabling sorting while populating the grid is required or the grid won't repopulate properly - This must be Qt bug, right?
@@ -355,11 +363,11 @@ void MainWindow::populateSnapperRestoreGrid()
         QTableWidgetItem *snapTime = new QTableWidgetItem(locale.toString(subvolume.time, QLocale::ShortFormat));
         snapTime->setData(Qt::DisplayRole, subvolume.time);
 
-        m_ui->tableWidget_snapperRestore->setItem(i, 0, number);
-        m_ui->tableWidget_snapperRestore->setItem(i, 1, new QTableWidgetItem(subvolume.subvol));
-        m_ui->tableWidget_snapperRestore->setItem(i, 2, snapTime);
-        m_ui->tableWidget_snapperRestore->setItem(i, 3, new QTableWidgetItem(subvolume.type));
-        m_ui->tableWidget_snapperRestore->setItem(i, 4, new QTableWidgetItem(subvolume.desc));
+        m_ui->tableWidget_snapperRestore->setItem(i, (int)SnapperRestoreTableColumn::Number, number);
+        m_ui->tableWidget_snapperRestore->setItem(i, (int)SnapperRestoreTableColumn::Subvolume, new QTableWidgetItem(subvolume.subvol));
+        m_ui->tableWidget_snapperRestore->setItem(i, (int)SnapperRestoreTableColumn::DateTime, snapTime);
+        m_ui->tableWidget_snapperRestore->setItem(i, (int)SnapperRestoreTableColumn::Type, new QTableWidgetItem(subvolume.type));
+        m_ui->tableWidget_snapperRestore->setItem(i, (int)SnapperRestoreTableColumn::Description, new QTableWidgetItem(subvolume.desc));
     }
 
     // Re-enable sorting and resize the colums to make everything fit
@@ -761,7 +769,9 @@ void MainWindow::on_pushButton_snapperRestore_clicked()
     }
 
     QString config = m_ui->comboBox_snapperSubvols->currentText();
-    QString subvol = m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), 1)->text();
+    QString subvol =
+        m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), (int)SnapperRestoreTableColumn::Subvolume)
+            ->text();
 
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(config);
 
@@ -781,14 +791,17 @@ void MainWindow::on_pushButton_snapperRestore_clicked()
 
 void MainWindow::on_pushButton_snapperBrowse_clicked()
 {
-    QString target = m_ui->comboBox_snapperSubvols->currentText();
-    if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
+    const int currentRow = m_ui->tableWidget_snapperRestore->currentRow();
+    if (currentRow == -1) {
         displayError("You must select snapshot to browse!");
         return;
     }
 
-    QString subvolPath = m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), 1)->text();
+    QString subvolPath = m_ui->tableWidget_snapperRestore->item(currentRow, (int)SnapperRestoreTableColumn::Subvolume)->text();
+    uint snapshotNumber =
+        m_ui->tableWidget_snapperRestore->item(currentRow, (int)SnapperRestoreTableColumn::Number)->data(Qt::DisplayRole).toUInt();
 
+    QString target = m_ui->comboBox_snapperSubvols->currentText();
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(target);
 
     // This shouldn't be possible but check anyway
@@ -802,8 +815,11 @@ void MainWindow::on_pushButton_snapperBrowse_clicked()
     // We need to mount the root so we can browse from there
     const QString mountpoint = m_btrfs->mountRoot(uuid);
 
-    FileBrowser fb(m_snapper, QDir::cleanPath(mountpoint + QDir::separator() + subvolPath), uuid);
-    fb.exec();
+    auto fb = new FileBrowser(m_snapper, QDir::cleanPath(mountpoint + QDir::separator() + subvolPath), uuid, this);
+    // Prefix the window title with target and snapshot number, so user can make sense of multiple windows
+    fb->setWindowTitle(QString("%1:%2 - %3").arg(target).arg(snapshotNumber).arg(fb->windowTitle()));
+    fb->setAttribute(Qt::WA_DeleteOnClose, true);
+    fb->show();
 }
 
 void MainWindow::on_pushButton_snapperCreate_clicked()
