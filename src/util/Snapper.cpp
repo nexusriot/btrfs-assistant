@@ -281,7 +281,7 @@ SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
         while (!metaFile.atEnd()) {
             QString line = metaFile.readLine();
             if (line.trimmed().startsWith("<num>")) {
-                snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toInt();
+                snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toUInt();
             } else if (line.trimmed().startsWith("<date>")) {
                 snap.time = QDateTime::fromString(line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed(), Qt::ISODate);
                 snap.time = snap.time.addSecs(snap.time.offsetFromUtc());
