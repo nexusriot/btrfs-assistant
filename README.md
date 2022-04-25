@@ -56,12 +56,12 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 ## Contributing
 Contributions are welcome!
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
+Please see [CONTRIBUTING.md](docs/CONTRIBUTING.md) for more details.
 
 
 ### Development Requirements
 * Qt5 / Qt Design UI
-* C++20
+* C++17
 * Cmake >= 3.5
 * Root user privileges
 * Btrfs filesystem

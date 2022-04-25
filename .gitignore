@@ -52,3 +52,6 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+# Standard CMake build subdirectory
+/build
+
