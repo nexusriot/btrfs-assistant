@@ -5,12 +5,14 @@
 * Allow opening multiple snapshot browse dialogs at the same time(Contributed by Adam Sowa)
 * Add the ability to filter subvolumes by name(Contributed by Adam Sowa)
 * Ensure the application works with or without systemd present
-* Various code quality improvements(Contributed by Adam Sowa)
+* Numerous code quality improvements(Contributed by Adam Sowa)
 * Improve layout of the BtrfsMaintencance tab when resized
 * Move temporary mountpoint for filesystems to /run
 * Unmount filesystems mounted by the application on exit
 * Change the naming of subvolume backups to support nested subvolumes
 * Ensured combo boxes retain their selections when refreshed
+* Excluded snapshot 0 from Snapper tab since it isn't a snapshot
+* Use an xml parser to parse xml
 * Added a warning when restoring if you are mounting by subvolid in /etc/fstab
 * Fixed the handling of paths with whitespace in the Btrfs Maintenance tab
 * Reorganized the source code to make it more manageable(Contributed by Austin Horstman)

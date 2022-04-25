@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QFile>
 #include <QRegularExpression>
+#include <QXmlStreamReader>
 
 constexpr const char *DEFAULT_SNAP_PATH = "/.snapshots";
 
@@ -163,8 +164,15 @@ void Snapper::load()
 
         for (const QString &snap : qAsConst(listResult.outputList)) {
             const QStringList &cols = snap.split(',');
-            m_snapshots[name].append({cols.at(0).trimmed().toUInt(), QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate),
-                                      cols.at(2).trimmed(), cols.at(3).trimmed()});
+            const uint number = cols.at(0).trimmed().toUInt();
+
+            // Snapshot 0 is not a real snapshot
+            if (number == 0) {
+                continue;
+            }
+
+            m_snapshots[name].append(
+                {number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(), cols.at(3).trimmed()});
         }
     }
     loadSubvols();
@@ -278,17 +286,23 @@ SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
     QFile metaFile(filename);
 
     if (metaFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        while (!metaFile.atEnd()) {
-            QString line = metaFile.readLine();
-            if (line.trimmed().startsWith("<num>")) {
-                snap.number = line.trimmed().split("<num>").at(1).split("</num>").at(0).trimmed().toUInt();
-            } else if (line.trimmed().startsWith("<date>")) {
-                snap.time = QDateTime::fromString(line.trimmed().split("<date>").at(1).split("</date>").at(0).trimmed(), Qt::ISODate);
+        QXmlStreamReader xml(&metaFile);
+
+        // Read until we find snapshot
+        while (!xml.atEnd() && xml.name() != "snapshot") {
+            xml.readNextStartElement();
+        }
+
+        while (xml.readNextStartElement()) {
+            if (xml.name() == "num") {
+                snap.number = xml.readElementText().toUInt();
+            } else if (xml.name() == "date") {
+                snap.time = QDateTime::fromString(xml.readElementText(), Qt::ISODate);
                 snap.time = snap.time.addSecs(snap.time.offsetFromUtc());
-            } else if (line.trimmed().startsWith("<description>")) {
-                snap.desc = line.trimmed().split("<description>").at(1).split("</description>").at(0).trimmed();
-            } else if (line.trimmed().startsWith("<type>")) {
-                snap.type = line.trimmed().split("<type>").at(1).split("</type>").at(0).trimmed();
+            } else if (xml.name() == "description") {
+                snap.desc = xml.readElementText();
+            } else if (xml.name() == "type") {
+                snap.type = xml.readElementText();
             }
         }
     }
