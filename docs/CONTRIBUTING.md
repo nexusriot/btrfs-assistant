@@ -66,7 +66,7 @@ There are a few things that use PascalCase.  This includes:
 
 Qt widgets should be named using objectType_objectName with both in camelCase.  For example, `pushButton_newItem`
 
-Getters and setters also follow Qt conventions.  members should be named starting with `m_`.  For example:
+Getters and setters also follow Qt conventions.  Members should be named starting with `m_`.  For example:
 
 ```
 int monkey() { return m_monkey; }
@@ -85,15 +85,15 @@ Function blocks for new code should use the follow convention
 ```
 /**
  * @brief A description of what the function does
- * @param paramname - A description of the parameter
- * @param paramname2 - A description of the parameter
+ * @param paramname A description of the parameter
+ * @param paramname2 A description of the parameter
  * @return A description of what the function returns
  */
 ```
 
 If the function doesn't return anything or has no parameters those sections should be omitted.
 
-The slots for widgets do not need comments.  It should be clear what the function `on_pushButton_subvolDelete_clicked`  does.  If it isn't clear, the code probably needs to be rafactored.
+The slots for widgets do not need comments.  It should be clear what the function `on_pushButton_subvolDelete_clicked`  does.  If it isn't clear, the code probably needs to be refactored.
 
 ### Other
 The functions in a class should be alphabetized in both the header and the .cpp file.  If a class file contains free functions, those should be at the top.
