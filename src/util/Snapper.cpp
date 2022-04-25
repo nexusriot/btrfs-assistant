@@ -67,7 +67,7 @@ QString Snapper::findTargetPath(const QString &snapshotPath, const QString &file
     QString snapshotSubvol = findSnapshotSubvolume(snapshotPath);
 
     // Ensure the root of the partition is mounted and get the mountpoint
-    QString mountpoint = Btrfs::mountRoot(uuid);
+    QString mountpoint = m_btrfs->mountRoot(uuid);
 
     QDir mp(mountpoint);
 
@@ -140,7 +140,7 @@ void Snapper::load()
                 const QString uuid = System::runCmd("findmnt", {"-no", "uuid", DEFAULT_SNAP_PATH}, false).output;
 
                 // Make sure the root of the partition is mounted
-                QString mountpoint = Btrfs::mountRoot(uuid);
+                QString mountpoint = m_btrfs->mountRoot(uuid);
                 if (mountpoint.isEmpty()) {
                     continue;
                 }
@@ -210,7 +210,7 @@ void Snapper::loadSubvols()
     const QStringList btrfsFilesystems = Btrfs::listFilesystems();
     for (const QString &uuid : btrfsFilesystems) {
         // We need to ensure the root is mounted and get the mountpoint
-        QString mountpoint = Btrfs::mountRoot(uuid);
+        QString mountpoint = m_btrfs->mountRoot(uuid);
         if (mountpoint.isEmpty()) {
             continue;
         }
@@ -326,7 +326,7 @@ RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceI
     const QString targetName = m_btrfs->subvolumeName(uuid, targetId);
 
     // Ensure the root of the partition is mounted and get the mountpoint
-    QString mountpoint = Btrfs::mountRoot(uuid);
+    QString mountpoint = m_btrfs->mountRoot(uuid);
 
     QString snapshotSubvol = findSnapshotSubvolume(sourceName);
 

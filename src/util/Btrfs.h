@@ -48,6 +48,8 @@ class Btrfs : public QObject {
   public:
     explicit Btrfs(QObject *parent = nullptr);
 
+    ~Btrfs();
+
     /**
      * @brief Checks the balance status of a given subvolume.
      * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs balance on
@@ -71,7 +73,7 @@ class Btrfs : public QObject {
      *  Returns a QStringList containing the subvol names/paths of all the children subvols
      *
      */
-    QStringList children(const uint64_t subvolid, const QString &uuid) const;
+    QStringList children(const uint64_t subvolid, const QString &uuid);
 
     /**
      * @brief Creates a btrfs snapshot
@@ -161,7 +163,7 @@ class Btrfs : public QObject {
      *  returns the mountpoint or a default constructed string if it fails
      *
      */
-    static QString mountRoot(const QString &uuid);
+    QString mountRoot(const QString &uuid);
 
     /** @brief Renames a btrfs subvolume from @p source to @p target
      *
@@ -188,7 +190,7 @@ class Btrfs : public QObject {
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
      *  it returns 0
      */
-    uint64_t subvolId(const QString &uuid, const QString &subvolName) const;
+    uint64_t subvolId(const QString &uuid, const QString &subvolName);
 
     /**
      * @brief Returns the name of the subvol with id @p subvolId
@@ -253,6 +255,7 @@ class Btrfs : public QObject {
   private:
     // A map of BtrfsFilesystem.  The key is UUID
     QMap<QString, BtrfsFilesystem> m_filesystems;
+    QVector<QString> m_tempMountpoints;
 
     /**
      * @brief Validates the UUID passed in actually exists and is accessible still.
@@ -260,6 +263,11 @@ class Btrfs : public QObject {
      * @return bool - True if the UUID is a mounted Btrfs filesystem
      */
     bool isUuidLoaded(const QString &uuid);
+
+    /**
+     * @brief Unmounts any filesystems that were mounted by the application
+     */
+    void unmountFilesystems();
 };
 
 #endif // BTRFS_H

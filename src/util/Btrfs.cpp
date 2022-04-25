@@ -1,6 +1,7 @@
 #include "util/Btrfs.h"
 #include "util/Settings.h"
 #include "util/System.h"
+#include <sys/mount.h>
 
 #include <QDebug>
 #include <QDir>
@@ -9,6 +10,8 @@
 #include <btrfsutil.h>
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
+
+Btrfs::~Btrfs() { unmountFilesystems(); }
 
 QString Btrfs::balanceStatus(const QString &mountpoint) const
 {
@@ -25,7 +28,7 @@ BtrfsFilesystem Btrfs::filesystem(const QString &uuid) const
     return m_filesystems[uuid];
 }
 
-QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid) const
+QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid)
 {
     const QString mountpoint = mountRoot(uuid);
     btrfs_util_subvolume_iterator *iter;
@@ -257,21 +260,17 @@ QString Btrfs::mountRoot(const QString &uuid)
 
     // If it isn't mounted we need to mount it
     if (mountpoint.isEmpty()) {
-        // Get a temp mountpoint
-        QTemporaryDir tempDir;
-        tempDir.setAutoRemove(false);
-        if (!tempDir.isValid()) {
-            qWarning() << "Failed to create temporary directory" << Qt::endl;
-            return QString();
-        }
+        mountpoint = QDir::cleanPath(System::mountPathRoot() + QDir::separator() + uuid);
 
-        mountpoint = tempDir.path();
+        // Add this mountpoint to a list so it can be unmounted later
+        m_tempMountpoints.append(mountpoint);
 
         // Create the mountpoint and mount the volume if successful
         QDir tempMount;
-        if (tempMount.mkpath(mountpoint)) {
-            System::runCmd("mount", {"-t", "btrfs", "-o", "subvolid=" + QString::number(BTRFS_ROOT_ID), "UUID=" + uuid, mountpoint}, false);
-        } else {
+        const QString device = QDir::cleanPath(QStringLiteral("/dev/disk/by-uuid/") + uuid);
+        const QString options = "subvolid=" + QString::number(BTRFS_ROOT_ID);
+        if (!(tempMount.mkpath(mountpoint) &&
+              mount(device.toLocal8Bit(), mountpoint.toLocal8Bit(), "btrfs", 0, options.toLocal8Bit()) == 0)) {
             return QString();
         }
     }
@@ -303,7 +302,7 @@ void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable)
     }
 }
 
-uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName) const
+uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName)
 {
     const QString mountpoint = mountRoot(uuid);
     if (mountpoint.isEmpty()) {
@@ -411,5 +410,12 @@ void Btrfs::stopScrubRoot(const QString &uuid)
         QString mountpoint = mountRoot(uuid);
 
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
+    }
+}
+
+void Btrfs::unmountFilesystems()
+{
+    for (const QString &mountpoint : qAsConst(m_tempMountpoints)) {
+        umount2(mountpoint.toLocal8Bit(), MNT_DETACH);
     }
 }

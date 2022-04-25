@@ -52,6 +52,11 @@ class System {
     static bool isSubvolidInFstab();
 
     /**
+     * @brief Returns an absolute path to be used for generating the location to mount a btrfs filesystem
+     */
+    static QString mountPathRoot() { return QStringLiteral("/run/BtrfsAssistant"); }
+
+    /**
      * @brief An overloaded version of runCmd which takes a string and runs it with bash -c
      * @param cmd - The command to pass to bash -c
      * @param includeStderr - When true stderr is included in the Result.output
