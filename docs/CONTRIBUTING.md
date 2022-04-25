@@ -1,7 +1,7 @@
 # Overview
 Contributions are welcome!
 
-If you want add or change significant functionality it is better to discuss it before beginning work either in an issue or a WIP merge request.
+If you want add or change significant functionality it is better to discuss it before beginning work either in an issue or a WIP merge request.  There is also a [Telegram group](https://t.me/+fR23J4jV68MwYTgx) available for development discussions.
 
 ### Release Cycle
 There is generally a WIP branch created for each new release.  The name is `wip-version`.  For example, `wip-1.5`.  When a set of features is completed the WIp branch is merged into `main` and a new WIP branch is created.  The changes are then tested by the community for a period of time.  During this period fixes are merged directly into `main`.
