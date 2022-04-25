@@ -118,7 +118,7 @@ QStringList Btrfs::listMountpoints()
     const QStringList output = System::runCmd("findmnt --real -lno fstype,target", false).output.trimmed().split('\n');
     for (const QString &line : output) {
         if (line.startsWith("btrfs")) {
-            QString mountpoint = line.simplified().split(' ').at(1).trimmed();
+            QString mountpoint = line.section(' ', 1);
             if (!mountpoint.isEmpty()) {
                 mountpoints.append(mountpoint);
             }

@@ -12,6 +12,7 @@
 * Change the naming of subvolume backups to support nested subvolumes
 * Ensured combo boxes retain their selections when refreshed
 * Added a warning when restoring if you are mounting by subvolid in /etc/fstab
+* Fixed the handling of paths with whitespace in the Btrfs Maintenance tab
 * Reorganized the source code to make it more manageable(Contributed by Austin Horstman)
 * Lowered required C++ standard to C++ 17
 
