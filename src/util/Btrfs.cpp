@@ -28,9 +28,9 @@ BtrfsFilesystem Btrfs::filesystem(const QString &uuid) const
     return m_filesystems[uuid];
 }
 
-QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid)
+QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid) const
 {
-    const QString mountpoint = mountRoot(uuid);
+    const QString mountpoint = findAnyMountpoint(uuid);
     btrfs_util_subvolume_iterator *iter;
 
     btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, 0, &iter);
@@ -78,6 +78,19 @@ bool Btrfs::deleteSubvol(const QString &uuid, const uint64_t subvolid)
 
     // If we get to here, it failed
     return false;
+}
+
+QString Btrfs::findAnyMountpoint(const QString &uuid)
+{
+    const QStringList outputList = System::runCmd("findmnt", {"-t", "btrfs", "-lno", "uuid,target"}, false).output.split("\n");
+
+    for (const QString &line : outputList) {
+        if (line.section(" ", 0, 0).trimmed() == uuid) {
+            return line.section(" ", 1).trimmed();
+        }
+    }
+
+    return QString();
 }
 
 bool Btrfs::isSnapper(const QString &subvolume)
@@ -138,7 +151,7 @@ void Btrfs::loadQgroups(const QString &uuid)
         return;
     }
 
-    const QString mountpoint = mountRoot(uuid);
+    const QString mountpoint = findAnyMountpoint(uuid);
     if (mountpoint.isEmpty()) {
         return;
     }
@@ -178,7 +191,7 @@ void Btrfs::loadSubvols(const QString &uuid)
     if (isUuidLoaded(uuid)) {
         m_filesystems[uuid].subvolumes.clear();
 
-        const QString mountpoint = mountRoot(uuid);
+        const QString mountpoint = findAnyMountpoint(uuid);
         btrfs_util_subvolume_iterator *iter;
 
         btrfs_util_error returnCode = btrfs_util_create_subvolume_iterator(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, 0, &iter);
@@ -213,11 +226,10 @@ void Btrfs::loadVolumes()
 
     // Loop through btrfs devices and retrieve filesystem usage
     for (const QString &uuid : qAsConst(uuidList)) {
-        QString mountpoint = mountRoot(uuid);
+        QString mountpoint = findAnyMountpoint(uuid);
         if (!mountpoint.isEmpty()) {
             BtrfsFilesystem btrfs;
             btrfs.isPopulated = true;
-            btrfs.mountPoint = mountpoint;
             QStringList usageLines = System::runCmd("LANG=C ; btrfs fi usage -b \"" + mountpoint + "\"", false).output.split('\n');
             for (const QString &line : qAsConst(usageLines)) {
                 const QStringList &cols = line.split(':');
@@ -308,7 +320,6 @@ uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName)
     if (mountpoint.isEmpty()) {
         return 0;
     }
-
     const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolName);
     uint64_t id;
     btrfs_util_error returnCode = btrfs_util_subvolume_id(subvolPath.toLocal8Bit(), &id);
@@ -379,7 +390,7 @@ bool Btrfs::isUuidLoaded(const QString &uuid)
 void Btrfs::startBalanceRoot(const QString &uuid)
 {
     if (isUuidLoaded(uuid)) {
-        QString mountpoint = mountRoot(uuid);
+        QString mountpoint = findAnyMountpoint(uuid);
 
         // Run full balance command against UUID top level subvolume.
         System::runCmd("btrfs", {"balance", "start", mountpoint, "--full-balance", "--bg"}, false);
@@ -389,7 +400,7 @@ void Btrfs::startBalanceRoot(const QString &uuid)
 void Btrfs::startScrubRoot(const QString &uuid)
 {
     if (isUuidLoaded(uuid)) {
-        QString mountpoint = mountRoot(uuid);
+        QString mountpoint = findAnyMountpoint(uuid);
 
         System::runCmd("btrfs", {"scrub", "start", mountpoint}, false);
     }
@@ -398,7 +409,7 @@ void Btrfs::startScrubRoot(const QString &uuid)
 void Btrfs::stopBalanceRoot(const QString &uuid)
 {
     if (isUuidLoaded(uuid)) {
-        QString mountpoint = mountRoot(uuid);
+        QString mountpoint = findAnyMountpoint(uuid);
 
         System::runCmd("btrfs", {"balance", "cancel", mountpoint}, false);
     }
@@ -407,7 +418,7 @@ void Btrfs::stopBalanceRoot(const QString &uuid)
 void Btrfs::stopScrubRoot(const QString &uuid)
 {
     if (isUuidLoaded(uuid)) {
-        QString mountpoint = mountRoot(uuid);
+        QString mountpoint = findAnyMountpoint(uuid);
 
         System::runCmd("btrfs", {"scrub", "cancel", mountpoint}, false);
     }

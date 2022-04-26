@@ -77,7 +77,7 @@ void MainWindow::displayError(const QString &errorText) { QMessageBox::critical(
 void MainWindow::btrfsBalanceStatusUpdateUI()
 {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString balanceStatus = m_btrfs->balanceStatus(m_btrfs->mountRoot(uuid));
+    QString balanceStatus = m_btrfs->balanceStatus(Btrfs::findAnyMountpoint(uuid));
 
     // if balance is running currently, make sure you can stop it and we monitor progress
     if (!balanceStatus.contains("No balance found")) {
@@ -99,7 +99,7 @@ void MainWindow::btrfsBalanceStatusUpdateUI()
 void MainWindow::btrfsScrubStatusUpdateUI()
 {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString scrubStatus = m_btrfs->scrubStatus(m_btrfs->mountRoot(uuid));
+    QString scrubStatus = m_btrfs->scrubStatus(Btrfs::findAnyMountpoint(uuid));
 
     // update status to current scrub operation status
     m_ui->label_btrfsScrubStatus->setText(scrubStatus);
@@ -412,7 +412,7 @@ void MainWindow::refreshSubvolListUi()
     const auto filesystems = m_btrfs->listFilesystems();
     for (const QString &uuid : filesystems) {
         // Check to see if the size related colums should be hidden
-        if (Btrfs::isQuotaEnabled(m_btrfs->mountRoot(uuid))) {
+        if (Btrfs::isQuotaEnabled(Btrfs::findAnyMountpoint(uuid))) {
             showQuota = true;
         }
     }
@@ -1073,7 +1073,7 @@ void MainWindow::on_pushButton_enableQuota_clicked()
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }
-    const QString mountpoint = m_btrfs->mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+    const QString mountpoint = Btrfs::findAnyMountpoint(m_ui->comboBox_btrfsDevice->currentText());
 
     if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
         Btrfs::setQgroupEnabled(mountpoint, false);
@@ -1101,7 +1101,7 @@ void MainWindow::setEnableQuotaButtonStatus()
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }
-    const QString mountpoint = m_btrfs->mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+    const QString mountpoint = Btrfs::findAnyMountpoint(m_ui->comboBox_btrfsDevice->currentText());
 
     if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
         m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));

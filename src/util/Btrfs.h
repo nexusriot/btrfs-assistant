@@ -25,7 +25,6 @@ using SubvolumeMap = QMap<uint64_t, Subvolume>;
 
 struct BtrfsFilesystem {
     bool isPopulated = false;
-    QString mountPoint;
     uint64_t totalSize;
     uint64_t allocatedSize;
     uint64_t usedSize;
@@ -73,7 +72,7 @@ class Btrfs : public QObject {
      *  Returns a QStringList containing the subvol names/paths of all the children subvols
      *
      */
-    QStringList children(const uint64_t subvolid, const QString &uuid);
+    QStringList children(const uint64_t subvolid, const QString &uuid) const;
 
     /**
      * @brief Creates a btrfs snapshot
@@ -91,6 +90,13 @@ class Btrfs : public QObject {
      *
      */
     bool deleteSubvol(const QString &uuid, const uint64_t subvolid);
+
+    /**
+     * @brief Finds a single mountpoint for a btrfs filesystem
+     * @param uuid The uuid of the filesystem to find the mountpoint for
+     * @return The absolute path to the mountpoint. If no mountpoint is found, a default constructed value
+     */
+    static QString findAnyMountpoint(const QString &uuid);
 
     /** @brief Returns true if the subvol represented by @p subvolid is mounted for @p uuid
      */
