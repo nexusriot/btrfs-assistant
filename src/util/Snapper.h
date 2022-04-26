@@ -34,7 +34,43 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
-    using ConfigMap = QMap<QString, QString>;
+    class Config : private QMap<QString, QString> {
+      public:
+        bool isEmpty() const;
+
+        QString subvolume() const;
+        void setSubvolume(const QString &value);
+
+        bool isTimelineCreate() const;
+        void setTimelineCreate(bool value);
+
+        int timelineLimitHourly() const;
+        void setTimelineLimitHourly(int value);
+
+        int timelineLimitDaily() const;
+        void setTimelineLimitDaily(int value);
+
+        int timelineLimitWeekly() const;
+        void setTimelineLimitWeekly(int value);
+
+        int timelineLimitMonthly() const;
+        void setTimelineLimitMonthly(int value);
+
+        int timelineLimitYearly() const;
+        void setTimelineLimitYearly(int value);
+
+        int numberLimit() const;
+        void setNumberLimit(int value);
+
+      private:
+        void insertBool(const QString &key, bool value);
+        bool boolValue(const QString &key, bool defaultValue = false) const;
+
+        void insertInt(const QString &key, int value);
+        int intValue(const QString &key, int defaultValue = 0) const;
+
+        friend class Snapper;
+    };
 
     Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
@@ -43,7 +79,7 @@ class Snapper : public QObject {
      * @param name - A QString that is the Snapper config name
      * @return A QMap of name, value pairs for each setting
      */
-    ConfigMap config(const QString &name);
+    Config config(const QString &name);
 
     /**
      * @brief Finds all available Snapper configs
@@ -158,7 +194,7 @@ class Snapper : public QObject {
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update
      */
-    SnapperResult setConfig(const QString &name, const ConfigMap &configMap);
+    SnapperResult setConfig(const QString &name, const Config &configMap);
 
     /**
      * @brief Returns a list of metadata for each snapshot in @p config
@@ -183,7 +219,7 @@ class Snapper : public QObject {
   private:
     Btrfs *m_btrfs = nullptr;
     // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
-    QMap<QString, ConfigMap> m_configs;
+    QMap<QString, Config> m_configs;
 
     // The absolute path to the snapper command
     QString m_snapperCommand;
