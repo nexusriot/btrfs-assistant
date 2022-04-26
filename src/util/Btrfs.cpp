@@ -114,14 +114,12 @@ QStringList Btrfs::listMountpoints()
 {
     QStringList mountpoints;
 
-    // loop through mountpoints and only include those with btrfs fileystem
-    const QStringList output = System::runCmd("findmnt --real -lno fstype,target", false).output.trimmed().split('\n');
+    // Find all btrfs mountpoints
+    const QStringList output = System::runCmd("findmnt --real -t btrfs -lno target", false).output.trimmed().split('\n');
     for (const QString &line : output) {
-        if (line.startsWith("btrfs")) {
-            QString mountpoint = line.section(' ', 1);
-            if (!mountpoint.isEmpty()) {
-                mountpoints.append(mountpoint);
-            }
+        const QString mountpoint = line.trimmed();
+        if (!mountpoint.isEmpty()) {
+            mountpoints.append(mountpoint);
         }
     }
 
