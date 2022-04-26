@@ -246,7 +246,7 @@ void MainWindow::populateSnapperConfigSettings()
     }
 
     // Retrieve settings for selected config
-    const QMap<QString, QString> config = m_snapper->config(name);
+    const Snapper::Config &config = m_snapper->config(name);
 
     if (config.isEmpty()) {
         return;
@@ -254,26 +254,14 @@ void MainWindow::populateSnapperConfigSettings()
 
     // Populate UI elements with the values from the snapper config settings.
     m_ui->label_snapperConfigNameValue->setText(name);
-    const QStringList keys = config.keys();
-    for (const QString &key : keys) {
-        if (key == "SUBVOLUME") {
-            m_ui->label_snapperBackupPathValue->setText(config[key]);
-        } else if (key == "TIMELINE_CREATE") {
-            m_ui->checkBox_snapperEnableTimeline->setChecked(config[key].toStdString() == "yes");
-        } else if (key == "TIMELINE_LIMIT_HOURLY") {
-            m_ui->spinBox_snapperHourly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_DAILY") {
-            m_ui->spinBox_snapperDaily->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_WEEKLY") {
-            m_ui->spinBox_snapperWeekly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_MONTHLY") {
-            m_ui->spinBox_snapperMonthly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_YEARLY") {
-            m_ui->spinBox_snapperYearly->setValue(config[key].toInt());
-        } else if (key == "NUMBER_LIMIT") {
-            m_ui->spinBox_snapperNumber->setValue(config[key].toInt());
-        }
-    }
+    m_ui->label_snapperBackupPathValue->setText(config.subvolume());
+    m_ui->checkBox_snapperEnableTimeline->setChecked(config.isTimelineCreate());
+    m_ui->spinBox_snapperHourly->setValue(config.timelineLimitHourly());
+    m_ui->spinBox_snapperDaily->setValue(config.timelineLimitDaily());
+    m_ui->spinBox_snapperWeekly->setValue(config.timelineLimitWeekly());
+    m_ui->spinBox_snapperMonthly->setValue(config.timelineLimitMonthly());
+    m_ui->spinBox_snapperYearly->setValue(config.timelineLimitYearly());
+    m_ui->spinBox_snapperNumber->setValue(config.numberLimit());
 
     snapperTimelineEnable(m_ui->checkBox_snapperEnableTimeline->isChecked());
 }
@@ -996,16 +984,16 @@ void MainWindow::on_pushButton_snapperSaveConfig_clicked()
             return;
         }
 
-        QMap<QString, QString> configMap;
-        configMap.insert("TIMELINE_CREATE", QString(m_ui->checkBox_snapperEnableTimeline->isChecked() ? "yes" : "no"));
-        configMap.insert("TIMELINE_LIMIT_HOURLY", QString::number(m_ui->spinBox_snapperHourly->value()));
-        configMap.insert("TIMELINE_LIMIT_DAILY", QString::number(m_ui->spinBox_snapperDaily->value()));
-        configMap.insert("TIMELINE_LIMIT_WEEKLY", QString::number(m_ui->spinBox_snapperWeekly->value()));
-        configMap.insert("TIMELINE_LIMIT_MONTHLY", QString::number(m_ui->spinBox_snapperMonthly->value()));
-        configMap.insert("TIMELINE_LIMIT_YEARLY", QString::number(m_ui->spinBox_snapperYearly->value()));
-        configMap.insert("NUMBER_LIMIT", QString::number(m_ui->spinBox_snapperNumber->value()));
+        Snapper::Config config;
+        config.setTimelineCreate(m_ui->checkBox_snapperEnableTimeline->isChecked());
+        config.setTimelineLimitHourly(m_ui->spinBox_snapperHourly->value());
+        config.setTimelineLimitDaily(m_ui->spinBox_snapperDaily->value());
+        config.setTimelineLimitWeekly(m_ui->spinBox_snapperWeekly->value());
+        config.setTimelineLimitMonthly(m_ui->spinBox_snapperMonthly->value());
+        config.setTimelineLimitYearly(m_ui->spinBox_snapperYearly->value());
+        config.setNumberLimit(m_ui->spinBox_snapperNumber->value());
 
-        SnapperResult result = m_snapper->setConfig(name, configMap);
+        SnapperResult result = m_snapper->setConfig(name, config);
 
         if (result.exitCode != 0) {
             displayError(result.outputList.at(0));

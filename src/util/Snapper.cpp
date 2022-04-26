@@ -18,7 +18,7 @@ Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObjec
     load();
 }
 
-Snapper::ConfigMap Snapper::config(const QString &name) { return m_configs.value(name); }
+Snapper::Config Snapper::config(const QString &name) { return m_configs.value(name); }
 
 void Snapper::createSubvolMap()
 {
@@ -193,7 +193,7 @@ void Snapper::loadConfig(const QString &name)
     }
 
     // Iterate over the data adding the name/value pairs to the map
-    ConfigMap config;
+    Config config;
     for (const QString &line : result.outputList) {
         if (line.trimmed().isEmpty()) {
             continue;
@@ -400,7 +400,7 @@ RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceI
     return restoreResult;
 }
 
-SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap)
+SnapperResult Snapper::setConfig(const QString &name, const Config &configMap)
 {
     SnapperResult result;
 
@@ -476,4 +476,54 @@ SnapperResult Snapper::runSnapper(const QString &command, const QString &name) c
     }
 
     return snapperResult;
+}
+
+bool Snapper::Config::isEmpty() const { return QMap<QString, QString>::isEmpty(); }
+
+QString Snapper::Config::subvolume() const { return value("SUBVOLUME"); }
+
+void Snapper::Config::setSubvolume(const QString &value) { insert("SUBVOLUME", value); }
+
+bool Snapper::Config::isTimelineCreate() const { return boolValue("TIMELINE_CREATE"); }
+
+void Snapper::Config::setTimelineCreate(bool value) { insertBool("TIMELINE_CREATE", value); }
+
+int Snapper::Config::timelineLimitHourly() const { return intValue("TIMELINE_LIMIT_HOURLY"); }
+
+void Snapper::Config::setTimelineLimitHourly(int value) { insertInt("TIMELINE_LIMIT_HOURLY", value); }
+
+int Snapper::Config::timelineLimitDaily() const { return intValue("TIMELINE_LIMIT_DAILY"); }
+
+void Snapper::Config::setTimelineLimitDaily(int value) { insertInt("TIMELINE_LIMIT_DAILY", value); }
+
+int Snapper::Config::timelineLimitWeekly() const { return intValue("TIMELINE_LIMIT_WEEKLY"); }
+
+void Snapper::Config::setTimelineLimitWeekly(int value) { insertInt("TIMELINE_LIMIT_WEEKLY", value); }
+
+int Snapper::Config::timelineLimitMonthly() const { return intValue("TIMELINE_LIMIT_MONTHLY"); }
+
+void Snapper::Config::setTimelineLimitMonthly(int value) { insertInt("TIMELINE_LIMIT_MONTHLY", value); }
+
+int Snapper::Config::timelineLimitYearly() const { return intValue("TIMELINE_LIMIT_YEARLY"); }
+
+void Snapper::Config::setTimelineLimitYearly(int value) { insertInt("TIMELINE_LIMIT_YEARLY", value); }
+
+int Snapper::Config::numberLimit() const { return intValue("NUMBER_LIMIT"); }
+
+void Snapper::Config::setNumberLimit(int value) { insertInt("NUMBER_LIMIT", value); }
+
+void Snapper::Config::insertBool(const QString &key, bool value) { insert(key, value ? "yes" : "no"); }
+
+bool Snapper::Config::boolValue(const QString &key, bool defaultValue) const { return value(key, defaultValue ? "yes" : "no") == "yes"; }
+
+void Snapper::Config::insertInt(const QString &key, int value) { insert(key, QString::number(value)); }
+
+int Snapper::Config::intValue(const QString &key, int defaultValue) const
+{
+    bool ok = false;
+    int ret = value(key).toInt(&ok);
+    if (!ok) {
+        ret = defaultValue;
+    }
+    return ret;
 }
