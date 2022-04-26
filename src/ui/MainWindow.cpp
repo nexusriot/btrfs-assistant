@@ -40,7 +40,7 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
 {
     m_ui->setupUi(this);
     // Always start on the BTRFS tab, regardless what is the currentIndex in the .ui file
-    m_ui->tabWidget->setCurrentWidget(m_ui->tab_btrfs);
+    m_ui->tabWidget_mainWindow->setCurrentWidget(m_ui->tab_btrfs);
 
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
@@ -73,6 +73,59 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
 MainWindow::~MainWindow() { delete m_ui; }
 
 void MainWindow::displayError(const QString &errorText) { QMessageBox::critical(this, tr("Error"), errorText); }
+
+void MainWindow::bmRefreshMountpoints()
+{
+    // Get updated list of mountpoints
+    const QStringList mountpoints = Btrfs::listMountpoints();
+
+    // Populate the balance section
+    QStringList balanceMounts;
+    const QList<QListWidgetItem *> selectedBalanceMounts = m_ui->listWidget_bmBalance->selectedItems();
+    for (QListWidgetItem *item : selectedBalanceMounts) {
+        balanceMounts << item->text();
+    }
+
+    m_ui->listWidget_bmBalance->clear();
+    m_ui->listWidget_bmBalance->insertItems(0, mountpoints);
+
+    if (!m_ui->checkBox_bmBalance->isChecked()) {
+        setListWidgetSelections(balanceMounts, m_ui->listWidget_bmBalance);
+    }
+
+    // Populate the scrub section
+    QStringList scrubMounts;
+    const QList<QListWidgetItem *> selectedScrubMounts = m_ui->listWidget_bmScrub->selectedItems();
+    for (QListWidgetItem *item : selectedScrubMounts) {
+        scrubMounts << item->text();
+    }
+    m_ui->listWidget_bmScrub->clear();
+    m_ui->listWidget_bmScrub->insertItems(0, mountpoints);
+
+    if (!m_ui->checkBox_bmScrub->isChecked()) {
+        setListWidgetSelections(scrubMounts, m_ui->listWidget_bmScrub);
+    }
+
+    // Populate the defrag section
+    QStringList defragMounts;
+    const QList<QListWidgetItem *> selectedDefragMounts = m_ui->listWidget_bmDefrag->selectedItems();
+    for (QListWidgetItem *item : selectedDefragMounts) {
+        defragMounts << item->text();
+    }
+
+    // In the case of defrag we need to include any nested subvols listed in the config
+    QStringList combinedMountpoints = defragMounts + mountpoints;
+
+    // Remove empty and duplicate entries
+    combinedMountpoints.removeAll("");
+    combinedMountpoints.removeDuplicates();
+
+    m_ui->listWidget_bmDefrag->clear();
+    m_ui->listWidget_bmDefrag->insertItems(0, combinedMountpoints);
+    if (!m_ui->checkBox_bmDefrag->isChecked()) {
+        setListWidgetSelections(defragMounts, m_ui->listWidget_bmDefrag);
+    }
+}
 
 void MainWindow::btrfsBalanceStatusUpdateUI()
 {
@@ -166,6 +219,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmBalance->setDisabled(true);
     } else {
         m_ui->checkBox_bmBalance->setChecked(false);
+        m_ui->listWidget_bmBalance->setDisabled(false);
         setListWidgetSelections(balanceMounts, m_ui->listWidget_bmBalance);
     }
 
@@ -178,6 +232,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmScrub->setDisabled(true);
     } else {
         m_ui->checkBox_bmScrub->setChecked(false);
+        m_ui->listWidget_bmScrub->setDisabled(false);
         setListWidgetSelections(scrubMounts, m_ui->listWidget_bmScrub);
     }
 
@@ -198,6 +253,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmDefrag->setDisabled(true);
     } else {
         m_ui->checkBox_bmDefrag->setChecked(false);
+        m_ui->listWidget_bmDefrag->setDisabled(false);
         setListWidgetSelections(defragMounts, m_ui->listWidget_bmDefrag);
     }
 }
@@ -363,6 +419,12 @@ void MainWindow::populateSnapperRestoreGrid()
     m_ui->tableWidget_snapperRestore->resizeColumnsToContents();
 }
 
+void MainWindow::refreshBmUi()
+{
+    // Refresh the mountpoint list widgets
+    bmRefreshMountpoints();
+}
+
 void MainWindow::refreshBtrfsUi()
 {
 
@@ -484,8 +546,8 @@ void MainWindow::setup()
     if (m_hasSnapper) {
         m_ui->groupBox_snapperConfigEdit->hide();
     } else {
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_general), false);
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_settings), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_general), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_settings), false);
     }
 
     // If the system isn't running systemd, hide the systemd-related elements of the UI
@@ -518,7 +580,7 @@ void MainWindow::setup()
         populateBmTab();
     } else {
         // Hide the btrfs maintenance tab
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_btrfsmaintenance), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_btrfsmaintenance), false);
     }
 }
 
@@ -588,7 +650,7 @@ void MainWindow::on_comboBox_snapperSubvols_activated(int index)
     m_ui->comboBox_snapperSubvols->clearFocus();
 }
 
-void MainWindow::on_pushButton_bmApply_clicked()
+void MainWindow::on_toolButton_bmApply_clicked()
 {
     // Read and set the Btrfs maintenance settings
     m_btrfsMaint->setValue("BTRFS_BALANCE_PERIOD", m_ui->comboBox_bmBalanceFreq->currentText());
@@ -636,8 +698,10 @@ void MainWindow::on_pushButton_bmApply_clicked()
 
     QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
-    m_ui->pushButton_bmApply->clearFocus();
+    m_ui->toolButton_bmApply->clearFocus();
 }
+
+void MainWindow::on_toolButton_bmReset_clicked() { populateBmTab(); }
 
 void MainWindow::on_pushButton_btrfsBalance_clicked()
 {
@@ -667,11 +731,11 @@ void MainWindow::on_pushButton_btrfsScrub_clicked()
     }
 }
 
-void MainWindow::on_pushButton_subvolDelete_clicked()
+void MainWindow::on_toolButton_subvolDelete_clicked()
 {
     if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
         displayError(tr("Please select a subvolume to delete first!"));
-        m_ui->pushButton_subvolDelete->clearFocus();
+        m_ui->toolButton_subvolDelete->clearFocus();
         return;
     }
     QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
@@ -681,7 +745,7 @@ void MainWindow::on_pushButton_subvolDelete_clicked()
     // Make sure the everything is good in the UI
     if (subvol.isEmpty() || uuid.isEmpty()) {
         displayError(tr("Nothing to delete!"));
-        m_ui->pushButton_subvolDelete->clearFocus();
+        m_ui->toolButton_subvolDelete->clearFocus();
         return;
     }
 
@@ -689,14 +753,14 @@ void MainWindow::on_pushButton_subvolDelete_clicked()
     uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
     if (subvolid == 0) {
         displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("subvolid missing from map"));
-        m_ui->pushButton_subvolDelete->clearFocus();
+        m_ui->toolButton_subvolDelete->clearFocus();
         return;
     }
 
     // ensure the subvol isn't mounted, btrfs will delete a mounted subvol but we probably shouldn't
     if (Btrfs::isMounted(uuid, subvolid)) {
         displayError(tr("You cannot delete a mounted subvolume") + "\n\n" + tr("Please unmount the subvolume before continuing"));
-        m_ui->pushButton_subvolDelete->clearFocus();
+        m_ui->toolButton_subvolDelete->clearFocus();
         return;
     }
 
@@ -724,7 +788,7 @@ void MainWindow::on_pushButton_subvolDelete_clicked()
         displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
     }
 
-    m_ui->pushButton_subvolDelete->clearFocus();
+    m_ui->toolButton_subvolDelete->clearFocus();
 }
 
 void MainWindow::on_pushButton_btrfsRefreshData_clicked()
@@ -736,7 +800,7 @@ void MainWindow::on_pushButton_btrfsRefreshData_clicked()
     m_ui->pushButton_btrfsRefreshData->clearFocus();
 }
 
-void MainWindow::on_pushButton_subvolRefresh_clicked()
+void MainWindow::on_toolButton_subvolRefresh_clicked()
 {
     const auto filesystems = m_btrfs->listFilesystems();
     for (const QString &uuid : filesystems) {
@@ -746,10 +810,10 @@ void MainWindow::on_pushButton_subvolRefresh_clicked()
     m_sourceModel->load(m_btrfs->filesystems());
     refreshSubvolListUi();
 
-    m_ui->pushButton_subvolRefresh->clearFocus();
+    m_ui->toolButton_subvolRefresh->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperRestore_clicked()
+void MainWindow::on_toolButton_snapperRestore_clicked()
 {
     if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
@@ -774,10 +838,10 @@ void MainWindow::on_pushButton_snapperRestore_clicked()
 
     restoreSnapshot(uuid, subvol);
 
-    m_ui->pushButton_snapperRestore->clearFocus();
+    m_ui->toolButton_snapperRestore->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperBrowse_clicked()
+void MainWindow::on_toolButton_snapperBrowse_clicked()
 {
     const int currentRow = m_ui->tableWidget_snapperRestore->currentRow();
     if (currentRow == -1) {
@@ -810,7 +874,7 @@ void MainWindow::on_pushButton_snapperBrowse_clicked()
     fb->show();
 }
 
-void MainWindow::on_pushButton_snapperCreate_clicked()
+void MainWindow::on_toolButton_snapperCreate_clicked()
 {
     QString config = m_ui->comboBox_snapperConfigs->currentText();
 
@@ -846,10 +910,10 @@ void MainWindow::on_pushButton_snapperCreate_clicked()
     populateSnapperGrid();
     populateSnapperRestoreGrid();
 
-    m_ui->pushButton_snapperCreate->clearFocus();
+    m_ui->toolButton_snapperCreate->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperDelete_clicked()
+void MainWindow::on_toolButton_snapperDelete_clicked()
 {
     if (m_ui->tableWidget_snapperNew->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
@@ -894,7 +958,7 @@ void MainWindow::on_pushButton_snapperDelete_clicked()
     populateSnapperGrid();
     populateSnapperRestoreGrid();
 
-    m_ui->pushButton_snapperDelete->clearFocus();
+    m_ui->toolButton_snapperDelete->clearFocus();
 }
 
 void MainWindow::on_pushButton_snapperDeleteConfig_clicked()
@@ -1070,6 +1134,13 @@ void MainWindow::on_pushButton_enableQuota_clicked()
     }
 
     setEnableQuotaButtonStatus();
+}
+
+void MainWindow::on_tabWidget_mainWindow_currentChanged()
+{
+    if (m_ui->tabWidget_mainWindow->currentWidget() == m_ui->tab_btrfsmaintenance) {
+        refreshBmUi();
+    }
 }
 
 void MainWindow::on_toolButton_snapperNewRefresh_clicked()

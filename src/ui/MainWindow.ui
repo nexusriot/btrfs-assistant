@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QTabWidget" name="tabWidget">
+     <widget class="QTabWidget" name="tabWidget_mainWindow">
       <property name="minimumSize">
        <size>
         <width>100</width>
@@ -24,7 +24,7 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_btrfs">
        <attribute name="title">
@@ -516,7 +516,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_subvolDelete">
+                <widget class="QToolButton" name="toolButton_subvolDelete">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -536,7 +536,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_subvolRefresh">
+                <widget class="QToolButton" name="toolButton_subvolRefresh">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -647,7 +647,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperCreate">
+                <widget class="QToolButton" name="toolButton_snapperCreate">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -667,7 +667,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperDelete">
+                <widget class="QToolButton" name="toolButton_snapperDelete">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -780,7 +780,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperBrowse">
+                <widget class="QToolButton" name="toolButton_snapperBrowse">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -806,7 +806,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperRestore">
+                <widget class="QToolButton" name="toolButton_snapperRestore">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -1364,6 +1364,9 @@
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
+                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>40</width>
@@ -1385,19 +1388,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="4">
-                <widget class="QListWidget" name="listWidget_bmBalance">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="selectionMode">
-                  <enum>QAbstractItemView::MultiSelection</enum>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="1">
                 <widget class="QComboBox" name="comboBox_bmBalanceFreq"/>
                </item>
@@ -1412,6 +1402,19 @@
                 <widget class="QLabel" name="label_bmBalanceSubvols">
                  <property name="text">
                   <string>Mountpoints: </string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="4">
+                <widget class="QListWidget" name="listWidget_bmBalance">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::MultiSelection</enum>
                  </property>
                 </widget>
                </item>
@@ -1437,6 +1440,9 @@
                 <spacer name="horizontalSpacer_2">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1522,6 +1528,9 @@
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
+                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>40</width>
@@ -1583,12 +1592,45 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_bmApply">
+                <widget class="QToolButton" name="toolButton_bmReset">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Reset</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/reset.png</normaloff>:/icons/reset.png</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="toolButton_bmApply">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update Btrfs Maintenance config file and call service to load new settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Apply</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/checkmark.png</normaloff>:/icons/checkmark.png</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
                  </property>
                 </widget>
                </item>

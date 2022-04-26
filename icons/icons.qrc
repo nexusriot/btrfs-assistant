@@ -7,5 +7,7 @@
         <file>btrfs-assistant.png</file>
         <file>edit-clear.svg</file>
         <file>folder.png</file>
+        <file>checkmark.png</file>
+        <file>reset.png</file>
     </qresource>
 </RCC>

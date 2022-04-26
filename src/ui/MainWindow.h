@@ -108,6 +108,11 @@ class MainWindow : public QMainWindow {
     void refreshBtrfsUi();
 
     /**
+     * @brief Refresh the Btrfs Maintenance tab UI.
+     */
+    void refreshBmUi();
+
+    /**
      * @brief Update the UI on Snapper Settings based on systems enabled units.
      */
     void refreshSnapperServices();
@@ -136,6 +141,11 @@ class MainWindow : public QMainWindow {
      * @param checkboxList
      */
     void updateServices(QList<QCheckBox *>);
+
+    /**
+     * @brief Refreshes the mountpoint list widgets on Btrfs Maintenance while maintaining any previous selections.
+     */
+    void bmRefreshMountpoints();
 
     /**
      * @brief Method used to fetch and update the btrfs balance status
@@ -212,12 +222,16 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Apply btrfs maintenance system settings based on the UI state.
      */
-    void on_pushButton_bmApply_clicked();
+    void on_toolButton_bmApply_clicked();
 
+    /**
+     * @brief Reset the btrfs maintenance screen to saved values.
+     */
+    void on_toolButton_bmReset_clicked();
     /**
      * @brief Delete a subvolume after checking for a variety of errors
      */
-    void on_pushButton_subvolDelete_clicked();
+    void on_toolButton_subvolDelete_clicked();
 
     /**
      * @brief Refreshes Btrfs data button handler
@@ -227,27 +241,27 @@ class MainWindow : public QMainWindow {
     /**
      * @brief Refreshes subvolume data button handler
      */
-    void on_pushButton_subvolRefresh_clicked();
+    void on_toolButton_subvolRefresh_clicked();
 
     /**
      * @brief Restore snapshot button handler
      */
-    void on_pushButton_snapperRestore_clicked();
+    void on_toolButton_snapperRestore_clicked();
 
     /**
      * @brief Snapper browse snapshot button handler
      */
-    void on_pushButton_snapperBrowse_clicked();
+    void on_toolButton_snapperBrowse_clicked();
 
     /**
      * @brief Snapper new snapshot button handler
      */
-    void on_pushButton_snapperCreate_clicked();
+    void on_toolButton_snapperCreate_clicked();
 
     /**
      * @brief Snapper delete snapshot button handler
      */
-    void on_pushButton_snapperDelete_clicked();
+    void on_toolButton_snapperDelete_clicked();
 
     /**
      * @brief Snapper new config button handler
@@ -272,7 +286,19 @@ class MainWindow : public QMainWindow {
      */
     void on_pushButton_snapperUnitsApply_clicked();
 
+    /**
+     * @brief Mainwindow tab selection change event handler.
+     */
+    void on_tabWidget_mainWindow_currentChanged();
+
+    /**
+     * @brief Snapper New/Delete Refresh button handler.
+     */
     void on_toolButton_snapperNewRefresh_clicked();
+
+    /**
+     * @brief Snapper Browse/Restore Refresh button handler.
+     */
     void on_toolButton_snapperRestoreRefresh_clicked();
 };
 #endif // MAINWINDOW_H
