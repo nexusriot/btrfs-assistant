@@ -798,7 +798,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/filebrowse.png</normaloff>:/icons/filebrowse.png</iconset>
+                   <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
