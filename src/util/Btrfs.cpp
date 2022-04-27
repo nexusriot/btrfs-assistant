@@ -9,6 +9,24 @@
 #include <QTemporaryDir>
 #include <btrfsutil.h>
 
+namespace {
+
+QString uuidToString(const uint8_t uuid[16])
+{
+    QString ret;
+    bool allZeros = true;
+    for (int i = 0; i < 16; ++i) {
+        ret.append(QString::number(uuid[i], 16));
+        if ((i + 1) % 2 == 0 && (i > 1 && i < 10)) {
+            ret.append('-');
+        }
+        allZeros &= (uuid[i] == 0);
+    }
+    return allZeros ? "" : ret;
+}
+
+} // namespace
+
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
 
 Btrfs::~Btrfs() { unmountFilesystems(); }
@@ -206,8 +224,14 @@ void Btrfs::loadSubvols(const QString &uuid)
             if (returnCode == BTRFS_UTIL_OK) {
                 subvols[subvolInfo.id].subvolName = QString::fromLocal8Bit(path);
                 subvols[subvolInfo.id].parentId = subvolInfo.parent_id;
-                subvols[subvolInfo.id].subvolId = subvolInfo.id;
-                subvols[subvolInfo.id].uuid = uuid;
+                subvols[subvolInfo.id].id = subvolInfo.id;
+                subvols[subvolInfo.id].uuid = uuidToString(subvolInfo.uuid);
+                subvols[subvolInfo.id].parentUuid = uuidToString(subvolInfo.parent_uuid);
+                subvols[subvolInfo.id].receivedUuid = uuidToString(subvolInfo.received_uuid);
+                subvols[subvolInfo.id].generation = subvolInfo.generation;
+                subvols[subvolInfo.id].flags = subvolInfo.flags;
+                subvols[subvolInfo.id].createdAt = QDateTime::fromSecsSinceEpoch(subvolInfo.otime.tv_sec);
+                subvols[subvolInfo.id].filesystemUuid = uuid;
                 free(path);
             }
         }
@@ -428,3 +452,9 @@ void Btrfs::unmountFilesystems()
         umount2(mountpoint.toLocal8Bit(), MNT_DETACH);
     }
 }
+
+bool Subvolume::isReadOnly() const { return flags & 0x1u; }
+
+bool Subvolume::isSnapshot() const { return !parentUuid.isEmpty(); }
+
+bool Subvolume::isReceived() const { return !receivedUuid.isEmpty(); }
