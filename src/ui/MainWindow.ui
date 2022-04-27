@@ -1035,7 +1035,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_snapperConfigEdit">
+             <widget class="QGroupBox" name="groupBox_snapperConfigCreate">
               <property name="title">
                <string>Config Information</string>
               </property>

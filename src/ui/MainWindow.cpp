@@ -174,16 +174,22 @@ void MainWindow::loadSnapperUI()
     if (!m_hasSnapper)
         return;
 
+    // Store current selection to restore after reload
+    QString selectedSnapperConfig = m_ui->comboBox_snapperConfigs->currentText();
+    QString selectedSnapperSettingsConfig = m_ui->comboBox_snapperConfigSettings->currentText();
+
+    m_ui->comboBox_snapperConfigs->clear();
+    m_ui->comboBox_snapperConfigSettings->clear();
+
     // Load the configs in the snapper new subtab and the snapper settings tabs
     const QStringList configs = m_snapper->configs();
     for (const QString &config : configs) {
-        if (m_ui->comboBox_snapperConfigs->findText(config) == -1) {
-            m_ui->comboBox_snapperConfigs->addItem(config);
-        }
-        if (m_ui->comboBox_snapperConfigSettings->findText(config) == -1) {
-            m_ui->comboBox_snapperConfigSettings->addItem(config);
-        }
+        m_ui->comboBox_snapperConfigs->addItem(config);
+        m_ui->comboBox_snapperConfigSettings->addItem(config);
     }
+
+    m_ui->comboBox_snapperConfigs->setCurrentText(selectedSnapperConfig);
+    m_ui->comboBox_snapperConfigSettings->setCurrentText(selectedSnapperSettingsConfig);
 
     // Load the subvols in the snapper restore subtab
     const QStringList subvols = m_snapper->subvolKeys();
@@ -548,7 +554,7 @@ void MainWindow::setup()
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (m_hasSnapper) {
-        m_ui->groupBox_snapperConfigEdit->hide();
+        m_ui->groupBox_snapperConfigCreate->hide();
     } else {
         m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_general), false);
         m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_settings), false);
@@ -589,6 +595,18 @@ void MainWindow::setup()
         // Hide the btrfs maintenance tab
         m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_btrfsmaintenance), false);
     }
+}
+
+void MainWindow::setSnapperSettingsEditModeEnabled(bool enabled)
+{
+
+    m_ui->lineEdit_snapperName->clear();
+    m_ui->pushButton_snapperNewConfig->setText(tr(enabled ? "New Config" : "Cancel New Config"));
+    m_ui->pushButton_snapperNewConfig->clearFocus();
+
+    m_ui->groupBox_snapperConfigCreate->setVisible(!enabled);
+    m_ui->groupBox_snapperConfigDisplay->setVisible(enabled);
+    m_ui->groupBox_snapperConfigSettings->setVisible(enabled);
 }
 
 void MainWindow::snapperTimelineEnable(bool enable)
@@ -1004,16 +1022,8 @@ void MainWindow::on_pushButton_snapperDeleteConfig_clicked()
 
 void MainWindow::on_pushButton_snapperNewConfig_clicked()
 {
-    if (m_ui->groupBox_snapperConfigEdit->isVisible()) {
-        m_ui->lineEdit_snapperName->clear();
-
-        // Put the ui back in edit mode
-        m_ui->groupBox_snapperConfigDisplay->show();
-        m_ui->groupBox_snapperConfigEdit->hide();
-        m_ui->groupBox_snapperConfigSettings->show();
-
-        m_ui->pushButton_snapperNewConfig->setText(tr("New Config"));
-        m_ui->pushButton_snapperNewConfig->clearFocus();
+    if (m_ui->groupBox_snapperConfigCreate->isVisible()) {
+        setSnapperSettingsEditModeEnabled(true);
     } else {
         // Get a list of btrfs mountpoints that could be backed up
         const QStringList mountpoints = Btrfs::listMountpoints();
@@ -1033,12 +1043,7 @@ void MainWindow::on_pushButton_snapperNewConfig_clicked()
         }
 
         // Put the UI in create config mode
-        m_ui->groupBox_snapperConfigDisplay->hide();
-        m_ui->groupBox_snapperConfigEdit->show();
-        m_ui->groupBox_snapperConfigSettings->hide();
-
-        m_ui->pushButton_snapperNewConfig->setText(tr("Cancel New Config"));
-        m_ui->pushButton_snapperNewConfig->clearFocus();
+        setSnapperSettingsEditModeEnabled(false);
     }
 }
 
@@ -1108,10 +1113,7 @@ void MainWindow::on_pushButton_snapperSaveConfig_clicked()
         populateSnapperConfigSettings();
 
         // Put the ui back in edit mode
-        m_ui->groupBox_snapperConfigDisplay->show();
-        m_ui->groupBox_snapperConfigEdit->hide();
-        m_ui->groupBox_snapperConfigSettings->show();
-        m_ui->pushButton_snapperNewConfig->setText(tr("New Config"));
+        setSnapperSettingsEditModeEnabled(true);
     }
 
     m_ui->pushButton_snapperSaveConfig->clearFocus();
