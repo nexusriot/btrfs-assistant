@@ -11,7 +11,21 @@ class SubvolumeModel : public QAbstractTableModel {
     Q_OBJECT
 
   public:
-    enum Column { Id, ParentId, Name, Uuid, Size, ExclusiveSize, ColumnCount };
+    enum Column {
+        Id,
+        ParentId,
+        Name,
+        Uuid,
+        ParentUuid,
+        ReceivedUuid,
+        CreatedAt,
+        Generation,
+        ReadOnly,
+        FilesystemUuid,
+        Size,
+        ExclusiveSize,
+        ColumnCount
+    };
 
     enum Role { Sort = Qt::UserRole };
 

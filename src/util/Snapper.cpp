@@ -235,7 +235,7 @@ void Snapper::loadSubvols()
             SnapperSubvolume snapperSubvol;
 
             snapperSubvol.uuid = uuid;
-            snapperSubvol.subvolid = subvol.subvolId;
+            snapperSubvol.subvolid = subvol.id;
             snapperSubvol.subvol = subvol.subvolName;
 
             // It is a snapshot so now we parse it and read the snapper XML
