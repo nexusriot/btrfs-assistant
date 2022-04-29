@@ -56,7 +56,7 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 1. `sudo make -C build install`
 1. Optionally install Snapper - `sudo dnf install snapper`
 1. Optionally install Btrfs Maintenance - `sudo dnf install btrfsmaintenance`
-1. Configure Btrfs Maintenance if installed - Edit `/etc/btrfs-assistant.conf` and change `bm_refresh_service` to `/etc/sysconfig/btrfsmaintenance`
+1. Configure Btrfs Maintenance if installed - Edit `/etc/btrfs-assistant.conf` and change `bm_config` to `/etc/sysconfig/btrfsmaintenance`
 
 ## Contributing
 Contributions are welcome!
