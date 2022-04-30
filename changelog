@@ -1,6 +1,6 @@
 ### Btrfs Assistant
 
-1.5 - TBD
+1.5 - 2022-04-30
 * Use libbtrfsutil instead of calling the btrfs command wherever possible
 * Allow opening multiple snapshot browse dialogs at the same time(Contributed by Adam Sowa)
 * Add the ability to filter subvolumes by name(Contributed by Adam Sowa)
