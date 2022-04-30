@@ -39,7 +39,7 @@ Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem eas
 Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 
 #### Debian/Ubuntu
-1. Install the prerequisites: `sudo apt install git cmake qtbase5-dev qttools5-dev fonts-noto libqt5svg5 libqt5core5a g++`
+1. Install the prerequisites: `sudo apt install git cmake qtbase5-dev qttools5-dev fonts-noto libqt5svg5 libqt5core5a g++ libbtrfs-dev libbtrfsutil-dev`
 1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
 1. Untar the archive and cd into the directory
 1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
@@ -48,7 +48,7 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 1. Optionally install Snapper - `sudo apt install snapper`
 
 #### Fedora
-1. Install the prerequisites: `sudo dnf install cmake git qt5-qttools qt5-qtbase qt5-qtsvg g++ qt5-qtbase-devel qt5-qttools-devel`
+1. Install the prerequisites: `sudo dnf install cmake git qt5-qttools qt5-qtbase qt5-qtsvg g++ qt5-qtbase-devel qt5-qttools-devel libbtrfsutil btrfs-progs-devel`
 1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
 1. Untar the archive and cd into the directory
 1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
