@@ -758,62 +758,72 @@ void MainWindow::on_pushButton_btrfsScrub_clicked()
 
 void MainWindow::on_toolButton_subvolDelete_clicked()
 {
+    m_ui->toolButton_subvolDelete->clearFocus();
+
     if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
         displayError(tr("Please select a subvolume to delete first!"));
-        m_ui->toolButton_subvolDelete->clearFocus();
-        return;
-    }
-    QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
-    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Name)).toString();
-    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::FilesystemUuid)).toString();
-
-    // Make sure the everything is good in the UI
-    if (subvol.isEmpty() || uuid.isEmpty()) {
-        displayError(tr("Nothing to delete!"));
-        m_ui->toolButton_subvolDelete->clearFocus();
         return;
     }
 
-    // get the subvolid, if it isn't found abort
-    uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
-    if (subvolid == 0) {
-        displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("subvolid missing from map"));
-        m_ui->toolButton_subvolDelete->clearFocus();
+    // Ask for confirmation
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected subvolume(s)?")) != QMessageBox::Yes) {
         return;
     }
 
-    // ensure the subvol isn't mounted, btrfs will delete a mounted subvol but we probably shouldn't
-    if (Btrfs::isMounted(uuid, subvolid)) {
-        displayError(tr("You cannot delete a mounted subvolume") + "\n\n" + tr("Please unmount the subvolume before continuing"));
-        m_ui->toolButton_subvolDelete->clearFocus();
-        return;
-    }
+    // Get all the rows that were selected
+    QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+    QModelIndexList uuidIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid);
 
-    Result result;
+    QSet<QString> uuids;
 
-    // Check to see if the subvolume is a snapper snapshot
-    if (Btrfs::isSnapper(subvol) && m_hasSnapper) {
-        QMessageBox::information(0, tr("Snapshot Delete"),
-                                 tr("That subvolume is a snapper shapshot") + "\n\n" + tr("Please use the snapper tab to remove it"));
-        return;
-    } else {
-        // Everything looks good so far, now we put up a confirmation box
-        if (QMessageBox::question(0, tr("Confirm"), tr("Are you sure you want to delete ") + subvol) != QMessageBox::Yes) {
-            return;
+    for (int i = 0; i < nameIndexes.count(); i++) {
+        QString subvol = nameIndexes.at(i).data().toString();
+        QString uuid = uuidIndexes.at(i).data().toString();
+
+        // Add the uuid to the set of uuids with subvolumes deleted
+        uuids.insert(uuid);
+
+        // Make sure the everything is good in the UI
+        if (subvol.isEmpty() || uuid.isEmpty()) {
+            continue;
+        }
+
+        // get the subvolid, if it isn't found abort
+        uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
+        if (subvolid == 0) {
+            displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("Invalid subvolume ID"));
+            continue;
+        }
+
+        // ensure the subvol isn't mounted, btrfs will delete a mounted subvol but we probably shouldn't
+        if (Btrfs::isMounted(uuid, subvolid)) {
+            displayError(tr("You cannot delete mounted subvolume: ") + subvol + "\n\n" +
+                         tr("Please unmount the subvolume before deleting"));
+            continue;
+        }
+
+        Result result;
+
+        // Check to see if the subvolume is a snapper snapshot
+        if (Btrfs::isSnapper(subvol) && m_hasSnapper) {
+            QMessageBox::information(this, tr("Snapshot Delete"),
+                                     subvol + tr(" is a snapper shapshot") + "\n\n" + tr("Please use the snapper tab to remove it"));
+            continue;
+        }
+
+        bool success = m_btrfs->deleteSubvol(uuid, subvolid);
+
+        if (!success) {
+            displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
         }
     }
 
-    bool success = m_btrfs->deleteSubvol(uuid, subvolid);
-
-    if (success) {
+    // Reload data and refresh the UI
+    for (const auto &uuid : qAsConst(uuids)) {
         m_btrfs->loadSubvols(uuid);
-        m_sourceModel->load(m_btrfs->filesystems());
-        refreshSubvolListUi();
-    } else {
-        displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
     }
-
-    m_ui->toolButton_subvolDelete->clearFocus();
+    m_sourceModel->load(m_btrfs->filesystems());
+    refreshSubvolListUi();
 }
 
 void MainWindow::on_pushButton_btrfsRefreshData_clicked()
