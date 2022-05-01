@@ -771,8 +771,24 @@ void MainWindow::on_toolButton_subvolDelete_clicked()
     }
 
     // Get all the rows that were selected
-    QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
-    QModelIndexList uuidIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid);
+    const QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+    const QModelIndexList uuidIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid);
+
+    // Check for a snapper snapshot and ask if the metadata should be cleaned up if found
+    bool hasSnapshot = false;
+    for (const auto &index : nameIndexes) {
+        if (Btrfs::isSnapper(index.data().toString())) {
+            hasSnapshot = true;
+            break;
+        }
+    }
+
+    bool cleanupSnapper = false;
+    if (hasSnapshot && QMessageBox::question(this, tr("Snapper Snapshots Found"),
+                                             tr("One or more of the selected subvolumes is a Snapper snapshot, would you like to remove "
+                                                "the Snapper Metadata?(Recommended)")) == QMessageBox::Yes) {
+        cleanupSnapper = true;
+    }
 
     QSet<QString> uuids;
 
@@ -802,19 +818,16 @@ void MainWindow::on_toolButton_subvolDelete_clicked()
             continue;
         }
 
-        Result result;
-
-        // Check to see if the subvolume is a snapper snapshot
-        if (Btrfs::isSnapper(subvol) && m_hasSnapper) {
-            QMessageBox::information(this, tr("Snapshot Delete"),
-                                     subvol + tr(" is a snapper shapshot") + "\n\n" + tr("Please use the snapper tab to remove it"));
+        if (!m_btrfs->deleteSubvol(uuid, subvolid)) {
+            displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
             continue;
         }
 
-        bool success = m_btrfs->deleteSubvol(uuid, subvolid);
-
-        if (!success) {
-            displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
+        // If this is a Snapper snapshot and removing the metadata was agreed to, clean it up
+        if (cleanupSnapper && Btrfs::isSnapper(subvol)) {
+            const QString mountpoint = m_btrfs->mountRoot(uuid);
+            const QFileInfo subvolumeFileInfo(QDir::cleanPath(mountpoint + QDir::separator() + subvol));
+            subvolumeFileInfo.dir().removeRecursively();
         }
     }
 

@@ -2,6 +2,7 @@
 
 1.6 - TBD
 * Add the ability to delete multiple subvolumes
+* Add support for deleting Snapper snapshots from the subvolume tab
 * Fix an issue where deleted Snapper configs were not being removed from UI(Contributed by Austin Horstman)
 * Remove some of the nested frames/boxes from the UI
 
