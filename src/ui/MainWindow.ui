@@ -558,7 +558,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                   <normaloff>:/icons/minus.svg</normaloff>:/icons/minus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -578,7 +578,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -701,7 +701,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                   <normaloff>:/icons/plus.svg</normaloff>:/icons/plus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -721,7 +721,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                   <normaloff>:/icons/minus.svg</normaloff>:/icons/minus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -747,7 +747,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -840,7 +840,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                   <normaloff>:/icons/folder.svg</normaloff>:/icons/folder.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -860,7 +860,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/restore.png</normaloff>:/icons/restore.png</iconset>
+                   <normaloff>:/icons/restore.svg</normaloff>:/icons/restore.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -886,7 +886,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -1676,7 +1676,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reset.png</normaloff>:/icons/reset.png</iconset>
+                   <normaloff>:/icons/reset.svg</normaloff>:/icons/reset.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -1699,7 +1699,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/checkmark.png</normaloff>:/icons/checkmark.png</iconset>
+                   <normaloff>:/icons/checkmark.svg</normaloff>:/icons/checkmark.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
