@@ -400,8 +400,9 @@ void MainWindow::populateSnapperRestoreGrid()
 
     QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
     // Make sure there is something to populate
-    if (subvols.isEmpty())
+    if (subvols.isEmpty()) {
         return;
+    }
 
     // Populate the table
     m_ui->tableWidget_snapperRestore->setRowCount(subvols.count());
@@ -952,6 +953,7 @@ void MainWindow::on_toolButton_snapperCreate_clicked()
     }
 
     // Reload the data and refresh the UI
+    m_btrfs->loadVolumes();
     m_snapper->load();
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
@@ -1000,6 +1002,7 @@ void MainWindow::on_toolButton_snapperDelete_clicked()
     }
 
     // Reload the data and refresh the UI
+    m_btrfs->loadVolumes();
     m_snapper->load();
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
@@ -1183,6 +1186,7 @@ void MainWindow::on_toolButton_snapperNewRefresh_clicked()
 
 void MainWindow::on_toolButton_snapperRestoreRefresh_clicked()
 {
+    m_btrfs->loadVolumes();
     m_snapper->loadSubvols();
     populateSnapperRestoreGrid();
 }
