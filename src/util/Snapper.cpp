@@ -303,6 +303,8 @@ SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
                 snap.desc = xml.readElementText();
             } else if (xml.name() == "type") {
                 snap.type = xml.readElementText();
+            } else {
+                xml.readElementText();
             }
         }
     }
