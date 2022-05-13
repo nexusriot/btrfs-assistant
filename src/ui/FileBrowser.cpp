@@ -8,6 +8,8 @@
 FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent)
     : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper)
 {
+    enum Column { NameColumn, SizeColumn, TypeColumn, TimeColumn };
+
     m_ui->setupUi(this);
 
     m_treeView = m_ui->treeView_file;
@@ -16,11 +18,19 @@ FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QStrin
     m_fileModel = new QFileSystemModel;
     m_fileModel->setRootPath(rootPath);
     m_fileModel->setFilter(QDir::Hidden | QDir::AllEntries | QDir::NoDotAndDotDot);
+    // No need to watch for changes of a readonly subvolume
+    m_fileModel->setOption(QFileSystemModel::DontWatchForChanges);
+    // Whenever new data is loaded resize columns but allow the user to shrink manually if needed
+    connect(m_fileModel, &QFileSystemModel::directoryLoaded, this, [this]() {
+        for (int columnCount = m_fileModel->columnCount(), c = 0; c < columnCount; ++c) {
+            m_treeView->resizeColumnToContents(c);
+        }
+    });
+
     m_treeView->setModel(m_fileModel);
-    m_treeView->hideColumn(1);
-    m_treeView->hideColumn(2);
     m_treeView->setRootIndex(m_fileModel->index(rootPath));
-    m_treeView->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
+    m_treeView->hideColumn(TypeColumn);
+    m_treeView->sortByColumn(0, Qt::AscendingOrder);
 
     this->setWindowTitle(tr("Snapshot File Viewer"));
 }
