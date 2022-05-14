@@ -1191,6 +1191,64 @@ void MainWindow::on_toolButton_snapperRestoreRefresh_clicked()
     populateSnapperRestoreGrid();
 }
 
+void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
+{
+    m_ui->toolButton_subvolRestoreBackup->clearFocus();
+
+    if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
+        displayError(tr("Nothing selected!"));
+        return;
+    }
+
+    // Get all the rows that were selected
+    const QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+
+    // Perform some sanity checks
+    if (nameIndexes.count() != 1) {
+        displayError(tr("Please select a single backup subvolume to restore!"));
+        return;
+    }
+
+    const QString name = nameIndexes.at(0).data().toString();
+
+    // Ensure it is a backup we created
+    static QRegularExpression re("_backup_[0-9]*$");
+    const QStringList nameParts = name.split(re);
+
+    if (nameParts.count() != 2) {
+        displayError(tr("The subvolume you selected is not a Btrfs Assistant backup"));
+        return;
+    }
+
+    const QString uuid =
+        m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid).at(0).data().toString();
+
+    const uint64_t sourceId = m_btrfs->subvolId(uuid, name);
+    const uint64_t targetId = m_btrfs->subvolId(uuid, nameParts[0]);
+
+    if (sourceId == 0 or targetId == 0) {
+        displayError(tr("The subvolume is missing!"));
+        return;
+    }
+
+    // Ask for confirmation
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to restore the selected backup?")) != QMessageBox::Yes) {
+        return;
+    }
+
+    // Everything checks out, time to do the restore
+    RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, sourceId, targetId);
+
+    // Report the outcome to the end user
+    if (restoreResult.isSuccess) {
+        QMessageBox::information(this, tr("Backup Restore"),
+                                 tr("Backup restoration complete.") + "\n\n" + tr("A copy of the original subvolume has been saved as ") +
+                                     restoreResult.backupSubvolName + "\n\n" + tr("Please reboot immediately"));
+    } else {
+        displayError(restoreResult.failureMessage);
+    }
+}
+
 void MainWindow::setEnableQuotaButtonStatus()
 {
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {

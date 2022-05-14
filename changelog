@@ -2,7 +2,9 @@
 
 1.6 - TBD
 * Add the ability to delete multiple subvolumes
+* The subvolume backups made by Btrfs Assistant can now be restored
 * Add more detail to the subvolume tab table(Contributed by Adam Sowa)
+* The file browser is now sortable and the columns can be manually resized(Contributed by Adam Sowa)
 * Add support for deleting Snapper snapshots from the subvolume tab
 * Fix an issue where deleted Snapper configs were not being removed from UI(Contributed by Austin Horstman)
 * Fix an issue where the snapshot grid was not being refreshed properly

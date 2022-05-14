@@ -314,5 +314,8 @@ class MainWindow : public QMainWindow {
      * @brief Snapper Browse/Restore Refresh button handler.
      */
     void on_toolButton_snapperRestoreRefresh_clicked();
+
+    void on_toolButton_subvolRestoreBackup_clicked();
+
 };
 #endif // MAINWINDOW_H

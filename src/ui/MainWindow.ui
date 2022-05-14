@@ -546,6 +546,26 @@
                 </spacer>
                </item>
                <item>
+                <widget class="QToolButton" name="toolButton_subvolRestoreBackup">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Restore Backup</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/restore.svg</normaloff>:/icons/restore.svg</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
                 <widget class="QToolButton" name="toolButton_subvolDelete">
                  <property name="minimumSize">
                   <size>
