@@ -4,6 +4,7 @@ set(UI_SRC
     ui/DiffViewer.ui ui/DiffViewer.h ui/DiffViewer.cpp
     ui/FileBrowser.ui ui/FileBrowser.h ui/FileBrowser.cpp
     ui/SnapshotSubvolumeDialog.ui ui/SnapshotSubvolumeDialog.h ui/SnapshotSubvolumeDialog.cpp
+    ui/RestoreConfirmDialog.ui ui/RestoreConfirmDialog.h ui/RestoreConfirmDialog.cpp
 )
 
 file(GLOB_RECURSE UI_FILES "*.ui")
