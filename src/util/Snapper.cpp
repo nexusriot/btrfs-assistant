@@ -370,7 +370,7 @@ RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceI
 
     // Place a snapshot of the source where the target was
     bool snapshotSuccess = Btrfs::createSnapshot(QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume).toUtf8(),
-                                                 QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8());
+                                                 QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8(), false);
 
     if (!snapshotSuccess) {
         // That failed, try to put the old one back

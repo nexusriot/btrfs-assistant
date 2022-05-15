@@ -1,6 +1,7 @@
 #include "ui/MainWindow.h"
 #include "model/SubvolModel.h"
 #include "ui/FileBrowser.h"
+#include "ui/SnapshotSubvolumeDialog.h"
 #include "ui_MainWindow.h"
 #include "util/Btrfs.h"
 #include "util/BtrfsMaintenance.h"
@@ -10,6 +11,7 @@
 
 #include <QDebug>
 #include <QInputDialog>
+#include <QMenu>
 #include <QMessageBox>
 #include <QTimer>
 
@@ -51,14 +53,14 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
-    m_sourceModel = new SubvolumeModel(this);
-    m_sourceModel->load(m_btrfs->filesystems());
-    m_subvolumeModel = new SubvolumeFilterModel(this);
-    m_subvolumeModel->setSourceModel(m_sourceModel);
+    m_subvolumeModel = new SubvolumeModel(this);
+    m_subvolumeModel->load(m_btrfs->filesystems());
+    m_subvolumeFilterModel = new SubvolumeFilterModel(this);
+    m_subvolumeFilterModel->setSourceModel(m_subvolumeModel);
 
-    connect(m_ui->lineEdit_subvolFilter, &QLineEdit::textChanged, m_subvolumeModel, &SubvolumeFilterModel::setFilterFixedString);
-    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
-    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeContainer);
+    connect(m_ui->lineEdit_subvolFilter, &QLineEdit::textChanged, m_subvolumeFilterModel, &SubvolumeFilterModel::setFilterFixedString);
+    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeFilterModel, &SubvolumeFilterModel::setIncludeSnapshots);
+    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeFilterModel, &SubvolumeFilterModel::setIncludeContainer);
 
     // timers for filesystem operations
     m_balanceTimer = new QTimer(this);
@@ -567,7 +569,9 @@ void MainWindow::setup()
     }
 
     // Connect the subvolume view
-    m_ui->tableView_subvols->setModel(m_subvolumeModel);
+    m_ui->tableView_subvols->setModel(m_subvolumeFilterModel);
+    m_ui->tableView_subvols->setContextMenuPolicy(Qt::CustomContextMenu);
+
     m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);
     m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
     m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::FilesystemUuid,
@@ -836,14 +840,14 @@ void MainWindow::on_toolButton_subvolDelete_clicked()
     for (const auto &uuid : qAsConst(uuids)) {
         m_btrfs->loadSubvols(uuid);
     }
-    m_sourceModel->load(m_btrfs->filesystems());
+    m_subvolumeModel->load(m_btrfs->filesystems());
     refreshSubvolListUi();
 }
 
 void MainWindow::on_pushButton_btrfsRefreshData_clicked()
 {
     m_btrfs->loadVolumes();
-    m_sourceModel->load(m_btrfs->filesystems());
+    m_subvolumeModel->load(m_btrfs->filesystems());
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
@@ -856,7 +860,7 @@ void MainWindow::on_toolButton_subvolRefresh_clicked()
         m_btrfs->loadSubvols(uuid);
     }
 
-    m_sourceModel->load(m_btrfs->filesystems());
+    m_subvolumeModel->load(m_btrfs->filesystems());
     refreshSubvolListUi();
 
     m_ui->toolButton_subvolRefresh->clearFocus();
@@ -1247,6 +1251,109 @@ void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
     } else {
         displayError(restoreResult.failureMessage);
     }
+}
+
+void MainWindow::on_tableView_subvols_customContextMenuRequested(const QPoint &pos)
+{
+    if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
+        return;
+    }
+
+    QVector<Subvolume> selectedSubvolumes;
+    const QModelIndexList selectedIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+
+    for (const QModelIndex &idx : selectedIndexes) {
+        QModelIndex sourceIdx = m_subvolumeFilterModel->mapToSource(idx);
+        const Subvolume &s = m_subvolumeModel->subvolume(sourceIdx.row());
+        selectedSubvolumes.append(s);
+    }
+
+    QVector<Subvolume> readOnlySubvols;
+    QVector<Subvolume> writeableSubvols;
+
+    for (const Subvolume &s : selectedSubvolumes) {
+        if (s.isReadOnly()) {
+            readOnlySubvols.append(s);
+        } else {
+            writeableSubvols.append(s);
+        }
+    }
+
+    auto setReadOnlyFlag = [this](const QVector<Subvolume> &subvols, bool readOnly) {
+        QString msg;
+        if (subvols.size() == 1) {
+            if (readOnly) {
+                msg = tr("Are you sure you want to set read-only flag for %1?").arg(subvols.begin()->subvolName);
+            } else {
+                msg = tr("Are you sure you want to clear read-only flag for %1?").arg(subvols.begin()->subvolName);
+            }
+        } else {
+            if (readOnly) {
+                msg = tr("Are you sure you want to set read-only flag for %1 subvolumes?").arg(subvols.size());
+            } else {
+                msg = tr("Are you sure you want to clear read-only flag for %1 subvolumes?").arg(subvols.size());
+            }
+        }
+        if (QMessageBox::question(this, tr("Confirm"), msg) == QMessageBox::Yes) {
+            QVector<Subvolume> failed;
+            for (Subvolume s : subvols) {
+                if (m_btrfs->setSubvolumeReadOnly(s, readOnly)) {
+                    s.flags = readOnly ? 0x1u : 0;
+                    m_subvolumeModel->updateSubvolume(s);
+                } else {
+                    failed.append(s);
+                }
+            }
+
+            if (failed.isEmpty()) {
+                QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
+            } else {
+                QStringList names;
+                std::transform(failed.begin(), failed.end(), std::back_inserter(names), [](const Subvolume &s) { return s.subvolName; });
+                QMessageBox::critical(0, tr("Btrfs Assistant"),
+                                      tr("Failed to apply changes to the following subvolumes:") + "\n" + names.join(QChar('\n')));
+            }
+        }
+    };
+
+    QMenu menu;
+
+    if (selectedSubvolumes.size() == 1) {
+        const Subvolume &subvol = selectedSubvolumes.first();
+        QAction *snapshotAction = menu.addAction(tr("Create &snapshot..."));
+        connect(snapshotAction, &QAction::triggered, this, [this, subvol]() {
+            SnapshotSubvolumeDialog dialog(this);
+            dialog.selectAllTextAndSetFocus();
+
+            if (dialog.exec() == QDialog::Accepted) {
+                std::optional<Subvolume> snapshot =
+                    m_btrfs->createSnapshot(subvol.filesystemUuid, subvol.id, dialog.destination(), dialog.isReadOnly());
+                if (snapshot) {
+                    m_subvolumeModel->addSubvolume(*snapshot);
+                    QMessageBox::information(0, tr("Btrfs Assistant"), tr("Snapshot created"));
+                } else {
+                    QMessageBox::critical(0, tr("Btrfs Assistant"), tr("Failed to create the snapshot"));
+                }
+            }
+        });
+    }
+
+    if (!writeableSubvols.isEmpty()) {
+        QAction *readOnlyAction = menu.addAction(tr("Set &read-only flag"));
+        connect(readOnlyAction, &QAction::triggered, this,
+                [setReadOnlyFlag, writeableSubvols]() { setReadOnlyFlag(writeableSubvols, true); });
+    }
+
+    if (!readOnlySubvols.isEmpty()) {
+        QAction *writeableAction = menu.addAction(tr("&Clear read-only flag"));
+        connect(writeableAction, &QAction::triggered, this,
+                [setReadOnlyFlag, readOnlySubvols]() { setReadOnlyFlag(readOnlySubvols, false); });
+    }
+
+    QAction *deleteAction = menu.addAction(tr("&Delete"));
+    connect(deleteAction, &QAction::triggered, this, &MainWindow::on_toolButton_subvolDelete_clicked);
+
+    menu.exec(m_ui->tableView_subvols->mapToGlobal(pos));
 }
 
 void MainWindow::setEnableQuotaButtonStatus()

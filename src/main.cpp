@@ -21,6 +21,8 @@ int main(int argc, char *argv[])
 
     QCoreApplication::setApplicationName(QCoreApplication::translate("main", "Btrfs Assistant"));
     QCoreApplication::setApplicationVersion("1.6");
+    // Disable question mark title bar buttons in QDialogs ("What's this?" help buttons)
+    QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 
     QCommandLineParser parser;
     parser.setApplicationDescription(QCoreApplication::translate("main", "An application for managing Btrfs and Snapper"));
