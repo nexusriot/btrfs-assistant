@@ -53,8 +53,8 @@ class MainWindow : public QMainWindow {
     QHash<QString, QCheckBox *> m_configCheckBoxes;
     bool m_hasSnapper = false;
     bool m_hasBtrfsmaintenance = false;
-    SubvolumeFilterModel *m_subvolumeModel = nullptr;
-    SubvolumeModel *m_sourceModel = nullptr;
+    SubvolumeFilterModel *m_subvolumeFilterModel = nullptr;
+    SubvolumeModel *m_subvolumeModel = nullptr;
 
     /**
      * @brief Timer used to periodically update UI on balance progress
@@ -317,5 +317,9 @@ class MainWindow : public QMainWindow {
 
     void on_toolButton_subvolRestoreBackup_clicked();
 
+    /**
+     * @brief Subvolumes table right click handler.
+     */
+    void on_tableView_subvols_customContextMenuRequested(const QPoint &pos);
 };
 #endif // MAINWINDOW_H

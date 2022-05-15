@@ -5,6 +5,8 @@
 #include <QMap>
 #include <QObject>
 
+#include <optional>
+
 constexpr uint64_t BTRFS_ROOT_ID = 5;
 
 struct RestoreResult {
@@ -26,6 +28,9 @@ struct Subvolume {
     uint64_t exclusive = 0;
     uint64_t flags = 0;
     QDateTime createdAt;
+
+    /** @brief Returns true if this instance doesn't represent any subvolume */
+    bool isEmpty() const;
 
     /** @brief Returns if the subvolume is read-only. */
     bool isReadOnly() const;
@@ -94,9 +99,20 @@ class Btrfs : public QObject {
      * @brief Creates a btrfs snapshot
      * @param source - The absolute path to the source subvolume
      * @param dest - The absolute path where the snapshot will be created
+     * @param readOnly - Whether the snapshot should be read-only
      * @return True on success, false otherwise
      */
-    static bool createSnapshot(const QString &source, const QString &dest);
+    static bool createSnapshot(const QString &source, const QString &dest, bool readOnly);
+
+    /**
+     * @brief Creates a btrfs snapshot
+     * @param fileSystemUuid The uuid of the filesystem containing the subvolume
+     * @param sourceSubvolId - The id of the subvolume to snapshot
+     * @param dest - The absolute path where the snapshot will be created
+     * @param readOnly - Whether the snapshot should be read-only
+     * @return Subvolume on success, or empty instance on failure.
+     */
+    std::optional<Subvolume> createSnapshot(const QString &fileSystemUuid, uint64_t sourceSubvolId, const QString &dest, bool readOnly);
 
     /** @brief Deletes a given subvolume
      *
@@ -207,6 +223,13 @@ class Btrfs : public QObject {
      */
     static void setQgroupEnabled(const QString &mountpoint, bool enable);
 
+    /**
+     * @brief Return whether a given path is a subvolume.
+     * @param path - An absolute path to a subvolume
+     * @return True if path is a subvolume.
+     */
+    static bool isSubvolume(const QString &path);
+
     /** @brief Returns the subvolid for a given subvol
      *
      *  Returns the subvolid of the subvol named by @p subvol on for @p uuid.  If @p subvol is not found,
@@ -227,7 +250,7 @@ class Btrfs : public QObject {
      * @param path - An absolute path to a subvolume
      * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
      */
-    QString subvolumeName(const QString &path) const;
+    static QString subvolumeName(const QString &path);
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId
@@ -243,6 +266,38 @@ class Btrfs : public QObject {
      * @return An uint64_t with parent ID or 0 if the subvolId is not found
      */
     uint64_t subvolParent(const QString &path) const;
+
+    /**
+     * @brief Set whether a subvolume is read-only
+     * @param path - An absolute path to a subvolume
+     * @param readOnly - New value of read-only flag
+     * @return Returns true if successful and false if it fails for any reason.
+     */
+    static bool setSubvolumeReadOnly(const QString &path, bool readOnly);
+
+    /**
+     * @brief Set whether a subvolume is read-only
+     * @param uuid - An uuid of the filesystem containing the subvolume
+     * @param subvolId - An if of the subvolume to modify
+     * @param readOnly - New value of read-only flag
+     * @return Returns true if successful and false if it fails for any reason.
+     */
+    bool setSubvolumeReadOnly(const QString &uuid, uint64_t subvolId, bool readOnly);
+
+    /**
+     * @brief Set whether a subvolume is read-only
+     * @param subvol - A subvolume to modify
+     * @param readOnly - New value of read-only flag
+     * @return Returns true if successful and false if it fails for any reason.
+     */
+    bool setSubvolumeReadOnly(const Subvolume &subvol, bool readOnly);
+
+    /**
+     * @brief Get whether a subvolume is read-only
+     * @param readOnly - New value of read-only flag
+     * @return Returns true if the subvolume is read-only or false if not read-only or an error occured.
+     */
+    static bool isSubvolumeReadOnly(const QString &path);
 
     /**
      * @brief Performs a balance operation on top level subvolume for device.

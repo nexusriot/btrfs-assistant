@@ -129,6 +129,8 @@ QVariant SubvolumeModel::data(const QModelIndex &index, int role) const
     return QVariant();
 }
 
+const Subvolume &SubvolumeModel::subvolume(int row) const { return m_data[row]; }
+
 void SubvolumeModel::load(const QMap<QString, BtrfsFilesystem> &filesystems)
 {
     // Ensure that multiple threads don't try to update the model at the same time
@@ -149,6 +151,27 @@ void SubvolumeModel::load(const QMap<QString, BtrfsFilesystem> &filesystems)
     }
 
     endResetModel();
+}
+
+void SubvolumeModel::addSubvolume(const Subvolume &subvol)
+{
+    beginInsertRows(QModelIndex(), m_data.size(), m_data.size());
+    m_data.append(subvol);
+    endInsertRows();
+}
+
+void SubvolumeModel::updateSubvolume(const Subvolume &subvol)
+{
+    for (int i = 0; i < m_data.size(); ++i) {
+        Subvolume &existing = m_data[i];
+        if (subvol.id == existing.id && subvol.filesystemUuid == existing.filesystemUuid) {
+            existing = subvol;
+            QModelIndex leftIdx = index(i, 0);
+            QModelIndex rightIdx = index(i, ColumnCount - 1);
+            emit dataChanged(leftIdx, rightIdx);
+            break;
+        }
+    }
 }
 
 SubvolumeFilterModel::SubvolumeFilterModel(QObject *parent) : QSortFilterProxyModel(parent)

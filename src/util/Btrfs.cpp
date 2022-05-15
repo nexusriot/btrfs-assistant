@@ -25,6 +25,22 @@ QString uuidToString(const uint8_t uuid[16])
     return allZeros ? "" : ret;
 }
 
+Subvolume infoToSubvolume(const QString &fileSystemUuid, const QString &name, const struct btrfs_util_subvolume_info &subvolInfo)
+{
+    Subvolume ret;
+    ret.subvolName = name;
+    ret.parentId = subvolInfo.parent_id;
+    ret.id = subvolInfo.id;
+    ret.uuid = uuidToString(subvolInfo.uuid);
+    ret.parentUuid = uuidToString(subvolInfo.parent_uuid);
+    ret.receivedUuid = uuidToString(subvolInfo.received_uuid);
+    ret.generation = subvolInfo.generation;
+    ret.flags = subvolInfo.flags;
+    ret.createdAt = QDateTime::fromSecsSinceEpoch(subvolInfo.otime.tv_sec);
+    ret.filesystemUuid = fileSystemUuid;
+    return ret;
+}
+
 } // namespace
 
 Btrfs::Btrfs(QObject *parent) : QObject{parent} { loadVolumes(); }
@@ -72,9 +88,30 @@ QStringList Btrfs::children(const uint64_t subvolId, const QString &uuid) const
     return children;
 }
 
-bool Btrfs::createSnapshot(const QString &source, const QString &dest)
+bool Btrfs::createSnapshot(const QString &source, const QString &dest, bool readOnly)
 {
-    return btrfs_util_create_snapshot(source.toLocal8Bit(), dest.toLocal8Bit(), 0, nullptr, nullptr) == BTRFS_UTIL_OK;
+    return btrfs_util_create_snapshot(source.toLocal8Bit(), dest.toLocal8Bit(), (readOnly ? BTRFS_UTIL_CREATE_SNAPSHOT_READ_ONLY : 0),
+                                      nullptr, nullptr) == BTRFS_UTIL_OK;
+}
+
+std::optional<Subvolume> Btrfs::createSnapshot(const QString &uuid, uint64_t subvolId, const QString &dest, bool readOnly)
+{
+    std::optional<Subvolume> ret;
+    if (m_filesystems.contains(uuid) && m_filesystems.value(uuid).subvolumes.contains(subvolId)) {
+        const QString subvolName = subvolumeName(uuid, subvolId);
+        const QString mountpoint = mountRoot(uuid);
+        const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolName);
+
+        if (createSnapshot(subvolPath, dest, readOnly)) {
+            struct btrfs_util_subvolume_info subvolInfo;
+            btrfs_util_error returnCode = btrfs_util_subvolume_info(dest.toLocal8Bit(), 0, &subvolInfo);
+            if (returnCode == BTRFS_UTIL_OK) {
+                ret = infoToSubvolume(uuid, subvolumeName(dest), subvolInfo);
+                m_filesystems[uuid].subvolumes[ret->id] = *ret;
+            }
+        }
+    }
+    return ret;
 }
 
 bool Btrfs::deleteSubvol(const QString &uuid, const uint64_t subvolid)
@@ -222,16 +259,7 @@ void Btrfs::loadSubvols(const QString &uuid)
             struct btrfs_util_subvolume_info subvolInfo;
             returnCode = btrfs_util_subvolume_iterator_next_info(iter, &path, &subvolInfo);
             if (returnCode == BTRFS_UTIL_OK) {
-                subvols[subvolInfo.id].subvolName = QString::fromLocal8Bit(path);
-                subvols[subvolInfo.id].parentId = subvolInfo.parent_id;
-                subvols[subvolInfo.id].id = subvolInfo.id;
-                subvols[subvolInfo.id].uuid = uuidToString(subvolInfo.uuid);
-                subvols[subvolInfo.id].parentUuid = uuidToString(subvolInfo.parent_uuid);
-                subvols[subvolInfo.id].receivedUuid = uuidToString(subvolInfo.received_uuid);
-                subvols[subvolInfo.id].generation = subvolInfo.generation;
-                subvols[subvolInfo.id].flags = subvolInfo.flags;
-                subvols[subvolInfo.id].createdAt = QDateTime::fromSecsSinceEpoch(subvolInfo.otime.tv_sec);
-                subvols[subvolInfo.id].filesystemUuid = uuid;
+                subvols[subvolInfo.id] = infoToSubvolume(uuid, QString::fromLocal8Bit(path), subvolInfo);
                 free(path);
             }
         }
@@ -336,6 +364,8 @@ void Btrfs::setQgroupEnabled(const QString &mountpoint, bool enable)
     }
 }
 
+bool Btrfs::isSubvolume(const QString &path) { return btrfs_util_is_subvolume(path.toLocal8Bit()); }
+
 uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName)
 {
     const QString mountpoint = mountRoot(uuid);
@@ -361,7 +391,7 @@ QString Btrfs::subvolumeName(const QString &uuid, const uint64_t subvolId) const
     }
 }
 
-QString Btrfs::subvolumeName(const QString &path) const
+QString Btrfs::subvolumeName(const QString &path)
 {
     QString ret;
     char *subvolName = nullptr;
@@ -391,6 +421,41 @@ uint64_t Btrfs::subvolParent(const QString &path) const
     }
 
     return subvolInfo.parent_id;
+}
+
+bool Btrfs::setSubvolumeReadOnly(const QString &path, bool readOnly)
+{
+    return btrfs_util_set_subvolume_read_only(path.toLocal8Bit(), readOnly) == BTRFS_UTIL_OK;
+}
+
+bool Btrfs::setSubvolumeReadOnly(const QString &uuid, uint64_t subvolId, bool readOnly)
+{
+    bool ret = false;
+    if (m_filesystems.contains(uuid) && m_filesystems.value(uuid).subvolumes.contains(subvolId)) {
+        Subvolume &subvol = m_filesystems[uuid].subvolumes[subvolId];
+        const QString mountpoint = mountRoot(uuid);
+        const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvol.subvolName);
+
+        ret = setSubvolumeReadOnly(subvolPath, readOnly);
+        if (ret) {
+            subvol.flags = readOnly ? 0x1u : 0;
+        }
+    }
+    return ret;
+}
+
+bool Btrfs::setSubvolumeReadOnly(const Subvolume &subvol, bool readOnly)
+{
+    return setSubvolumeReadOnly(subvol.filesystemUuid, subvol.id, readOnly);
+}
+
+bool Btrfs::isSubvolumeReadOnly(const QString &path)
+{
+    bool ret = false;
+    if (btrfs_util_get_subvolume_read_only(path.toLocal8Bit(), &ret) != BTRFS_UTIL_OK) {
+        ret = false;
+    }
+    return ret;
 }
 
 bool Btrfs::isUuidLoaded(const QString &uuid)
@@ -452,6 +517,8 @@ void Btrfs::unmountFilesystems()
         umount2(mountpoint.toLocal8Bit(), MNT_DETACH);
     }
 }
+
+bool Subvolume::isEmpty() const { return id == 0; }
 
 bool Subvolume::isReadOnly() const { return flags & 0x1u; }
 
