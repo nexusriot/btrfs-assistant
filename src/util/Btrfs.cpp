@@ -363,11 +363,12 @@ RestoreResult Btrfs::restoreSubvol(const QString &uuid, const uint64_t sourceId,
 
     // We are out of excuses, time to do the restore....carefully
     QString targetBackup = targetName + "_backup_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
-    restoreResult.backupSubvolName = targetBackup;
 
     if (!customName.trimmed().isEmpty()) {
         targetBackup += "_" + customName.trimmed();
     }
+
+    restoreResult.backupSubvolName = targetBackup;
 
     // Find the children before we start
     const QStringList children = this->children(targetId, uuid);
