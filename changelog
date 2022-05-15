@@ -1,6 +1,7 @@
 ### Btrfs Assistant
 
 1.6 - TBD
+* Add a context menu to the subvolume page that sets read-only status, deletes subvolumes and creates new snapshots(Contributed by Adam Sowa)
 * Add the ability to delete multiple subvolumes
 * The subvolume backups made by Btrfs Assistant can now be restored
 * Add more detail to the subvolume tab table(Contributed by Adam Sowa)
