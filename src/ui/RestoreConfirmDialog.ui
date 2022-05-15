@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="questionLabel">
      <property name="text">
-      <string></string>
+      <string/>
      </property>
     </widget>
    </item>
@@ -39,7 +39,7 @@
       <item>
        <widget class="QLabel" name="backupNameLabel">
         <property name="text">
-         <string>Optional backup name: </string>
+         <string>Name for saved backup(Optional): </string>
         </property>
        </widget>
       </item>
