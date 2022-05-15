@@ -210,6 +210,15 @@ class Btrfs : public QObject {
     static bool renameSubvolume(const QString &source, const QString &target);
 
     /**
+     * @brief Restores the source subvolume over the target
+     * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
+     * @param sourceId - An uint64_t that is the subvolid of the source subvolume
+     * @param targetId - An uint64_t that is the subvolid of the target subvolume
+     * @return A RestoreResult struct that contains the results of the operation
+     */
+    RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId, const QString &customName = QString());
+
+    /**
      * @brief Checks the scrub status of a given subvolume.
      * @param mountpoint - A Qstring that represents the mountpoint to check for a btrfs scrub on
      * @return Qstring that contains the output from the btrfs scrub command.

@@ -545,7 +545,7 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     const QString backupName = confirmDialog.backupName();
 
     // Everything checks out, time to do the restore
-    RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, subvolId, targetId, backupName);
+    RestoreResult restoreResult = m_btrfs->restoreSubvol(uuid, subvolId, targetId, backupName);
 
     // Report the outcome to the end user
     if (restoreResult.isSuccess) {
@@ -1250,7 +1250,7 @@ void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
     const QString backupName = confirmDialog.backupName();
 
     // Everything checks out, time to do the restore
-    RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, sourceId, targetId, backupName);
+    RestoreResult restoreResult = m_btrfs->restoreSubvol(uuid, sourceId, targetId, backupName);
 
     // Report the outcome to the end user
     if (restoreResult.isSuccess) {
