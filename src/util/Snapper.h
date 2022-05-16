@@ -34,7 +34,43 @@ struct SnapperSubvolume {
 class Snapper : public QObject {
     Q_OBJECT
   public:
-    using ConfigMap = QMap<QString, QString>;
+    class Config : private QMap<QString, QString> {
+      public:
+        bool isEmpty() const;
+
+        QString subvolume() const;
+        void setSubvolume(const QString &value);
+
+        bool isTimelineCreate() const;
+        void setTimelineCreate(bool value);
+
+        int timelineLimitHourly() const;
+        void setTimelineLimitHourly(int value);
+
+        int timelineLimitDaily() const;
+        void setTimelineLimitDaily(int value);
+
+        int timelineLimitWeekly() const;
+        void setTimelineLimitWeekly(int value);
+
+        int timelineLimitMonthly() const;
+        void setTimelineLimitMonthly(int value);
+
+        int timelineLimitYearly() const;
+        void setTimelineLimitYearly(int value);
+
+        int numberLimit() const;
+        void setNumberLimit(int value);
+
+      private:
+        void insertBool(const QString &key, bool value);
+        bool boolValue(const QString &key, bool defaultValue = false) const;
+
+        void insertInt(const QString &key, int value);
+        int intValue(const QString &key, int defaultValue = 0) const;
+
+        friend class Snapper;
+    };
 
     Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent = nullptr);
 
@@ -43,7 +79,7 @@ class Snapper : public QObject {
      * @param name - A QString that is the Snapper config name
      * @return A QMap of name, value pairs for each setting
      */
-    ConfigMap config(const QString &name);
+    Config config(const QString &name);
 
     /**
      * @brief Finds all available Snapper configs
@@ -145,20 +181,11 @@ class Snapper : public QObject {
     bool restoreFile(const QString &sourcePath, const QString &destPath) const;
 
     /**
-     * @brief Restores the source subvolume over the target
-     * @param uuid - A QString that holds the UUID of the filesystem you want to perform the restore in
-     * @param sourceId - An uint64_t that is the subvolid of the source subvolume
-     * @param targetId - An uint64_t that is the subvolid of the target subvolume
-     * @return A RestoreResult struct that contains the results of the operation
-     */
-    RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const;
-
-    /**
      * @brief Updates the settings for a given Snapper config described by @p name
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update
      */
-    SnapperResult setConfig(const QString &name, const ConfigMap &configMap);
+    SnapperResult setConfig(const QString &name, const Config &configMap);
 
     /**
      * @brief Returns a list of metadata for each snapshot in @p config
@@ -183,7 +210,7 @@ class Snapper : public QObject {
   private:
     Btrfs *m_btrfs = nullptr;
     // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
-    QMap<QString, ConfigMap> m_configs;
+    QMap<QString, Config> m_configs;
 
     // The absolute path to the snapper command
     QString m_snapperCommand;

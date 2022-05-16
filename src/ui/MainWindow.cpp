@@ -1,6 +1,8 @@
 #include "ui/MainWindow.h"
 #include "model/SubvolModel.h"
 #include "ui/FileBrowser.h"
+#include "ui/RestoreConfirmDialog.h"
+#include "ui/SnapshotSubvolumeDialog.h"
 #include "ui_MainWindow.h"
 #include "util/Btrfs.h"
 #include "util/BtrfsMaintenance.h"
@@ -10,6 +12,7 @@
 
 #include <QDebug>
 #include <QInputDialog>
+#include <QMenu>
 #include <QMessageBox>
 #include <QTimer>
 
@@ -40,7 +43,7 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
 {
     m_ui->setupUi(this);
     // Always start on the BTRFS tab, regardless what is the currentIndex in the .ui file
-    m_ui->tabWidget->setCurrentWidget(m_ui->tab_btrfs);
+    m_ui->tabWidget_mainWindow->setCurrentWidget(m_ui->tab_btrfs);
 
     // Ensure the application is running as root
     if (!System::checkRootUid()) {
@@ -51,14 +54,14 @@ MainWindow::MainWindow(Btrfs *btrfs, BtrfsMaintenance *btrfsMaintenance, Snapper
     m_hasSnapper = snapper != nullptr;
     m_hasBtrfsmaintenance = btrfsMaintenance != nullptr;
 
-    m_sourceModel = new SubvolumeModel(this);
-    m_sourceModel->load(m_btrfs->filesystems());
-    m_subvolumeModel = new SubvolumeFilterModel(this);
-    m_subvolumeModel->setSourceModel(m_sourceModel);
+    m_subvolumeModel = new SubvolumeModel(this);
+    m_subvolumeModel->load(m_btrfs->filesystems());
+    m_subvolumeFilterModel = new SubvolumeFilterModel(this);
+    m_subvolumeFilterModel->setSourceModel(m_subvolumeModel);
 
-    connect(m_ui->lineEdit_subvolFilter, &QLineEdit::textChanged, m_subvolumeModel, &SubvolumeFilterModel::setFilterFixedString);
-    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeSnapshots);
-    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeModel, &SubvolumeFilterModel::setIncludeContainer);
+    connect(m_ui->lineEdit_subvolFilter, &QLineEdit::textChanged, m_subvolumeFilterModel, &SubvolumeFilterModel::setFilterFixedString);
+    connect(m_ui->checkBox_subvolIncludeSnapshots, &QCheckBox::toggled, m_subvolumeFilterModel, &SubvolumeFilterModel::setIncludeSnapshots);
+    connect(m_ui->checkBox_subvolIncludeContainer, &QCheckBox::toggled, m_subvolumeFilterModel, &SubvolumeFilterModel::setIncludeContainer);
 
     // timers for filesystem operations
     m_balanceTimer = new QTimer(this);
@@ -74,10 +77,63 @@ MainWindow::~MainWindow() { delete m_ui; }
 
 void MainWindow::displayError(const QString &errorText) { QMessageBox::critical(this, tr("Error"), errorText); }
 
+void MainWindow::bmRefreshMountpoints()
+{
+    // Get updated list of mountpoints
+    const QStringList mountpoints = Btrfs::listMountpoints();
+
+    // Populate the balance section
+    QStringList balanceMounts;
+    const QList<QListWidgetItem *> selectedBalanceMounts = m_ui->listWidget_bmBalance->selectedItems();
+    for (QListWidgetItem *item : selectedBalanceMounts) {
+        balanceMounts << item->text();
+    }
+
+    m_ui->listWidget_bmBalance->clear();
+    m_ui->listWidget_bmBalance->insertItems(0, mountpoints);
+
+    if (!m_ui->checkBox_bmBalance->isChecked()) {
+        setListWidgetSelections(balanceMounts, m_ui->listWidget_bmBalance);
+    }
+
+    // Populate the scrub section
+    QStringList scrubMounts;
+    const QList<QListWidgetItem *> selectedScrubMounts = m_ui->listWidget_bmScrub->selectedItems();
+    for (QListWidgetItem *item : selectedScrubMounts) {
+        scrubMounts << item->text();
+    }
+    m_ui->listWidget_bmScrub->clear();
+    m_ui->listWidget_bmScrub->insertItems(0, mountpoints);
+
+    if (!m_ui->checkBox_bmScrub->isChecked()) {
+        setListWidgetSelections(scrubMounts, m_ui->listWidget_bmScrub);
+    }
+
+    // Populate the defrag section
+    QStringList defragMounts;
+    const QList<QListWidgetItem *> selectedDefragMounts = m_ui->listWidget_bmDefrag->selectedItems();
+    for (QListWidgetItem *item : selectedDefragMounts) {
+        defragMounts << item->text();
+    }
+
+    // In the case of defrag we need to include any nested subvols listed in the config
+    QStringList combinedMountpoints = defragMounts + mountpoints;
+
+    // Remove empty and duplicate entries
+    combinedMountpoints.removeAll("");
+    combinedMountpoints.removeDuplicates();
+
+    m_ui->listWidget_bmDefrag->clear();
+    m_ui->listWidget_bmDefrag->insertItems(0, combinedMountpoints);
+    if (!m_ui->checkBox_bmDefrag->isChecked()) {
+        setListWidgetSelections(defragMounts, m_ui->listWidget_bmDefrag);
+    }
+}
+
 void MainWindow::btrfsBalanceStatusUpdateUI()
 {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString balanceStatus = m_btrfs->balanceStatus(m_btrfs->mountRoot(uuid));
+    QString balanceStatus = m_btrfs->balanceStatus(Btrfs::findAnyMountpoint(uuid));
 
     // if balance is running currently, make sure you can stop it and we monitor progress
     if (!balanceStatus.contains("No balance found")) {
@@ -99,7 +155,7 @@ void MainWindow::btrfsBalanceStatusUpdateUI()
 void MainWindow::btrfsScrubStatusUpdateUI()
 {
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
-    QString scrubStatus = m_btrfs->scrubStatus(m_btrfs->mountRoot(uuid));
+    QString scrubStatus = m_btrfs->scrubStatus(Btrfs::findAnyMountpoint(uuid));
 
     // update status to current scrub operation status
     m_ui->label_btrfsScrubStatus->setText(scrubStatus);
@@ -121,16 +177,22 @@ void MainWindow::loadSnapperUI()
     if (!m_hasSnapper)
         return;
 
+    // Store current selection to restore after reload
+    QString selectedSnapperConfig = m_ui->comboBox_snapperConfigs->currentText();
+    QString selectedSnapperSettingsConfig = m_ui->comboBox_snapperConfigSettings->currentText();
+
+    m_ui->comboBox_snapperConfigs->clear();
+    m_ui->comboBox_snapperConfigSettings->clear();
+
     // Load the configs in the snapper new subtab and the snapper settings tabs
     const QStringList configs = m_snapper->configs();
     for (const QString &config : configs) {
-        if (m_ui->comboBox_snapperConfigs->findText(config) == -1) {
-            m_ui->comboBox_snapperConfigs->addItem(config);
-        }
-        if (m_ui->comboBox_snapperConfigSettings->findText(config) == -1) {
-            m_ui->comboBox_snapperConfigSettings->addItem(config);
-        }
+        m_ui->comboBox_snapperConfigs->addItem(config);
+        m_ui->comboBox_snapperConfigSettings->addItem(config);
     }
+
+    m_ui->comboBox_snapperConfigs->setCurrentText(selectedSnapperConfig);
+    m_ui->comboBox_snapperConfigSettings->setCurrentText(selectedSnapperSettingsConfig);
 
     // Load the subvols in the snapper restore subtab
     const QStringList subvols = m_snapper->subvolKeys();
@@ -166,6 +228,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmBalance->setDisabled(true);
     } else {
         m_ui->checkBox_bmBalance->setChecked(false);
+        m_ui->listWidget_bmBalance->setDisabled(false);
         setListWidgetSelections(balanceMounts, m_ui->listWidget_bmBalance);
     }
 
@@ -178,6 +241,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmScrub->setDisabled(true);
     } else {
         m_ui->checkBox_bmScrub->setChecked(false);
+        m_ui->listWidget_bmScrub->setDisabled(false);
         setListWidgetSelections(scrubMounts, m_ui->listWidget_bmScrub);
     }
 
@@ -198,6 +262,7 @@ void MainWindow::populateBmTab()
         m_ui->listWidget_bmDefrag->setDisabled(true);
     } else {
         m_ui->checkBox_bmDefrag->setChecked(false);
+        m_ui->listWidget_bmDefrag->setDisabled(false);
         setListWidgetSelections(defragMounts, m_ui->listWidget_bmDefrag);
     }
 }
@@ -246,7 +311,7 @@ void MainWindow::populateSnapperConfigSettings()
     }
 
     // Retrieve settings for selected config
-    const QMap<QString, QString> config = m_snapper->config(name);
+    const Snapper::Config &config = m_snapper->config(name);
 
     if (config.isEmpty()) {
         return;
@@ -254,26 +319,14 @@ void MainWindow::populateSnapperConfigSettings()
 
     // Populate UI elements with the values from the snapper config settings.
     m_ui->label_snapperConfigNameValue->setText(name);
-    const QStringList keys = config.keys();
-    for (const QString &key : keys) {
-        if (key == "SUBVOLUME") {
-            m_ui->label_snapperBackupPathValue->setText(config[key]);
-        } else if (key == "TIMELINE_CREATE") {
-            m_ui->checkBox_snapperEnableTimeline->setChecked(config[key].toStdString() == "yes");
-        } else if (key == "TIMELINE_LIMIT_HOURLY") {
-            m_ui->spinBox_snapperHourly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_DAILY") {
-            m_ui->spinBox_snapperDaily->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_WEEKLY") {
-            m_ui->spinBox_snapperWeekly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_MONTHLY") {
-            m_ui->spinBox_snapperMonthly->setValue(config[key].toInt());
-        } else if (key == "TIMELINE_LIMIT_YEARLY") {
-            m_ui->spinBox_snapperYearly->setValue(config[key].toInt());
-        } else if (key == "NUMBER_LIMIT") {
-            m_ui->spinBox_snapperNumber->setValue(config[key].toInt());
-        }
-    }
+    m_ui->label_snapperBackupPathValue->setText(config.subvolume());
+    m_ui->checkBox_snapperEnableTimeline->setChecked(config.isTimelineCreate());
+    m_ui->spinBox_snapperHourly->setValue(config.timelineLimitHourly());
+    m_ui->spinBox_snapperDaily->setValue(config.timelineLimitDaily());
+    m_ui->spinBox_snapperWeekly->setValue(config.timelineLimitWeekly());
+    m_ui->spinBox_snapperMonthly->setValue(config.timelineLimitMonthly());
+    m_ui->spinBox_snapperYearly->setValue(config.timelineLimitYearly());
+    m_ui->spinBox_snapperNumber->setValue(config.numberLimit());
 
     snapperTimelineEnable(m_ui->checkBox_snapperEnableTimeline->isChecked());
 }
@@ -350,8 +403,9 @@ void MainWindow::populateSnapperRestoreGrid()
 
     QVector<SnapperSubvolume> subvols = m_snapper->subvols(config);
     // Make sure there is something to populate
-    if (subvols.isEmpty())
+    if (subvols.isEmpty()) {
         return;
+    }
 
     // Populate the table
     m_ui->tableWidget_snapperRestore->setRowCount(subvols.count());
@@ -373,6 +427,12 @@ void MainWindow::populateSnapperRestoreGrid()
     // Re-enable sorting and resize the colums to make everything fit
     m_ui->tableWidget_snapperRestore->setSortingEnabled(true);
     m_ui->tableWidget_snapperRestore->resizeColumnsToContents();
+}
+
+void MainWindow::refreshBmUi()
+{
+    // Refresh the mountpoint list widgets
+    bmRefreshMountpoints();
 }
 
 void MainWindow::refreshBtrfsUi()
@@ -412,7 +472,7 @@ void MainWindow::refreshSubvolListUi()
     const auto filesystems = m_btrfs->listFilesystems();
     for (const QString &uuid : filesystems) {
         // Check to see if the size related colums should be hidden
-        if (Btrfs::isQuotaEnabled(m_btrfs->mountRoot(uuid))) {
+        if (Btrfs::isQuotaEnabled(Btrfs::findAnyMountpoint(uuid))) {
             showQuota = true;
         }
     }
@@ -421,6 +481,10 @@ void MainWindow::refreshSubvolListUi()
     m_ui->tableView_subvols->verticalHeader()->hide();
     m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Id);
     m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ParentId);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Uuid);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ParentUuid);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::ReceivedUuid);
+    m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Generation);
 
     // Hide quota data if no columns supported it
     if (!showQuota) {
@@ -433,7 +497,7 @@ void MainWindow::refreshSubvolListUi()
 
     // If there is only a single filesystem then hide the Uuid column
     if (m_ui->comboBox_btrfsDevice->count() == 1) {
-        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::Uuid);
+        m_ui->tableView_subvols->hideColumn(SubvolumeModel::Column::FilesystemUuid);
     }
 }
 
@@ -471,13 +535,17 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     }
 
     // We are out of errors to check for, time to ask for confirmation
-    if (QMessageBox::question(this, tr("Confirm"),
-                              tr("Are you sure you want to restore ") + subvolume + tr(" to ", "as in from/to") + targetSubvol) !=
-        QMessageBox::Yes)
+    RestoreConfirmDialog confirmDialog("Confirm", tr("Are you sure you want to restore ") + subvolume + tr(" to ", "as in from/to") +
+                                                      targetSubvol + "?");
+
+    if (confirmDialog.exec() != QDialog::Accepted) {
         return;
+    }
+
+    const QString backupName = confirmDialog.backupName();
 
     // Everything checks out, time to do the restore
-    RestoreResult restoreResult = m_snapper->restoreSubvol(uuid, subvolId, targetId);
+    RestoreResult restoreResult = m_btrfs->restoreSubvol(uuid, subvolId, targetId, backupName);
 
     // Report the outcome to the end user
     if (restoreResult.isSuccess) {
@@ -494,10 +562,10 @@ void MainWindow::setup()
 
     // If snapper isn't installed, hide the snapper-related elements of the UI
     if (m_hasSnapper) {
-        m_ui->groupBox_snapperConfigEdit->hide();
+        m_ui->groupBox_snapperConfigCreate->hide();
     } else {
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_general), false);
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_snapper_settings), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_general), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_snapper_settings), false);
     }
 
     // If the system isn't running systemd, hide the systemd-related elements of the UI
@@ -506,10 +574,15 @@ void MainWindow::setup()
     }
 
     // Connect the subvolume view
-    m_ui->tableView_subvols->setModel(m_subvolumeModel);
+    m_ui->tableView_subvols->setModel(m_subvolumeFilterModel);
+    m_ui->tableView_subvols->setContextMenuPolicy(Qt::CustomContextMenu);
+
     m_ui->tableView_subvols->sortByColumn(SubvolumeModel::Column::Name, Qt::AscendingOrder);
     m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Name, QHeaderView::Stretch);
-    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::Uuid, QHeaderView::ResizeToContents);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::FilesystemUuid,
+                                                                      QHeaderView::ResizeToContents);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::CreatedAt, QHeaderView::ResizeToContents);
+    m_ui->tableView_subvols->horizontalHeader()->setSectionResizeMode(SubvolumeModel::Column::ReadOnly, QHeaderView::ResizeToContents);
     m_ui->tableView_subvols->verticalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
 
     // Populate the UI
@@ -530,8 +603,20 @@ void MainWindow::setup()
         populateBmTab();
     } else {
         // Hide the btrfs maintenance tab
-        m_ui->tabWidget->setTabVisible(m_ui->tabWidget->indexOf(m_ui->tab_btrfsmaintenance), false);
+        m_ui->tabWidget_mainWindow->setTabVisible(m_ui->tabWidget_mainWindow->indexOf(m_ui->tab_btrfsmaintenance), false);
     }
+}
+
+void MainWindow::setSnapperSettingsEditModeEnabled(bool enabled)
+{
+
+    m_ui->lineEdit_snapperName->clear();
+    m_ui->pushButton_snapperNewConfig->setText(tr(enabled ? "New Config" : "Cancel New Config"));
+    m_ui->pushButton_snapperNewConfig->clearFocus();
+
+    m_ui->groupBox_snapperConfigCreate->setVisible(!enabled);
+    m_ui->groupBox_snapperConfigDisplay->setVisible(enabled);
+    m_ui->groupBox_snapperConfigSettings->setVisible(enabled);
 }
 
 void MainWindow::snapperTimelineEnable(bool enable)
@@ -600,7 +685,7 @@ void MainWindow::on_comboBox_snapperSubvols_activated(int index)
     m_ui->comboBox_snapperSubvols->clearFocus();
 }
 
-void MainWindow::on_pushButton_bmApply_clicked()
+void MainWindow::on_toolButton_bmApply_clicked()
 {
     // Read and set the Btrfs maintenance settings
     m_btrfsMaint->setValue("BTRFS_BALANCE_PERIOD", m_ui->comboBox_bmBalanceFreq->currentText());
@@ -648,8 +733,10 @@ void MainWindow::on_pushButton_bmApply_clicked()
 
     QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
 
-    m_ui->pushButton_bmApply->clearFocus();
+    m_ui->toolButton_bmApply->clearFocus();
 }
+
+void MainWindow::on_toolButton_bmReset_clicked() { populateBmTab(); }
 
 void MainWindow::on_pushButton_btrfsBalance_clicked()
 {
@@ -679,89 +766,112 @@ void MainWindow::on_pushButton_btrfsScrub_clicked()
     }
 }
 
-void MainWindow::on_pushButton_subvolDelete_clicked()
+void MainWindow::on_toolButton_subvolDelete_clicked()
 {
+    m_ui->toolButton_subvolDelete->clearFocus();
+
     if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
         displayError(tr("Please select a subvolume to delete first!"));
-        m_ui->pushButton_subvolDelete->clearFocus();
-        return;
-    }
-    QModelIndexList indexes = m_ui->tableView_subvols->selectionModel()->selection().indexes();
-    QString subvol = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Name)).toString();
-    QString uuid = m_ui->tableView_subvols->model()->data(indexes.at(SubvolumeModel::Column::Uuid)).toString();
-
-    // Make sure the everything is good in the UI
-    if (subvol.isEmpty() || uuid.isEmpty()) {
-        displayError(tr("Nothing to delete!"));
-        m_ui->pushButton_subvolDelete->clearFocus();
         return;
     }
 
-    // get the subvolid, if it isn't found abort
-    uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
-    if (subvolid == 0) {
-        displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("subvolid missing from map"));
-        m_ui->pushButton_subvolDelete->clearFocus();
+    // Ask for confirmation
+    if (QMessageBox::question(this, tr("Confirm"), tr("Are you sure you want to delete the selected subvolume(s)?")) != QMessageBox::Yes) {
         return;
     }
 
-    // ensure the subvol isn't mounted, btrfs will delete a mounted subvol but we probably shouldn't
-    if (Btrfs::isMounted(uuid, subvolid)) {
-        displayError(tr("You cannot delete a mounted subvolume") + "\n\n" + tr("Please unmount the subvolume before continuing"));
-        m_ui->pushButton_subvolDelete->clearFocus();
-        return;
-    }
+    // Get all the rows that were selected
+    const QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+    const QModelIndexList uuidIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid);
 
-    Result result;
-
-    // Check to see if the subvolume is a snapper snapshot
-    if (Btrfs::isSnapper(subvol) && m_hasSnapper) {
-        QMessageBox::information(0, tr("Snapshot Delete"),
-                                 tr("That subvolume is a snapper shapshot") + "\n\n" + tr("Please use the snapper tab to remove it"));
-        return;
-    } else {
-        // Everything looks good so far, now we put up a confirmation box
-        if (QMessageBox::question(0, tr("Confirm"), tr("Are you sure you want to delete ") + subvol) != QMessageBox::Yes) {
-            return;
+    // Check for a snapper snapshot and ask if the metadata should be cleaned up if found
+    bool hasSnapshot = false;
+    for (const auto &index : nameIndexes) {
+        if (Btrfs::isSnapper(index.data().toString())) {
+            hasSnapshot = true;
+            break;
         }
     }
 
-    bool success = m_btrfs->deleteSubvol(uuid, subvolid);
-
-    if (success) {
-        m_btrfs->loadSubvols(uuid);
-        m_sourceModel->load(m_btrfs->filesystems());
-        refreshSubvolListUi();
-    } else {
-        displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
+    bool cleanupSnapper = false;
+    if (hasSnapshot && QMessageBox::question(this, tr("Snapper Snapshots Found"),
+                                             tr("One or more of the selected subvolumes is a Snapper snapshot, would you like to remove "
+                                                "the Snapper Metadata?(Recommended)")) == QMessageBox::Yes) {
+        cleanupSnapper = true;
     }
 
-    m_ui->pushButton_subvolDelete->clearFocus();
+    QSet<QString> uuids;
+
+    for (int i = 0; i < nameIndexes.count(); i++) {
+        QString subvol = nameIndexes.at(i).data().toString();
+        QString uuid = uuidIndexes.at(i).data().toString();
+
+        // Add the uuid to the set of uuids with subvolumes deleted
+        uuids.insert(uuid);
+
+        // Make sure the everything is good in the UI
+        if (subvol.isEmpty() || uuid.isEmpty()) {
+            continue;
+        }
+
+        // get the subvolid, if it isn't found abort
+        uint64_t subvolid = m_btrfs->subvolId(uuid, subvol);
+        if (subvolid == 0) {
+            displayError(tr("Failed to delete subvolume!") + "\n\n" + tr("Invalid subvolume ID"));
+            continue;
+        }
+
+        // ensure the subvol isn't mounted, btrfs will delete a mounted subvol but we probably shouldn't
+        if (Btrfs::isMounted(uuid, subvolid)) {
+            displayError(tr("You cannot delete mounted subvolume: ") + subvol + "\n\n" +
+                         tr("Please unmount the subvolume before deleting"));
+            continue;
+        }
+
+        if (!m_btrfs->deleteSubvol(uuid, subvolid)) {
+            displayError(tr("Failed to delete subvolume " + subvol.toUtf8()));
+            continue;
+        }
+
+        // If this is a Snapper snapshot and removing the metadata was agreed to, clean it up
+        if (cleanupSnapper && Btrfs::isSnapper(subvol)) {
+            const QString mountpoint = m_btrfs->mountRoot(uuid);
+            const QFileInfo subvolumeFileInfo(QDir::cleanPath(mountpoint + QDir::separator() + subvol));
+            subvolumeFileInfo.dir().removeRecursively();
+        }
+    }
+
+    // Reload data and refresh the UI
+    for (const auto &uuid : qAsConst(uuids)) {
+        m_btrfs->loadSubvols(uuid);
+    }
+    m_subvolumeModel->load(m_btrfs->filesystems());
+    refreshSubvolListUi();
 }
 
 void MainWindow::on_pushButton_btrfsRefreshData_clicked()
 {
     m_btrfs->loadVolumes();
-    m_sourceModel->load(m_btrfs->filesystems());
+    m_subvolumeModel->load(m_btrfs->filesystems());
     refreshBtrfsUi();
 
     m_ui->pushButton_btrfsRefreshData->clearFocus();
 }
 
-void MainWindow::on_pushButton_subvolRefresh_clicked()
+void MainWindow::on_toolButton_subvolRefresh_clicked()
 {
     const auto filesystems = m_btrfs->listFilesystems();
     for (const QString &uuid : filesystems) {
         m_btrfs->loadSubvols(uuid);
     }
 
-    m_sourceModel->load(m_btrfs->filesystems());
+    m_subvolumeModel->load(m_btrfs->filesystems());
     refreshSubvolListUi();
 
-    m_ui->pushButton_subvolRefresh->clearFocus();
+    m_ui->toolButton_subvolRefresh->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperRestore_clicked()
+void MainWindow::on_toolButton_snapperRestore_clicked()
 {
     if (m_ui->tableWidget_snapperRestore->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
@@ -786,10 +896,10 @@ void MainWindow::on_pushButton_snapperRestore_clicked()
 
     restoreSnapshot(uuid, subvol);
 
-    m_ui->pushButton_snapperRestore->clearFocus();
+    m_ui->toolButton_snapperRestore->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperBrowse_clicked()
+void MainWindow::on_toolButton_snapperBrowse_clicked()
 {
     const int currentRow = m_ui->tableWidget_snapperRestore->currentRow();
     if (currentRow == -1) {
@@ -822,7 +932,7 @@ void MainWindow::on_pushButton_snapperBrowse_clicked()
     fb->show();
 }
 
-void MainWindow::on_pushButton_snapperCreate_clicked()
+void MainWindow::on_toolButton_snapperCreate_clicked()
 {
     QString config = m_ui->comboBox_snapperConfigs->currentText();
 
@@ -852,16 +962,17 @@ void MainWindow::on_pushButton_snapperCreate_clicked()
     }
 
     // Reload the data and refresh the UI
+    m_btrfs->loadVolumes();
     m_snapper->load();
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
     populateSnapperRestoreGrid();
 
-    m_ui->pushButton_snapperCreate->clearFocus();
+    m_ui->toolButton_snapperCreate->clearFocus();
 }
 
-void MainWindow::on_pushButton_snapperDelete_clicked()
+void MainWindow::on_toolButton_snapperDelete_clicked()
 {
     if (m_ui->tableWidget_snapperNew->currentRow() == -1) {
         displayError(tr("Nothing selected!"));
@@ -900,13 +1011,14 @@ void MainWindow::on_pushButton_snapperDelete_clicked()
     }
 
     // Reload the data and refresh the UI
+    m_btrfs->loadVolumes();
     m_snapper->load();
     loadSnapperUI();
     m_ui->comboBox_snapperConfigs->setCurrentText(config);
     populateSnapperGrid();
     populateSnapperRestoreGrid();
 
-    m_ui->pushButton_snapperDelete->clearFocus();
+    m_ui->toolButton_snapperDelete->clearFocus();
 }
 
 void MainWindow::on_pushButton_snapperDeleteConfig_clicked()
@@ -945,16 +1057,8 @@ void MainWindow::on_pushButton_snapperDeleteConfig_clicked()
 
 void MainWindow::on_pushButton_snapperNewConfig_clicked()
 {
-    if (m_ui->groupBox_snapperConfigEdit->isVisible()) {
-        m_ui->lineEdit_snapperName->clear();
-
-        // Put the ui back in edit mode
-        m_ui->groupBox_snapperConfigDisplay->show();
-        m_ui->groupBox_snapperConfigEdit->hide();
-        m_ui->groupBox_snapperConfigSettings->show();
-
-        m_ui->pushButton_snapperNewConfig->setText(tr("New Config"));
-        m_ui->pushButton_snapperNewConfig->clearFocus();
+    if (m_ui->groupBox_snapperConfigCreate->isVisible()) {
+        setSnapperSettingsEditModeEnabled(true);
     } else {
         // Get a list of btrfs mountpoints that could be backed up
         const QStringList mountpoints = Btrfs::listMountpoints();
@@ -974,12 +1078,7 @@ void MainWindow::on_pushButton_snapperNewConfig_clicked()
         }
 
         // Put the UI in create config mode
-        m_ui->groupBox_snapperConfigDisplay->hide();
-        m_ui->groupBox_snapperConfigEdit->show();
-        m_ui->groupBox_snapperConfigSettings->hide();
-
-        m_ui->pushButton_snapperNewConfig->setText(tr("Cancel New Config"));
-        m_ui->pushButton_snapperNewConfig->clearFocus();
+        setSnapperSettingsEditModeEnabled(false);
     }
 }
 
@@ -996,16 +1095,16 @@ void MainWindow::on_pushButton_snapperSaveConfig_clicked()
             return;
         }
 
-        QMap<QString, QString> configMap;
-        configMap.insert("TIMELINE_CREATE", QString(m_ui->checkBox_snapperEnableTimeline->isChecked() ? "yes" : "no"));
-        configMap.insert("TIMELINE_LIMIT_HOURLY", QString::number(m_ui->spinBox_snapperHourly->value()));
-        configMap.insert("TIMELINE_LIMIT_DAILY", QString::number(m_ui->spinBox_snapperDaily->value()));
-        configMap.insert("TIMELINE_LIMIT_WEEKLY", QString::number(m_ui->spinBox_snapperWeekly->value()));
-        configMap.insert("TIMELINE_LIMIT_MONTHLY", QString::number(m_ui->spinBox_snapperMonthly->value()));
-        configMap.insert("TIMELINE_LIMIT_YEARLY", QString::number(m_ui->spinBox_snapperYearly->value()));
-        configMap.insert("NUMBER_LIMIT", QString::number(m_ui->spinBox_snapperNumber->value()));
+        Snapper::Config config;
+        config.setTimelineCreate(m_ui->checkBox_snapperEnableTimeline->isChecked());
+        config.setTimelineLimitHourly(m_ui->spinBox_snapperHourly->value());
+        config.setTimelineLimitDaily(m_ui->spinBox_snapperDaily->value());
+        config.setTimelineLimitWeekly(m_ui->spinBox_snapperWeekly->value());
+        config.setTimelineLimitMonthly(m_ui->spinBox_snapperMonthly->value());
+        config.setTimelineLimitYearly(m_ui->spinBox_snapperYearly->value());
+        config.setNumberLimit(m_ui->spinBox_snapperNumber->value());
 
-        SnapperResult result = m_snapper->setConfig(name, configMap);
+        SnapperResult result = m_snapper->setConfig(name, config);
 
         if (result.exitCode != 0) {
             displayError(result.outputList.at(0));
@@ -1049,10 +1148,7 @@ void MainWindow::on_pushButton_snapperSaveConfig_clicked()
         populateSnapperConfigSettings();
 
         // Put the ui back in edit mode
-        m_ui->groupBox_snapperConfigDisplay->show();
-        m_ui->groupBox_snapperConfigEdit->hide();
-        m_ui->groupBox_snapperConfigSettings->show();
-        m_ui->pushButton_snapperNewConfig->setText(tr("New Config"));
+        setSnapperSettingsEditModeEnabled(true);
     }
 
     m_ui->pushButton_snapperSaveConfig->clearFocus();
@@ -1073,7 +1169,7 @@ void MainWindow::on_pushButton_enableQuota_clicked()
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }
-    const QString mountpoint = m_btrfs->mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+    const QString mountpoint = Btrfs::findAnyMountpoint(m_ui->comboBox_btrfsDevice->currentText());
 
     if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
         Btrfs::setQgroupEnabled(mountpoint, false);
@@ -1084,6 +1180,13 @@ void MainWindow::on_pushButton_enableQuota_clicked()
     setEnableQuotaButtonStatus();
 }
 
+void MainWindow::on_tabWidget_mainWindow_currentChanged()
+{
+    if (m_ui->tabWidget_mainWindow->currentWidget() == m_ui->tab_btrfsmaintenance) {
+        refreshBmUi();
+    }
+}
+
 void MainWindow::on_toolButton_snapperNewRefresh_clicked()
 {
     m_snapper->load();
@@ -1092,8 +1195,174 @@ void MainWindow::on_toolButton_snapperNewRefresh_clicked()
 
 void MainWindow::on_toolButton_snapperRestoreRefresh_clicked()
 {
+    m_btrfs->loadVolumes();
     m_snapper->loadSubvols();
     populateSnapperRestoreGrid();
+}
+
+void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
+{
+    m_ui->toolButton_subvolRestoreBackup->clearFocus();
+
+    if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
+        displayError(tr("Nothing selected!"));
+        return;
+    }
+
+    // Get all the rows that were selected
+    const QModelIndexList nameIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+
+    // Perform some sanity checks
+    if (nameIndexes.count() != 1) {
+        displayError(tr("Please select a single backup subvolume to restore!"));
+        return;
+    }
+
+    const QString name = nameIndexes.at(0).data().toString();
+
+    // Ensure it is a backup we created
+    static QRegularExpression re("_backup_[0-9]{17}");
+    const QStringList nameParts = name.split(re);
+
+    if (nameParts.count() != 2) {
+        displayError(tr("The subvolume you selected is not a Btrfs Assistant backup"));
+        return;
+    }
+
+    const QString uuid =
+        m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::FilesystemUuid).at(0).data().toString();
+
+    const uint64_t sourceId = m_btrfs->subvolId(uuid, name);
+    const uint64_t targetId = m_btrfs->subvolId(uuid, nameParts[0]);
+
+    if (sourceId == 0 or targetId == 0) {
+        displayError(tr("The subvolume is missing!"));
+        return;
+    }
+
+    // Ask for confirmation
+    RestoreConfirmDialog confirmDialog("Confirm", tr("Are you sure you want to restore the selected backup?"));
+
+    if (confirmDialog.exec() != QDialog::Accepted) {
+        return;
+    }
+
+    const QString backupName = confirmDialog.backupName();
+
+    // Everything checks out, time to do the restore
+    RestoreResult restoreResult = m_btrfs->restoreSubvol(uuid, sourceId, targetId, backupName);
+
+    // Report the outcome to the end user
+    if (restoreResult.isSuccess) {
+        QMessageBox::information(this, tr("Backup Restore"),
+                                 tr("Backup restoration complete.") + "\n\n" + tr("A copy of the original subvolume has been saved as ") +
+                                     restoreResult.backupSubvolName + "\n\n" + tr("Please reboot immediately"));
+    } else {
+        displayError(restoreResult.failureMessage);
+    }
+}
+
+void MainWindow::on_tableView_subvols_customContextMenuRequested(const QPoint &pos)
+{
+    if (!m_ui->tableView_subvols->selectionModel()->hasSelection()) {
+        return;
+    }
+
+    QVector<Subvolume> selectedSubvolumes;
+    const QModelIndexList selectedIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
+
+    for (const QModelIndex &idx : selectedIndexes) {
+        QModelIndex sourceIdx = m_subvolumeFilterModel->mapToSource(idx);
+        const Subvolume &s = m_subvolumeModel->subvolume(sourceIdx.row());
+        selectedSubvolumes.append(s);
+    }
+
+    QVector<Subvolume> readOnlySubvols;
+    QVector<Subvolume> writeableSubvols;
+
+    for (const Subvolume &s : selectedSubvolumes) {
+        if (s.isReadOnly()) {
+            readOnlySubvols.append(s);
+        } else {
+            writeableSubvols.append(s);
+        }
+    }
+
+    auto setReadOnlyFlag = [this](const QVector<Subvolume> &subvols, bool readOnly) {
+        QString msg;
+        if (subvols.size() == 1) {
+            if (readOnly) {
+                msg = tr("Are you sure you want to set read-only flag for %1?").arg(subvols.begin()->subvolName);
+            } else {
+                msg = tr("Are you sure you want to clear read-only flag for %1?").arg(subvols.begin()->subvolName);
+            }
+        } else {
+            if (readOnly) {
+                msg = tr("Are you sure you want to set read-only flag for %1 subvolumes?").arg(subvols.size());
+            } else {
+                msg = tr("Are you sure you want to clear read-only flag for %1 subvolumes?").arg(subvols.size());
+            }
+        }
+        if (QMessageBox::question(this, tr("Confirm"), msg) == QMessageBox::Yes) {
+            QVector<Subvolume> failed;
+            for (Subvolume s : subvols) {
+                if (m_btrfs->setSubvolumeReadOnly(s, readOnly)) {
+                    s.flags = readOnly ? 0x1u : 0;
+                    m_subvolumeModel->updateSubvolume(s);
+                } else {
+                    failed.append(s);
+                }
+            }
+
+            if (failed.isEmpty()) {
+                QMessageBox::information(0, tr("Btrfs Assistant"), tr("Changes applied"));
+            } else {
+                QStringList names;
+                std::transform(failed.begin(), failed.end(), std::back_inserter(names), [](const Subvolume &s) { return s.subvolName; });
+                QMessageBox::critical(0, tr("Btrfs Assistant"),
+                                      tr("Failed to apply changes to the following subvolumes:") + "\n" + names.join(QChar('\n')));
+            }
+        }
+    };
+
+    QMenu menu;
+
+    if (selectedSubvolumes.size() == 1) {
+        const Subvolume &subvol = selectedSubvolumes.first();
+        QAction *snapshotAction = menu.addAction(tr("Create &snapshot..."));
+        connect(snapshotAction, &QAction::triggered, this, [this, subvol]() {
+            SnapshotSubvolumeDialog dialog(this);
+            dialog.selectAllTextAndSetFocus();
+
+            if (dialog.exec() == QDialog::Accepted) {
+                std::optional<Subvolume> snapshot =
+                    m_btrfs->createSnapshot(subvol.filesystemUuid, subvol.id, dialog.destination(), dialog.isReadOnly());
+                if (snapshot) {
+                    m_subvolumeModel->addSubvolume(*snapshot);
+                    QMessageBox::information(0, tr("Btrfs Assistant"), tr("Snapshot created"));
+                } else {
+                    QMessageBox::critical(0, tr("Btrfs Assistant"), tr("Failed to create the snapshot"));
+                }
+            }
+        });
+    }
+
+    if (!writeableSubvols.isEmpty()) {
+        QAction *readOnlyAction = menu.addAction(tr("Set &read-only flag"));
+        connect(readOnlyAction, &QAction::triggered, this,
+                [setReadOnlyFlag, writeableSubvols]() { setReadOnlyFlag(writeableSubvols, true); });
+    }
+
+    if (!readOnlySubvols.isEmpty()) {
+        QAction *writeableAction = menu.addAction(tr("&Clear read-only flag"));
+        connect(writeableAction, &QAction::triggered, this,
+                [setReadOnlyFlag, readOnlySubvols]() { setReadOnlyFlag(readOnlySubvols, false); });
+    }
+
+    QAction *deleteAction = menu.addAction(tr("&Delete"));
+    connect(deleteAction, &QAction::triggered, this, &MainWindow::on_toolButton_subvolDelete_clicked);
+
+    menu.exec(m_ui->tableView_subvols->mapToGlobal(pos));
 }
 
 void MainWindow::setEnableQuotaButtonStatus()
@@ -1101,7 +1370,7 @@ void MainWindow::setEnableQuotaButtonStatus()
     if (m_ui->comboBox_btrfsDevice->currentText().isEmpty()) {
         return;
     }
-    const QString mountpoint = m_btrfs->mountRoot(m_ui->comboBox_btrfsDevice->currentText());
+    const QString mountpoint = Btrfs::findAnyMountpoint(m_ui->comboBox_btrfsDevice->currentText());
 
     if (!mountpoint.isEmpty() && m_btrfs->isQuotaEnabled(mountpoint)) {
         m_ui->pushButton_enableQuota->setText(tr("Disable Btrfs Quotas"));

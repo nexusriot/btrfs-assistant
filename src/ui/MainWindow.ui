@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QTabWidget" name="tabWidget">
+     <widget class="QTabWidget" name="tabWidget_mainWindow">
       <property name="minimumSize">
        <size>
         <width>100</width>
@@ -24,15 +24,30 @@
        </size>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_btrfs">
        <attribute name="title">
         <string>Overview</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_33">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="0" column="0">
          <widget class="QScrollArea" name="scrollArea_btrfs">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -41,8 +56,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>924</width>
+             <height>668</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_7">
@@ -444,8 +459,23 @@
         <string>Subvolumes</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="0" column="0">
          <widget class="QScrollArea" name="scrollArea_subvolumes">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -454,8 +484,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>924</width>
+             <height>668</height>
             </rect>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
@@ -516,7 +546,27 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_subvolDelete">
+                <widget class="QToolButton" name="toolButton_subvolRestoreBackup">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Restore Backup</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/restore.svg</normaloff>:/icons/restore.svg</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="toolButton_subvolDelete">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -528,7 +578,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                   <normaloff>:/icons/minus.svg</normaloff>:/icons/minus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -536,7 +586,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_subvolRefresh">
+                <widget class="QToolButton" name="toolButton_subvolRefresh">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -548,7 +598,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -561,7 +611,7 @@
             <item row="1" column="0">
              <widget class="QTableView" name="tableView_subvols">
               <property name="selectionMode">
-               <enum>QAbstractItemView::SingleSelection</enum>
+               <enum>QAbstractItemView::ExtendedSelection</enum>
               </property>
               <property name="selectionBehavior">
                <enum>QAbstractItemView::SelectRows</enum>
@@ -594,6 +644,18 @@
         <string>Snapper</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_25">
+        <property name="leftMargin">
+         <number>4</number>
+        </property>
+        <property name="topMargin">
+         <number>4</number>
+        </property>
+        <property name="rightMargin">
+         <number>4</number>
+        </property>
+        <property name="bottomMargin">
+         <number>4</number>
+        </property>
         <item row="0" column="0">
          <widget class="QTabWidget" name="tabWidget_snapper">
           <property name="currentIndex">
@@ -647,7 +709,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperCreate">
+                <widget class="QToolButton" name="toolButton_snapperCreate">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -659,7 +721,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/plus.png</normaloff>:/icons/plus.png</iconset>
+                   <normaloff>:/icons/plus.svg</normaloff>:/icons/plus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -667,7 +729,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperDelete">
+                <widget class="QToolButton" name="toolButton_snapperDelete">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -679,7 +741,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/minus.png</normaloff>:/icons/minus.png</iconset>
+                   <normaloff>:/icons/minus.svg</normaloff>:/icons/minus.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -705,7 +767,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -780,7 +842,7 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperBrowse">
+                <widget class="QToolButton" name="toolButton_snapperBrowse">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -798,7 +860,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/folder.png</normaloff>:/icons/folder.png</iconset>
+                   <normaloff>:/icons/folder.svg</normaloff>:/icons/folder.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -806,7 +868,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="pushButton_snapperRestore">
+                <widget class="QToolButton" name="toolButton_snapperRestore">
                  <property name="minimumSize">
                   <size>
                    <width>100</width>
@@ -818,7 +880,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/restore.png</normaloff>:/icons/restore.png</iconset>
+                   <normaloff>:/icons/restore.svg</normaloff>:/icons/restore.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -844,7 +906,7 @@
                  </property>
                  <property name="icon">
                   <iconset resource="../../icons/icons.qrc">
-                   <normaloff>:/icons/reload.png</normaloff>:/icons/reload.png</iconset>
+                   <normaloff>:/icons/reload.svg</normaloff>:/icons/reload.svg</iconset>
                  </property>
                  <property name="toolButtonStyle">
                   <enum>Qt::ToolButtonTextUnderIcon</enum>
@@ -884,6 +946,18 @@
         <string>Snapper Settings</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_26">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="1" column="0">
          <widget class="QScrollArea" name="scrollArea_snapperSettings">
           <property name="sizePolicy">
@@ -891,6 +965,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
@@ -900,8 +977,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>924</width>
+             <height>668</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -1035,7 +1112,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QGroupBox" name="groupBox_snapperConfigEdit">
+             <widget class="QGroupBox" name="groupBox_snapperConfigCreate">
               <property name="title">
                <string>Config Information</string>
               </property>
@@ -1332,8 +1409,23 @@
         <string>Btrfs maintenance</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
         <item row="0" column="0">
          <widget class="QScrollArea" name="scrollArea_bm">
+          <property name="frameShape">
+           <enum>QFrame::NoFrame</enum>
+          </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
@@ -1342,8 +1434,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>904</width>
-             <height>648</height>
+             <width>924</width>
+             <height>668</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -1363,6 +1455,9 @@
                 <spacer name="horizontalSpacer">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1385,19 +1480,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="4">
-                <widget class="QListWidget" name="listWidget_bmBalance">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="selectionMode">
-                  <enum>QAbstractItemView::MultiSelection</enum>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="1">
                 <widget class="QComboBox" name="comboBox_bmBalanceFreq"/>
                </item>
@@ -1412,6 +1494,19 @@
                 <widget class="QLabel" name="label_bmBalanceSubvols">
                  <property name="text">
                   <string>Mountpoints: </string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="4">
+                <widget class="QListWidget" name="listWidget_bmBalance">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="selectionMode">
+                  <enum>QAbstractItemView::MultiSelection</enum>
                  </property>
                 </widget>
                </item>
@@ -1437,6 +1532,9 @@
                 <spacer name="horizontalSpacer_2">
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
                  </property>
                  <property name="sizeHint" stdset="0">
                   <size>
@@ -1522,6 +1620,9 @@
                  <property name="orientation">
                   <enum>Qt::Horizontal</enum>
                  </property>
+                 <property name="sizeType">
+                  <enum>QSizePolicy::Preferred</enum>
+                 </property>
                  <property name="sizeHint" stdset="0">
                   <size>
                    <width>40</width>
@@ -1583,12 +1684,45 @@
                 </spacer>
                </item>
                <item>
-                <widget class="QPushButton" name="pushButton_bmApply">
+                <widget class="QToolButton" name="toolButton_bmReset">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Reset</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/reset.svg</normaloff>:/icons/reset.svg</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QToolButton" name="toolButton_bmApply">
+                 <property name="minimumSize">
+                  <size>
+                   <width>100</width>
+                   <height>0</height>
+                  </size>
+                 </property>
                  <property name="toolTip">
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Update Btrfs Maintenance config file and call service to load new settings.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
                   <string>Apply</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../../icons/icons.qrc">
+                   <normaloff>:/icons/checkmark.svg</normaloff>:/icons/checkmark.svg</iconset>
+                 </property>
+                 <property name="toolButtonStyle">
+                  <enum>Qt::ToolButtonTextUnderIcon</enum>
                  </property>
                 </widget>
                </item>

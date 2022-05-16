@@ -18,7 +18,7 @@ Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObjec
     load();
 }
 
-Snapper::ConfigMap Snapper::config(const QString &name) { return m_configs.value(name); }
+Snapper::Config Snapper::config(const QString &name) { return m_configs.value(name); }
 
 void Snapper::createSubvolMap()
 {
@@ -193,7 +193,7 @@ void Snapper::loadConfig(const QString &name)
     }
 
     // Iterate over the data adding the name/value pairs to the map
-    ConfigMap config;
+    Config config;
     for (const QString &line : result.outputList) {
         if (line.trimmed().isEmpty()) {
             continue;
@@ -235,7 +235,7 @@ void Snapper::loadSubvols()
             SnapperSubvolume snapperSubvol;
 
             snapperSubvol.uuid = uuid;
-            snapperSubvol.subvolid = subvol.subvolId;
+            snapperSubvol.subvolid = subvol.id;
             snapperSubvol.subvol = subvol.subvolName;
 
             // It is a snapshot so now we parse it and read the snapper XML
@@ -303,6 +303,8 @@ SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
                 snap.desc = xml.readElementText();
             } else if (xml.name() == "type") {
                 snap.type = xml.readElementText();
+            } else {
+                xml.readElementText();
             }
         }
     }
@@ -331,76 +333,7 @@ bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) co
     return true;
 }
 
-RestoreResult Snapper::restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId) const
-{
-    RestoreResult restoreResult;
-
-    // Get the subvol names associated with the IDs
-    const QString sourceName = m_btrfs->subvolumeName(uuid, sourceId);
-    const QString targetName = m_btrfs->subvolumeName(uuid, targetId);
-
-    // Ensure the root of the partition is mounted and get the mountpoint
-    QString mountpoint = m_btrfs->mountRoot(uuid);
-
-    QString snapshotSubvol = findSnapshotSubvolume(sourceName);
-
-    // We are out of excuses, time to do the restore....carefully
-    QString targetBackup = targetName + "_backup_" + QDateTime::currentDateTime().toString("yyyyddMMHHmmsszzz");
-    restoreResult.backupSubvolName = targetBackup;
-
-    // Find the children before we start
-    const QStringList children = m_btrfs->children(targetId, uuid);
-
-    // Rename the target
-    if (!Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetName),
-                                QDir::cleanPath(mountpoint + QDir::separator() + targetBackup))) {
-        restoreResult.failureMessage = tr("Failed to make a backup of target subvolume");
-        return restoreResult;
-    }
-
-    // If the snapshot subvolume is nested, we need to set the new subvol name to be inside the backup we created
-    QString newSubvolume;
-    if (targetName + DEFAULT_SNAP_PATH == snapshotSubvol) {
-        newSubvolume = targetBackup + sourceName.right(sourceName.length() - targetName.length());
-    } else {
-        newSubvolume = sourceName;
-    }
-
-    // Place a snapshot of the source where the target was
-    bool snapshotSuccess = Btrfs::createSnapshot(QDir::cleanPath(mountpoint + QDir::separator() + newSubvolume).toUtf8(),
-                                                 QDir::cleanPath(mountpoint + QDir::separator() + targetName).toUtf8());
-
-    if (!snapshotSuccess) {
-        // That failed, try to put the old one back
-        Btrfs::renameSubvolume(QDir::cleanPath(mountpoint + QDir::separator() + targetBackup),
-                               QDir::cleanPath(mountpoint + QDir::separator() + targetName));
-        restoreResult.failureMessage = tr("Failed to restore subvolume!") + "\n\n" +
-                                       tr("Snapshot restore failed.  Please verify the status of your system before rebooting");
-        return restoreResult;
-    }
-
-    // The restore was successful, now we need to move any child subvolumes into the target
-    QString childSubvolPath;
-    for (const QString &childSubvol : children) {
-        childSubvolPath = childSubvol.right(childSubvol.length() - (targetName.length() + 1));
-
-        // rename snapshot
-        QString sourcePath = QDir::cleanPath(mountpoint + QDir::separator() + targetBackup + QDir::separator() + childSubvolPath);
-        QString destinationPath = QDir::cleanPath(mountpoint + QDir::separator() + childSubvol);
-        if (!Btrfs::renameSubvolume(sourcePath, destinationPath)) {
-            // If this fails, not much can be done except let the user know
-            restoreResult.failureMessage = tr("The restore was successful but the migration of the nested subvolumes failed") + "\n\n" +
-                                           tr("Please migrate the those subvolumes manually");
-            return restoreResult;
-        }
-    }
-
-    // If we get to here, it worked!
-    restoreResult.isSuccess = true;
-    return restoreResult;
-}
-
-SnapperResult Snapper::setConfig(const QString &name, const ConfigMap &configMap)
+SnapperResult Snapper::setConfig(const QString &name, const Config &configMap)
 {
     SnapperResult result;
 
@@ -476,4 +409,54 @@ SnapperResult Snapper::runSnapper(const QString &command, const QString &name) c
     }
 
     return snapperResult;
+}
+
+bool Snapper::Config::isEmpty() const { return QMap<QString, QString>::isEmpty(); }
+
+QString Snapper::Config::subvolume() const { return value("SUBVOLUME"); }
+
+void Snapper::Config::setSubvolume(const QString &value) { insert("SUBVOLUME", value); }
+
+bool Snapper::Config::isTimelineCreate() const { return boolValue("TIMELINE_CREATE"); }
+
+void Snapper::Config::setTimelineCreate(bool value) { insertBool("TIMELINE_CREATE", value); }
+
+int Snapper::Config::timelineLimitHourly() const { return intValue("TIMELINE_LIMIT_HOURLY"); }
+
+void Snapper::Config::setTimelineLimitHourly(int value) { insertInt("TIMELINE_LIMIT_HOURLY", value); }
+
+int Snapper::Config::timelineLimitDaily() const { return intValue("TIMELINE_LIMIT_DAILY"); }
+
+void Snapper::Config::setTimelineLimitDaily(int value) { insertInt("TIMELINE_LIMIT_DAILY", value); }
+
+int Snapper::Config::timelineLimitWeekly() const { return intValue("TIMELINE_LIMIT_WEEKLY"); }
+
+void Snapper::Config::setTimelineLimitWeekly(int value) { insertInt("TIMELINE_LIMIT_WEEKLY", value); }
+
+int Snapper::Config::timelineLimitMonthly() const { return intValue("TIMELINE_LIMIT_MONTHLY"); }
+
+void Snapper::Config::setTimelineLimitMonthly(int value) { insertInt("TIMELINE_LIMIT_MONTHLY", value); }
+
+int Snapper::Config::timelineLimitYearly() const { return intValue("TIMELINE_LIMIT_YEARLY"); }
+
+void Snapper::Config::setTimelineLimitYearly(int value) { insertInt("TIMELINE_LIMIT_YEARLY", value); }
+
+int Snapper::Config::numberLimit() const { return intValue("NUMBER_LIMIT"); }
+
+void Snapper::Config::setNumberLimit(int value) { insertInt("NUMBER_LIMIT", value); }
+
+void Snapper::Config::insertBool(const QString &key, bool value) { insert(key, value ? "yes" : "no"); }
+
+bool Snapper::Config::boolValue(const QString &key, bool defaultValue) const { return value(key, defaultValue ? "yes" : "no") == "yes"; }
+
+void Snapper::Config::insertInt(const QString &key, int value) { insert(key, QString::number(value)); }
+
+int Snapper::Config::intValue(const QString &key, int defaultValue) const
+{
+    bool ok = false;
+    int ret = value(key).toInt(&ok);
+    if (!ok) {
+        ret = defaultValue;
+    }
+    return ret;
 }

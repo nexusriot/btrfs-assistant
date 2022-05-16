@@ -1,5 +1,18 @@
 ### Btrfs Assistant
 
+1.6 - TBD
+* Add a context menu to the subvolume page that sets read-only status, deletes subvolumes and creates new snapshots(Contributed by Adam Sowa)
+* Add the ability to delete multiple subvolumes
+* The subvolume backups made by Btrfs Assistant can now be restored
+* Add an option to add a name to the subvolume backups(Contributed by Zesko)
+* Add more detail to the subvolume tab table(Contributed by Adam Sowa)
+* The file browser is now sortable and the columns can be manually resized(Contributed by Adam Sowa)
+* Add support for deleting Snapper snapshots from the subvolume tab
+* Fix an issue where deleted Snapper configs were not being removed from UI(Contributed by Austin Horstman)
+* Fix an issue where the snapshot grid was not being refreshed properly
+* Fix issue where Snapper file reading was stopping on unprocessed elements
+* Remove some of the nested frames/boxes from the UI
+
 1.5 - 2022-04-30
 * Use libbtrfsutil instead of calling the btrfs command wherever possible
 * Allow opening multiple snapshot browse dialogs at the same time(Contributed by Adam Sowa)

@@ -11,7 +11,21 @@ class SubvolumeModel : public QAbstractTableModel {
     Q_OBJECT
 
   public:
-    enum Column { Id, ParentId, Name, Uuid, Size, ExclusiveSize, ColumnCount };
+    enum Column {
+        Id,
+        ParentId,
+        Name,
+        Uuid,
+        ParentUuid,
+        ReceivedUuid,
+        CreatedAt,
+        Generation,
+        ReadOnly,
+        FilesystemUuid,
+        Size,
+        ExclusiveSize,
+        ColumnCount
+    };
 
     enum Role { Sort = Qt::UserRole };
 
@@ -24,11 +38,30 @@ class SubvolumeModel : public QAbstractTableModel {
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
 
     /**
+     * @brief Returns a Subvolume for a given row
+     * @param row - A row of the Subvolume
+     * @return Subvolume at that row
+     */
+    const Subvolume &subvolume(int row) const;
+
+    /**
      * @brief Populates the model using @p subvolData and @p subvolSize
      * @param subvolData - A map of Subvolumes with subvolId as the key
      * @param m_subvolSize - A map of QVectors where subvolId is the key and size is at index 0 and exclusize size at index 1
      */
     void load(const QMap<QString, BtrfsFilesystem> &filesystems);
+
+    /**
+     * @brief Adds a new Subvolume to the model
+     * @param subvol - A Subvolume to add
+     */
+    void addSubvolume(const Subvolume &subvol);
+
+    /**
+     * @brief Updates an existing Subvolume in the model
+     * @param subvol - A Subvolume to update
+     */
+    void updateSubvolume(const Subvolume &subvol);
 
   private:
     // Holds the data for the model
