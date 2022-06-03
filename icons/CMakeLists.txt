@@ -1,1 +1,1 @@
-install(FILES btrfs-assistant.png DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps/)
+install(FILES btrfs-assistant.svg DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps/)

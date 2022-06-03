@@ -1,8 +1,7 @@
 [Desktop Entry]
-Encoding=UTF-8
 Name=Btrfs Assistant
 Comment=Change system settings
-Exec=pkexec btrfs-assistant --xdg-desktop=$XDG_CURRENT_DESKTOP
+Exec=sh -c "pkexec btrfs-assistant --xdg-desktop=\$XDG_CURRENT_DESKTOP"
 Terminal=false
 Type=Application
 Icon=btrfs-assistant
