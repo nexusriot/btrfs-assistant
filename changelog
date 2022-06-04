@@ -1,5 +1,9 @@
 ### Btrfs Assistant
 
+1.6.1 - 2022-06-04
+* Replace png application icon with svg
+* Use a launcher script to ensure that the desktop file is xdg compliant
+
 1.6 - 2022-06-01
 * Add a context menu to the subvolume page that sets read-only status, deletes subvolumes and creates new snapshots(Contributed by Adam Sowa)
 * Add the ability to delete multiple subvolumes
