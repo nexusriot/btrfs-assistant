@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+pkexec btrfs-assistant --xdg-desktop=$XDG_CURRENT_DESKTOP

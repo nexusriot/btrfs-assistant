@@ -13,7 +13,7 @@
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
-    app.setWindowIcon(QIcon(":/icons/btrfs-assistant.png"));
+    app.setWindowIcon(QIcon(":/icons/btrfs-assistant.svg"));
 
     QTranslator translator;
     translator.load("btrfsassistant_" + QLocale::system().name(), "/usr/share/btrfs-assistant/translations");
