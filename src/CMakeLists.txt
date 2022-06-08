@@ -26,6 +26,7 @@ add_executable(btrfs-assistant-bin
 install(FILES ${FILES_TS} DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/btrfs-assistant/translations)
 install(FILES btrfs-assistant.conf DESTINATION ${CMAKE_INSTALL_FULL_SYSCONFDIR})
 install(FILES btrfs-assistant.desktop DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+install(FILES btrfs-assistant.metainfo.xml DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo)
 install(FILES org.btrfs-assistant.pkexec.policy DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/polkit-1/actions/)
 install(PROGRAMS btrfs-assistant DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(PROGRAMS btrfs-assistant-launcher DESTINATION ${CMAKE_INSTALL_BINDIR})
