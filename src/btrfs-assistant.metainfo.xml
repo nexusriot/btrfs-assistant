@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>btrfs-assistant.desktop</id>
+  <launchable type="desktop-id">btrfs-assistant.desktop</launchable>
+
+  <name>Btrfs Assistant</name>
+  <summary>GUI management tool to make managing a Btrfs filesystem easier</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <description>
+    <p>
+      Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem easier.
+    </p>
+    <p>The primary features it offers are:</p>
+    <ul>
+      <li>An easy to read overview of Btrfs metadata</li>
+      <li>A simple view of subvolumes with or without Snapper/Timeshift snapshots</li>
+      <li>Run and monitor scrub and balance operations</li>
+      <li>A pushbutton method for removing subvolumes</li>
+      <li>A management front-end for Snapper with enhanced restore functionality</li>
+      <li>A front-end for Btrfs Maintenance</li>
+    </ul>
+  </description>
+
+  <url type="homepage">https://gitlab.com/btrfs-assistant/btrfs-assistant</url>
+  <url type="bugtracker">https://gitlab.com/btrfs-assistant/btrfs-assistant/-/issues</url>
+  <url type="help">https://gitlab.com/btrfs-assistant/wiki/-/wikis/home</url>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://gitlab.com/btrfs-assistant/btrfs-assistant/uploads/21da59577c3e8a101347cf0d59569c09/image.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://gitlab.com/btrfs-assistant/btrfs-assistant/uploads/41aa431b6a0de85bc70b84d90da392ea/image.png</image>
+    </screenshot>
+    <screenshot>
+      <image>https://gitlab.com/btrfs-assistant/btrfs-assistant/uploads/65b6004c3257d66154828259a0fed47d/image.png</image>
+    </screenshot>
+  </screenshots>
+  <content_rating type="oars-1.1" />
+</component>
