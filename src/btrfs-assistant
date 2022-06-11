@@ -1,13 +1,35 @@
 #!/usr/bin/env bash
 #
-# This wrapper allows allows XDG_CURRENT_DESKTOP to be set properly even when it isn't in the environment
+# This wrapper allows allows some enviroment variables to be set properly even when it isn't in the environment
 #
+
+ID=$(id -u)
+if [[ "$ID" == "0" ]]; then
+    export XDG_RUNTIME_DIR=$(mktemp -d)
+fi
+
 
 # extract the value of --xdg-desktop if it is passed and put all other args in params
 for i in "$@"; do
     case $i in
         -x=*|--xdg-desktop=*)
-            XDG_CURRENT_DESKTOP="${i#*=}"
+            export XDG_CURRENT_DESKTOP="${i#*=}"
+            shift
+        ;;
+        -r=*|--xdg-runtime=*)
+            export XDG_RUNTIME_DIR="${i#*=}"
+            shift
+        ;;
+        -t=*|--platformtheme=*)
+            export QT_QPA_PLATFORMTHEME="${i#*=}"
+            shift
+        ;;
+        -p=*|--platform=*)
+            export QT_QPA_PLATFORM="${i#*=}"
+            shift
+        ;;
+        -d=*|--display=*)
+            export WAYLAND_DISPLAY="${i#*=}"
             shift
         ;;
         *)
@@ -16,12 +38,5 @@ for i in "$@"; do
         ;;
     esac
 done
-
-export XDG_CURRENT_DESKTOP
-
-ID=$(id -u)
-if [[ "$ID" == "0" ]]; then
-        export XDG_RUNTIME_DIR=$(mktemp -d)
-fi
 
 btrfs-assistant-bin ${params}

@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
     app.installTranslator(&translator);
 
     QCoreApplication::setApplicationName(QCoreApplication::translate("main", "Btrfs Assistant"));
-    QCoreApplication::setApplicationVersion("1.6.1");
+    QCoreApplication::setApplicationVersion("1.6.2");
     // Disable question mark title bar buttons in QDialogs ("What's this?" help buttons)
     QApplication::setAttribute(Qt::AA_DisableWindowContextHelpButton);
 

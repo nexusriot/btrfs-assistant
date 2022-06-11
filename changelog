@@ -1,5 +1,10 @@
 ### Btrfs Assistant
 
+1.6.2 - TBD
+* Change the launcher script to handle sway
+* Added an AppStream metainfo file(Contributed by Arthur Bols)
+* Fix a bug when the snapshot subvolume is directly attached to the root partition
+
 1.6.1 - 2022-06-04
 * Replace png application icon with svg
 * Use a launcher script to ensure that the desktop file is xdg compliant
