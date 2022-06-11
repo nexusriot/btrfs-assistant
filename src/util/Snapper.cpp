@@ -11,6 +11,7 @@
 #include <QXmlStreamReader>
 
 constexpr const char *DEFAULT_SNAP_PATH = "/.snapshots";
+constexpr const char *DEFAULT_SNAP_SUBVOL = ".snapshots";
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
 {
@@ -124,14 +125,14 @@ void Snapper::load()
             if (listResult.outputList.isEmpty()) {
                 // This means that either there are no snapshots or the root is mounted on non-btrfs filesystem like an overlayfs
                 // Let's check the latter case first
-                QString subvolName = m_btrfs->subvolumeName(DEFAULT_SNAP_PATH);
+                QString subvolName = m_btrfs->subvolumeName(DEFAULT_SNAP_SUBVOL);
                 if (subvolName.isEmpty()) {
                     // This probably means there are just no snapshots or we are using a nested subvol in another place
                     continue;
                 }
 
                 // Now we need to find out where the snapshots are actually stored
-                const uint64_t parentId = m_btrfs->subvolParent(DEFAULT_SNAP_PATH);
+                const uint64_t parentId = m_btrfs->subvolParent(DEFAULT_SNAP_SUBVOL);
 
                 // It shouldn't be possible for the parent to not exist but we check anyway
                 if (parentId == 0) {
@@ -265,7 +266,7 @@ void Snapper::loadSubvols()
 
             // If it is empty, it may mean the the map isn't loaded yet for the nested subvolumes
             if (targetSubvol.isEmpty()) {
-                if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH)) {
+                if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH) || snapshotSubvol == DEFAULT_SNAP_SUBVOL) {
                     const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
                     const uint64_t parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
                     targetSubvol = m_btrfs->subvolumeName(uuid, parentId);
