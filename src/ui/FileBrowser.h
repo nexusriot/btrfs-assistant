@@ -34,7 +34,6 @@ class FileBrowser : public QDialog {
   private slots:
     void on_pushButton_close_clicked();
     void on_pushButton_diff_clicked();
-    void on_pushButton_open_clicked();
     void on_pushButton_restore_clicked();
 };
 

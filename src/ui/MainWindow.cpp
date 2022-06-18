@@ -1277,13 +1277,13 @@ void MainWindow::on_toolButton_snapperCreate_clicked()
 
 void MainWindow::on_toolButton_snapperDelete_clicked()
 {
-    if (m_ui->tableWidget_snapperNew->currentRow() == -1) {
+    // Get all the rows that were selected
+    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapperNew->selectedItems();
+
+    if (list.count() < 1) {
         displayError(tr("Nothing selected!"));
         return;
     }
-
-    // Get all the rows that were selected
-    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapperNew->selectedItems();
 
     QSet<QString> numbers;
 
