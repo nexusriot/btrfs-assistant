@@ -19,6 +19,7 @@ class FileBrowser : public QDialog {
 
   public:
     FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent = nullptr);
+    FileBrowser(const QString &rootPath, const QString &uuid, QWidget *parent = nullptr);
     ~FileBrowser();
 
   private:
@@ -28,10 +29,12 @@ class FileBrowser : public QDialog {
     Snapper *m_snapper = nullptr;
     QTreeView *m_treeView = nullptr;
     QFileSystemModel *m_fileModel = nullptr;
+    void intializeFileBrowser(const QString &rootPath);
 
   private slots:
     void on_pushButton_close_clicked();
     void on_pushButton_diff_clicked();
+    void on_pushButton_open_clicked();
     void on_pushButton_restore_clicked();
 };
 

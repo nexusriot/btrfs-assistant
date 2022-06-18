@@ -2,11 +2,11 @@
 #include "DiffViewer.h"
 #include "ui_FileBrowser.h"
 
+#include <QDesktopServices>
 #include <QDir>
 #include <QMessageBox>
 
-FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent)
-    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper)
+void FileBrowser::intializeFileBrowser(const QString &rootPath)
 {
     enum Column { NameColumn, SizeColumn, TypeColumn, TimeColumn };
 
@@ -31,8 +31,26 @@ FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QStrin
     m_treeView->setRootIndex(m_fileModel->index(rootPath));
     m_treeView->hideColumn(TypeColumn);
     m_treeView->sortByColumn(0, Qt::AscendingOrder);
+}
+
+FileBrowser::FileBrowser(Snapper *snapper, const QString &rootPath, const QString &uuid, QWidget *parent)
+    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid), m_snapper(snapper)
+{
+    intializeFileBrowser(rootPath);
 
     this->setWindowTitle(tr("Snapshot File Viewer"));
+}
+
+FileBrowser::FileBrowser(const QString &rootPath, const QString &uuid, QWidget *parent)
+    : QDialog(parent), m_ui(new Ui::FileBrowser), m_rootPath(rootPath), m_uuid(uuid)
+{
+    intializeFileBrowser(rootPath);
+
+    // Hide snapper operations
+    m_ui->pushButton_diff->hide();
+    m_ui->pushButton_restore->hide();
+
+    this->setWindowTitle(tr("File Viewer"));
 }
 
 FileBrowser::~FileBrowser() { delete m_ui; }

@@ -146,6 +146,13 @@ class Btrfs : public QObject {
      */
     static bool isSnapper(const QString &subvolume);
 
+    /**
+     * @brief Returns boolean if subvolume is a Btrfs Assistant backup.
+     * @param subvolPath - The QString path to the subvolume
+     * @return true if subvolume is a Btrfs Assistant backup subvolume based on naming.
+     */
+    bool isSubvolumeBackup(QString subvolPath);
+
     /** @brief Returns true if @p subvolume is a timeshift snapshot
      *
      */
@@ -216,7 +223,8 @@ class Btrfs : public QObject {
      * @param targetId - An uint64_t that is the subvolid of the target subvolume
      * @return A RestoreResult struct that contains the results of the operation
      */
-    RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId, const QString &customName = QString());
+    RestoreResult restoreSubvol(const QString &uuid, const uint64_t sourceId, const uint64_t targetId,
+                                const QString &customName = QString());
 
     /**
      * @brief Checks the scrub status of a given subvolume.
