@@ -575,8 +575,7 @@ void MainWindow::setup()
 
     // Connect the subvolume view
     m_ui->tableView_subvols->setModel(m_subvolumeFilterModel);
-    m_ui->toolButton_subvolRestoreBackup->hide();
-    connect(m_ui->tableView_subvols->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this,
+    connect(m_ui->tableView_subvols->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this,
             SLOT(subvolsSelectionChanged()));
     m_ui->tableView_subvols->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -1331,18 +1330,15 @@ void MainWindow::subvolsSelectionChanged()
         const QModelIndexList selectedIndexes = m_ui->tableView_subvols->selectionModel()->selectedRows(SubvolumeModel::Column::Name);
 
         if (selectedIndexes.length() > 1) {
-            m_ui->toolButton_subvolumeBrowse->hide();
+            m_ui->toolButton_subvolumeBrowse->setEnabled(false);
+            m_ui->toolButton_subvolRestoreBackup->setEnabled(false);
         } else {
-            m_ui->toolButton_subvolumeBrowse->show();
+            m_ui->toolButton_subvolumeBrowse->setEnabled(true);
 
             QString subvolPath = m_subvolumeModel->subvolume(m_subvolumeFilterModel->mapToSource(selectedIndexes.at(0)).row()).subvolName;
 
             // Ensure it is a backup we created
-            if (m_btrfs->isSubvolumeBackup(subvolPath)) {
-                m_ui->toolButton_subvolRestoreBackup->show();
-            } else {
-                m_ui->toolButton_subvolRestoreBackup->hide();
-            }
+            m_ui->toolButton_subvolRestoreBackup->setEnabled(m_btrfs->isSubvolumeBackup(subvolPath));
         }
     }
 }
