@@ -1,6 +1,6 @@
 ### Btrfs Assistant
 
-1.6.2 - TBD
+1.6.2 - 2022-08-21
 * Change the launcher script to handle sway
 * Added an AppStream metainfo file(Contributed by Arthur Bols)
 * Fix a bug when the snapshot subvolume is directly attached to the root partition
