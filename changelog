@@ -1,5 +1,8 @@
 ### Btrfs Assistant
 
+1.6.3 - 2022-08-24
+* Fix a bug that caused theming to not work and broke sway support
+
 1.6.2 - 2022-08-21
 * Change the launcher script to handle sway
 * Added an AppStream metainfo file(Contributed by Arthur Bols)

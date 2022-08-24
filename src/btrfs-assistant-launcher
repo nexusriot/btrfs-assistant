@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-if [[ -n ${SWAYLOCK} ]]; then
+if [[ -z ${SWAYLOCK} ]]; then
     pkexec btrfs-assistant --xdg-desktop=$XDG_CURRENT_DESKTOP
 else
     pkexec btrfs-assistant --xdg-runtime="${XDG_RUNTIME_DIR}" --platformtheme="${QT_QPA_PLATFORMTHEME}" --platform="${QT_QPA_PLATFORM}" --display="${WAYLAND_DISPLAY}"
