@@ -154,6 +154,14 @@ bool Btrfs::isSnapper(const QString &subvolume)
     return re.match(subvolume).hasMatch();
 }
 
+bool Btrfs::isSubvolumeBackup(QString subvolPath)
+{
+    static QRegularExpression re("_backup_[0-9]{17}");
+    const QStringList nameParts = subvolPath.split(re);
+
+    return nameParts.count() == 2;
+}
+
 bool Btrfs::isMounted(const QString &uuid, const uint64_t subvolid)
 {
     const QStringList outputList =

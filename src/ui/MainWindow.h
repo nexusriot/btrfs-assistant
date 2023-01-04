@@ -199,24 +199,9 @@ class MainWindow : public QMainWindow {
     void on_checkBox_snapperEnableTimeline_clicked(bool checked);
 
     /**
-     * @brief Btrfs balance button handler
-     */
-    void on_pushButton_btrfsBalance_clicked();
-
-    /**
      * @brief When a change is detected on the dropdown of btrfs devices, repopulate the UI based on the new selection
      */
     void on_comboBox_btrfsDevice_activated(int index);
-
-    /**
-     * @brief Btrfs scrub button handler
-     */
-    void on_pushButton_btrfsScrub_clicked();
-
-    /**
-     * @brief Btrfs enable quota button hanlder
-     */
-    void on_pushButton_enableQuota_clicked();
 
     /**
      * @brief Repopulate the grid when a different config is selected
@@ -233,19 +218,6 @@ class MainWindow : public QMainWindow {
      * @param index of the selected subvolume from the subvolume target combobox.
      */
     void on_comboBox_snapperSubvols_activated(int index);
-    /**
-     * @brief Apply btrfs maintenance system settings based on the UI state.
-     */
-    void on_toolButton_bmApply_clicked();
-
-    /**
-     * @brief Reset the btrfs maintenance screen to saved values.
-     */
-    void on_toolButton_bmReset_clicked();
-    /**
-     * @brief Delete a subvolume after checking for a variety of errors
-     */
-    void on_toolButton_subvolDelete_clicked();
 
     /**
      * @brief Refreshes Btrfs data button handler
@@ -253,29 +225,19 @@ class MainWindow : public QMainWindow {
     void on_pushButton_btrfsRefreshData_clicked();
 
     /**
-     * @brief Refreshes subvolume data button handler
+     * @brief Btrfs balance button handler
      */
-    void on_toolButton_subvolRefresh_clicked();
+    void on_pushButton_btrfsBalance_clicked();
 
     /**
-     * @brief Restore snapshot button handler
+     * @brief Btrfs scrub button handler
      */
-    void on_toolButton_snapperRestore_clicked();
+    void on_pushButton_btrfsScrub_clicked();
 
     /**
-     * @brief Snapper browse snapshot button handler
+     * @brief Btrfs enable quota button hanlder
      */
-    void on_toolButton_snapperBrowse_clicked();
-
-    /**
-     * @brief Snapper new snapshot button handler
-     */
-    void on_toolButton_snapperCreate_clicked();
-
-    /**
-     * @brief Snapper delete snapshot button handler
-     */
-    void on_toolButton_snapperDelete_clicked();
+    void on_pushButton_enableQuota_clicked();
 
     /**
      * @brief Snapper new config button handler
@@ -301,9 +263,24 @@ class MainWindow : public QMainWindow {
     void on_pushButton_snapperUnitsApply_clicked();
 
     /**
+     * @brief Subvolumes table right click handler.
+     */
+    void on_tableView_subvols_customContextMenuRequested(const QPoint &pos);
+
+    /**
      * @brief Mainwindow tab selection change event handler.
      */
     void on_tabWidget_mainWindow_currentChanged();
+
+    /**
+     * @brief Apply btrfs maintenance system settings based on the UI state.
+     */
+    void on_toolButton_bmApply_clicked();
+
+    /**
+     * @brief Reset the btrfs maintenance screen to saved values.
+     */
+    void on_toolButton_bmReset_clicked();
 
     /**
      * @brief Snapper New/Delete Refresh button handler.
@@ -311,15 +288,54 @@ class MainWindow : public QMainWindow {
     void on_toolButton_snapperNewRefresh_clicked();
 
     /**
+     * @brief Restore snapshot button handler
+     */
+    void on_toolButton_snapperRestore_clicked();
+
+    /**
+     * @brief Snapper browse snapshot button handler
+     */
+    void on_toolButton_snapperBrowse_clicked();
+
+    /**
+     * @brief Snapper new snapshot button handler
+     */
+    void on_toolButton_snapperCreate_clicked();
+
+    /**
+     * @brief Snapper delete snapshot button handler
+     */
+    void on_toolButton_snapperDelete_clicked();
+
+    /**
      * @brief Snapper Browse/Restore Refresh button handler.
      */
     void on_toolButton_snapperRestoreRefresh_clicked();
 
+    /**
+     * @brief Subvolume restore backup button handler.
+     */
     void on_toolButton_subvolRestoreBackup_clicked();
 
     /**
-     * @brief Subvolumes table right click handler.
+     * @brief Refreshes subvolume data button handler
      */
-    void on_tableView_subvols_customContextMenuRequested(const QPoint &pos);
+    void on_toolButton_subvolRefresh_clicked();
+
+    /**
+     * @brief Snapper browse snapshot button handler
+     */
+
+    void on_toolButton_subvolumeBrowse_clicked();
+    /**
+     * @brief Delete a subvolume after checking for a variety of errors
+     */
+
+    void on_toolButton_subvolDelete_clicked();
+
+    /**
+     * @brief Subvolumes table row selection handler.
+     */
+    void subvolsSelectionChanged();
 };
 #endif // MAINWINDOW_H

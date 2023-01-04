@@ -84,13 +84,15 @@ Result System::runCmd(const QString &cmd, const QStringList &args, bool includeS
     return {proc.exitCode(), proc.readAllStandardOutput().trimmed()};
 }
 
-QString System::toHumanReadable(uint64_t number)
+QString System::toHumanReadable(const uint64_t number)
 {
+    auto result = static_cast<double>(number);
+
     int i = 0;
     const QVector<QString> units = {"B", "kiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"};
-    while (number > 1024) {
-        number /= 1024;
+    while (result > 1024) {
+        result /= 1024;
         i++;
     }
-    return QString::number(static_cast<double>(number), 'f', 2) + " " + units[i];
+    return QString::number(result, 'f', 2) + " " + units[i];
 }
