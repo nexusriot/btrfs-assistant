@@ -6,7 +6,6 @@
 #include "ui_MainWindow.h"
 #include "util/Btrfs.h"
 #include "util/BtrfsMaintenance.h"
-#include "util/Settings.h"
 #include "util/Snapper.h"
 #include "util/System.h"
 
@@ -572,6 +571,10 @@ void MainWindow::setup()
     if (!System::hasSystemd()) {
         m_ui->groupBox_snapperUnits->hide();
     }
+
+    // Disable the restore and browse buttons until a selection is made
+    m_ui->toolButton_subvolumeBrowse->setEnabled(false);
+    m_ui->toolButton_subvolRestoreBackup->setEnabled(false);
 
     // Connect the subvolume view
     m_ui->tableView_subvols->setModel(m_subvolumeFilterModel);
