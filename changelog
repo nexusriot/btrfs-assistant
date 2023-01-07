@@ -1,5 +1,14 @@
 ### Btrfs Assistant
 
+1.7 - 2023-01-07
+* Added the ability to directly browse files in a subvolume from the subvolumes tab(Contributed by Austin Horstman)
+* Btrfs Assistant backups can now be restored from the context menu on the subvolumes tab(Contributed by Austin Horstman)
+* Support for Hyprland has been added(Contributed by Austin Horstman)
+* Yet another fix for Sway support(Contributed by Austin Horstman)
+* Fix displayed sizes for volumes larger than 2TB(Contributed by Arthur Bols)
+* Fix nothing selected when using the keyboard to select all
+* The browse/restore buttons on the subvolumes tab are now disabled instead of being hidden
+
 1.6.3 - 2022-08-24
 * Fix a bug that caused theming to not work and broke sway support
 
