@@ -28,6 +28,11 @@ struct SnapperSubvolume {
     QString type;
 };
 
+struct MapSubvol {
+    QString uuid;
+    QString targetName;
+};
+
 /**
  * @brief The Snapper service class that handles all the interaction with the snapper application.
  */
@@ -222,7 +227,7 @@ class Snapper : public QObject {
     QMap<QString, QVector<SnapperSubvolume>> m_subvols;
 
     // Maps the subvolumes to their snapshot directories.  key is the snapshot subvol path
-    QMap<QString, QString> *m_subvolMap = nullptr;
+    QMap<QString, MapSubvol> m_subvolMap;
 
     SnapperResult runSnapper(const QString &command, const QString &name = "") const;
 };

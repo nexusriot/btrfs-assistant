@@ -15,7 +15,15 @@ constexpr const char *DEFAULT_SNAP_SUBVOL = ".snapshots";
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
 {
-    m_subvolMap = Settings::instance().subvolMap();
+    // Load the subvolume map from settings if present
+    QMap<QString, QString> *settingsSubvolMap = Settings::instance().subvolMap();
+    for (auto &key : qAsConst(*settingsSubvolMap)) {
+        MapSubvol ms;
+        ms.targetName = settingsSubvolMap->value(key).split(",").at(0);
+        ms.uuid = settingsSubvolMap->value(key).split(",").at(1);
+        m_subvolMap.insert(key, ms);
+    }
+
     load();
 }
 
@@ -26,7 +34,7 @@ void Snapper::createSubvolMap()
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString uuid = subvol.at(0).uuid;
-        if (!m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
+        if (m_subvolMap.value(snapshotSubvol, {QString(),QString()}).uuid == uuid) {
             const uint64_t snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
             const uint64_t targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
             QString targetSubvol = m_btrfs->subvolumeName(uuid, targetId);
@@ -41,7 +49,7 @@ void Snapper::createSubvolMap()
                 targetSubvol = "";
             }
 
-            m_subvolMap->insert(snapshotSubvol, targetSubvol + "," + uuid);
+            m_subvolMap.insert(snapshotSubvol, {targetSubvol, uuid});
         }
     }
 }
@@ -89,8 +97,8 @@ QString Snapper::findTargetPath(const QString &snapshotPath, const QString &file
 
 QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
 {
-    if (m_subvolMap->value(snapshotSubvol, "").endsWith(uuid)) {
-        return m_subvolMap->value(snapshotSubvol, "").split(",").at(0);
+    if (m_subvolMap.value(snapshotSubvol).uuid == uuid) {
+        return m_subvolMap.value(snapshotSubvol).targetName;
     } else {
         return QString();
     }
