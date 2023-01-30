@@ -518,10 +518,11 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     }
 
     // Check the map for the target subvolume
-    const QString targetSubvol = m_snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const SubvolResult sr = m_snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const QString targetSubvol = sr.name;
     const uint64_t targetId = m_btrfs->subvolId(uuid, targetSubvol);
 
-    if (targetId == 0 || targetSubvol.isEmpty()) {
+    if (targetId == 0 || !sr.success) {
         displayError(tr("Target not found"));
         return;
     }

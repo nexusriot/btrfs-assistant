@@ -98,15 +98,14 @@ std::optional<Subvolume> Btrfs::createSnapshot(const QString &uuid, uint64_t sub
 {
     std::optional<Subvolume> ret;
     if (m_filesystems.contains(uuid) && m_filesystems.value(uuid).subvolumes.contains(subvolId)) {
-        const QString subvolName = subvolumeName(uuid, subvolId);
         const QString mountpoint = mountRoot(uuid);
-        const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolName);
+        const QString subvolPath = QDir::cleanPath(mountpoint + QDir::separator() + subvolumeName(uuid, subvolId).name);
 
         if (createSnapshot(subvolPath, dest, readOnly)) {
             struct btrfs_util_subvolume_info subvolInfo;
             btrfs_util_error returnCode = btrfs_util_subvolume_info(dest.toLocal8Bit(), 0, &subvolInfo);
             if (returnCode == BTRFS_UTIL_OK) {
-                ret = infoToSubvolume(uuid, subvolumeName(dest), subvolInfo);
+                ret = infoToSubvolume(uuid, subvolumeName(dest).name, subvolInfo);
                 m_filesystems[uuid].subvolumes[ret->id] = *ret;
             }
         }
@@ -242,8 +241,10 @@ void Btrfs::loadQgroups(const QString &uuid)
 
         subvolId = qgroupList.at(0).split("/").at(1).toUInt();
 
-        m_filesystems[uuid].subvolumes[subvolId].size = qgroupList.at(1).toULong();
-        m_filesystems[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toULong();
+        if (m_filesystems[uuid].subvolumes.contains(subvolId)) {
+            m_filesystems[uuid].subvolumes[subvolId].size = qgroupList.at(1).toULong();
+            m_filesystems[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toULong();
+        }
     }
 }
 
@@ -272,6 +273,13 @@ void Btrfs::loadSubvols(const QString &uuid)
             }
         }
         btrfs_util_destroy_subvolume_iterator(iter);
+
+        // We need to add the root at subvolid 5
+        struct btrfs_util_subvolume_info subvolInfo;
+        returnCode = btrfs_util_subvolume_info(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, &subvolInfo);
+        if (returnCode == BTRFS_UTIL_OK) {
+            subvols[subvolInfo.id] = infoToSubvolume(uuid, QString(), subvolInfo);
+        }
 
         m_filesystems[uuid].subvolumes = subvols;
         loadQgroups(uuid);
@@ -362,9 +370,15 @@ RestoreResult Btrfs::restoreSubvol(const QString &uuid, const uint64_t sourceId,
 {
     RestoreResult restoreResult;
 
+    if (targetId == 5) {
+        restoreResult.failureMessage = tr("You cannot restore to the root of the partition");
+        restoreResult.isSuccess = false;
+        return restoreResult;
+    }
+
     // Get the subvol names associated with the IDs
-    const QString sourceName = subvolumeName(uuid, sourceId);
-    const QString targetName = subvolumeName(uuid, targetId);
+    const QString sourceName = subvolumeName(uuid, sourceId).name;
+    const QString targetName = subvolumeName(uuid, targetId).name;
 
     // Ensure the root of the partition is mounted and get the mountpoint
     QString mountpoint = mountRoot(uuid);
@@ -462,22 +476,22 @@ uint64_t Btrfs::subvolId(const QString &uuid, const QString &subvolName)
     }
 }
 
-QString Btrfs::subvolumeName(const QString &uuid, const uint64_t subvolId) const
+SubvolResult Btrfs::subvolumeName(const QString &uuid, const uint64_t subvolId) const
 {
     if (m_filesystems.contains(uuid) && m_filesystems[uuid].subvolumes.contains(subvolId)) {
-        return m_filesystems[uuid].subvolumes[subvolId].subvolName;
+        return {m_filesystems[uuid].subvolumes[subvolId].subvolName, true};
     } else {
-        return QString();
+        return {QString(), false};
     }
 }
 
-QString Btrfs::subvolumeName(const QString &path)
+SubvolResult Btrfs::subvolumeName(const QString &path)
 {
-    QString ret;
+    SubvolResult ret;
     char *subvolName = nullptr;
     btrfs_util_error returnCode = btrfs_util_subvolume_path(path.toLocal8Bit(), 0, &subvolName);
     if (returnCode == BTRFS_UTIL_OK) {
-        ret = QString::fromLocal8Bit(subvolName);
+        ret = {QString::fromLocal8Bit(subvolName), true};
         free(subvolName);
     }
     return ret;

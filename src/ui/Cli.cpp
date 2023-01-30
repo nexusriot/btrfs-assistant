@@ -61,10 +61,10 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget)
     }
 
     // Check the map for the target subvolume
-    const QString targetSubvol = snapper->findTargetSubvol(snapshotSubvol, uuid);
-    const uint64_t targetId = btrfs->subvolId(uuid, targetSubvol);
+    const SubvolResult sr = snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const uint64_t targetId = btrfs->subvolId(uuid, sr.name);
 
-    if (targetId == 0 || targetSubvol.isEmpty()) {
+    if (targetId == 0 || !sr.success) {
         displayError(tr("Target not found"));
         return 1;
     }

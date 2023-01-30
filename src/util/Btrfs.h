@@ -15,6 +15,11 @@ struct RestoreResult {
     QString backupSubvolName;
 };
 
+struct SubvolResult {
+    QString name;
+    bool success = false;
+};
+
 struct Subvolume {
     uint64_t id = 0;
     uint64_t parentId = 0;
@@ -258,16 +263,16 @@ class Btrfs : public QObject {
      * @brief Returns the name of the subvol with id @p subvolId
      * @param uuid - A QString that represents the UUID of the filesystem to match @p subvolId to
      * @param subvolId - An uint64_t with the ID of the subvolume to find the name for
-     * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
+     * @return A struct containing the path of the subvolume relative to the root of the filesystem and a success flag
      */
-    QString subvolumeName(const QString &uuid, const uint64_t subvolId) const;
+    SubvolResult subvolumeName(const QString &uuid, const uint64_t subvolId) const;
 
     /**
      * @brief Returns the name of the subvol at @p path
      * @param path - An absolute path to a subvolume
-     * @return The path of the subvolume relative to the root of the filesystem or a default constructed QString if not found
+     * @return A struct containing the path of the subvolume relative to the root of the filesystem and a success flag
      */
-    static QString subvolumeName(const QString &path);
+    static SubvolResult subvolumeName(const QString &path);
 
     /**
      * @brief Finds the ID of the subvolume that is the parent of @p subvolId
