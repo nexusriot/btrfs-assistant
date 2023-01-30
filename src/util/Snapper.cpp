@@ -82,25 +82,32 @@ QString Snapper::findTargetPath(const QString &snapshotPath, const QString &file
     QDir mp(mountpoint);
 
     const QString relSnapshotSubvol = mp.relativeFilePath(snapshotSubvol);
-    QString targetSubvol = findTargetSubvol(relSnapshotSubvol, uuid);
+
+    QString targetSubvol;
+    const SubvolResult sr = findTargetSubvol(relSnapshotSubvol, uuid);
+    if (sr.success) {
+         targetSubvol = sr.name;
+    } else {
+        return QString();
+    }
 
     QDir snapshotDir(snapshotPath);
 
     QString relpath = snapshotDir.relativeFilePath(filePath);
 
-    if (snapshotSubvol.isEmpty() || targetSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
+    if (snapshotSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
         return QString();
     }
 
     return QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
 }
 
-QString Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
+SubvolResult Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
 {
     if (m_subvolMap.value(snapshotSubvol).uuid == uuid) {
-        return m_subvolMap.value(snapshotSubvol).targetName;
+        return {m_subvolMap.value(snapshotSubvol).targetName, true};
     } else {
-        return QString();
+        return {QString(),false};
     }
 }
 
@@ -270,10 +277,10 @@ void Snapper::loadSubvols()
             }
 
             // Check the map for the target subvolume
-            QString targetSubvol = findTargetSubvol(snapshotSubvol, uuid);
-
-            // If it is empty, it may mean the the map isn't loaded yet for the nested subvolumes
-            if (targetSubvol.isEmpty()) {
+            const SubvolResult sr = findTargetSubvol(snapshotSubvol, uuid);
+            QString targetSubvol = sr.name;
+            // If it failed, it may mean the the map isn't loaded yet for the nested subvolumes
+            if (!sr.success) {
                 if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH) || snapshotSubvol == DEFAULT_SNAP_SUBVOL) {
                     const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
                     const uint64_t parentId = m_btrfs->subvolParent(uuid, targetSubvolId);

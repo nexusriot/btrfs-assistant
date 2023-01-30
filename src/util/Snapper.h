@@ -11,6 +11,11 @@ struct SnapperResult {
     QStringList outputList;
 };
 
+struct SubvolResult {
+    QString name;
+    bool success;
+};
+
 struct SnapperSnapshot {
     uint number = 0;
     QDateTime time;
@@ -148,7 +153,7 @@ class Snapper : public QObject {
      * @param uuid - The UUID of the btrfs filesystem
      * @return A QString that is the path to the target subvolume relative to the root of the filesystem
      */
-    QString findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const;
+    SubvolResult findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const;
 
     /**
      * @brief Loads all the Snapper meta data from disk
