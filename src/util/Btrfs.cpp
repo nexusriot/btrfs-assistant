@@ -242,8 +242,10 @@ void Btrfs::loadQgroups(const QString &uuid)
 
         subvolId = qgroupList.at(0).split("/").at(1).toUInt();
 
-        m_filesystems[uuid].subvolumes[subvolId].size = qgroupList.at(1).toULong();
-        m_filesystems[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toULong();
+        if (m_filesystems[uuid].subvolumes.contains(subvolId)) {
+            m_filesystems[uuid].subvolumes[subvolId].size = qgroupList.at(1).toULong();
+            m_filesystems[uuid].subvolumes[subvolId].exclusive = qgroupList.at(2).toULong();
+        }
     }
 }
 
@@ -272,6 +274,13 @@ void Btrfs::loadSubvols(const QString &uuid)
             }
         }
         btrfs_util_destroy_subvolume_iterator(iter);
+
+        // We need to add the root at subvolid 5
+        struct btrfs_util_subvolume_info subvolInfo;
+        returnCode = btrfs_util_subvolume_info(mountpoint.toLocal8Bit(), BTRFS_ROOT_ID, &subvolInfo);
+        if (returnCode == BTRFS_UTIL_OK) {
+            subvols[subvolInfo.id] = infoToSubvolume(uuid, QString(), subvolInfo);
+        }
 
         m_filesystems[uuid].subvolumes = subvols;
         loadQgroups(uuid);
