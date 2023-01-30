@@ -11,11 +11,6 @@ struct SnapperResult {
     QStringList outputList;
 };
 
-struct SubvolResult {
-    QString name;
-    bool success;
-};
-
 struct SnapperSnapshot {
     uint number = 0;
     QDateTime time;

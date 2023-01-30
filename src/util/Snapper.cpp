@@ -17,7 +17,8 @@ Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObjec
 {
     // Load the subvolume map from settings if present
     QMap<QString, QString> *settingsSubvolMap = Settings::instance().subvolMap();
-    for (auto &key : qAsConst(*settingsSubvolMap)) {
+    const auto keys = settingsSubvolMap->keys();
+    for (auto &key : keys) {
         MapSubvol ms;
         ms.targetName = settingsSubvolMap->value(key).split(",").at(0);
         ms.uuid = settingsSubvolMap->value(key).split(",").at(1);
@@ -34,22 +35,17 @@ void Snapper::createSubvolMap()
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString uuid = subvol.at(0).uuid;
-        if (m_subvolMap.value(snapshotSubvol, {QString(),QString()}).uuid == uuid) {
+        if (m_subvolMap.value(snapshotSubvol).uuid != uuid) {
             const uint64_t snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
             const uint64_t targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
-            QString targetSubvol = m_btrfs->subvolumeName(uuid, targetId);
+            SubvolResult sr = m_btrfs->subvolumeName(uuid, targetId);
 
             // Get the subvolid of the target and do some additional error checking
-            if (targetId == 0 || targetSubvol.isEmpty()) {
+            if (targetId == 0 || !sr.success) {
                 continue;
             }
 
-            // Handle a special case where the snapshot is of the root of the Btrfs partition
-            if (targetSubvol == ".snapshots") {
-                targetSubvol = "";
-            }
-
-            m_subvolMap.insert(snapshotSubvol, {targetSubvol, uuid});
+            m_subvolMap.insert(snapshotSubvol, {uuid, sr.name});
         }
     }
 }
@@ -86,7 +82,7 @@ QString Snapper::findTargetPath(const QString &snapshotPath, const QString &file
     QString targetSubvol;
     const SubvolResult sr = findTargetSubvol(relSnapshotSubvol, uuid);
     if (sr.success) {
-         targetSubvol = sr.name;
+        targetSubvol = sr.name;
     } else {
         return QString();
     }
@@ -107,7 +103,7 @@ SubvolResult Snapper::findTargetSubvol(const QString &snapshotSubvol, const QStr
     if (m_subvolMap.value(snapshotSubvol).uuid == uuid) {
         return {m_subvolMap.value(snapshotSubvol).targetName, true};
     } else {
-        return {QString(),false};
+        return {QString(), false};
     }
 }
 
@@ -140,8 +136,7 @@ void Snapper::load()
             if (listResult.outputList.isEmpty()) {
                 // This means that either there are no snapshots or the root is mounted on non-btrfs filesystem like an overlayfs
                 // Let's check the latter case first
-                QString subvolName = m_btrfs->subvolumeName(DEFAULT_SNAP_SUBVOL);
-                if (subvolName.isEmpty()) {
+                if (!m_btrfs->subvolumeName(DEFAULT_SNAP_SUBVOL).success) {
                     // This probably means there are just no snapshots or we are using a nested subvol in another place
                     continue;
                 }
@@ -162,7 +157,7 @@ void Snapper::load()
                     continue;
                 }
 
-                const QString parentName = m_btrfs->subvolumeName(uuid, parentId);
+                const QString parentName = m_btrfs->subvolumeName(uuid, parentId).name;
 
                 listResult = runSnapper("--no-dbus -r " + QDir::cleanPath(mountpoint + QDir::separator() + parentName) +
                                         " list --columns number,date,description,type");
@@ -284,7 +279,7 @@ void Snapper::loadSubvols()
                 if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH) || snapshotSubvol == DEFAULT_SNAP_SUBVOL) {
                     const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
                     const uint64_t parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
-                    targetSubvol = m_btrfs->subvolumeName(uuid, parentId);
+                    targetSubvol = m_btrfs->subvolumeName(uuid, parentId).name;
                 } else {
                     continue;
                 }
