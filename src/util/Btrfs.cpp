@@ -370,6 +370,12 @@ RestoreResult Btrfs::restoreSubvol(const QString &uuid, const uint64_t sourceId,
 {
     RestoreResult restoreResult;
 
+    if (targetId == 5) {
+        restoreResult.failureMessage = tr("You cannot restore to the root of the partition");
+        restoreResult.isSuccess = false;
+        return restoreResult;
+    }
+
     // Get the subvol names associated with the IDs
     const QString sourceName = subvolumeName(uuid, sourceId).name;
     const QString targetName = subvolumeName(uuid, targetId).name;
