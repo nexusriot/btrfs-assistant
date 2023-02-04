@@ -40,6 +40,14 @@ class System {
     static QStringList findEnabledUnits();
 
     /**
+     *  @brief Finds the UUID of the filesystem path specified
+     *  @param path The absolute path to find the UUID for
+     *  @return Returns a QString containing the UUID or an empty string if not found
+     *
+     */
+    static QString findUuid(const QString path) { return runCmd("findmnt", {"-no", path}, false).output; }
+
+    /**
      * @brief Checks if the system is running systemd
      * @return true if the system is running systemd, false otherwise
      */

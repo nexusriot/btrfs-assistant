@@ -12,6 +12,7 @@
 
 constexpr const char *DEFAULT_SNAP_PATH = "/.snapshots";
 constexpr const char *DEFAULT_SNAP_SUBVOL = ".snapshots";
+constexpr const char *ROOT_PATH = "/";
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
 {
@@ -32,6 +33,17 @@ Snapper::Config Snapper::config(const QString &name) { return m_configs.value(na
 
 void Snapper::createSubvolMap()
 {
+    // Check to see if /.snapshots has something mounted on it other than a nested subvolume
+    const QString uuid = System::findUuid(DEFAULT_SNAP_PATH);
+    if (!uuid.isEmpty()) {
+        const SubvolResult subvolResultSnapshot = m_btrfs->subvolumeName(DEFAULT_SNAP_PATH);
+        const SubvolResult subvolResultTarget = m_btrfs->subvolumeName(ROOT_PATH);
+        // Add this to the map if it isn't already there
+        if (subvolResultSnapshot.success && subvolResultTarget.success && m_subvolMap.value(subvolResultSnapshot.name).uuid != uuid) {
+            m_subvolMap.insert(subvolResultSnapshot.name, {uuid, subvolResultTarget.name});
+        }
+    }
+
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const SubvolResult sr = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString snapshotSubvol = sr.name;
