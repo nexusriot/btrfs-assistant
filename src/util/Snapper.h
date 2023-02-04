@@ -213,6 +213,11 @@ class Snapper : public QObject {
     QVector<SnapperSubvolume> subvols(const QString &config);
 
   private:
+    /**
+     * @brief Loads the subvol map from the config file and manually mounted /.snapshots
+     */
+    void loadSubvolMap();
+
     Btrfs *m_btrfs = nullptr;
     // The outer map is keyed with the config name, the inner map is the name, value pairs of the configuration settings
     QMap<QString, Config> m_configs;

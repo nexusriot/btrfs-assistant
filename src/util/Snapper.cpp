@@ -12,19 +12,10 @@
 
 constexpr const char *DEFAULT_SNAP_PATH = "/.snapshots";
 constexpr const char *DEFAULT_SNAP_SUBVOL = ".snapshots";
+constexpr const char *ROOT_PATH = "/";
 
 Snapper::Snapper(Btrfs *btrfs, QString snapperCommand, QObject *parent) : QObject{parent}, m_btrfs(btrfs), m_snapperCommand(snapperCommand)
 {
-    // Load the subvolume map from settings if present
-    QMap<QString, QString> *settingsSubvolMap = Settings::instance().subvolMap();
-    const auto keys = settingsSubvolMap->keys();
-    for (auto &key : keys) {
-        MapSubvol ms;
-        ms.targetName = settingsSubvolMap->value(key).split(",").at(0);
-        ms.uuid = settingsSubvolMap->value(key).split(",").at(1);
-        m_subvolMap.insert(key, ms);
-    }
-
     load();
 }
 
@@ -32,8 +23,6 @@ Snapper::Config Snapper::config(const QString &name) { return m_configs.value(na
 
 void Snapper::createSubvolMap()
 {
-    const SubvolResult sr2 = findSnapshotSubvolume(".snapshots");
-    qDebug() << sr2.name;
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const SubvolResult sr = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString snapshotSubvol = sr.name;
@@ -109,6 +98,9 @@ SubvolResult Snapper::findTargetSubvol(const QString &snapshotSubvol, const QStr
 
 void Snapper::load()
 {
+    // Load the subvol map from config
+    loadSubvolMap();
+
     // Load the list of valid configs
     m_configs.clear();
     m_snapshots.clear();
@@ -217,6 +209,29 @@ void Snapper::loadConfig(const QString &name)
     // Add the map to m_configs
     if (!config.isEmpty()) {
         m_configs[name] = config;
+    }
+}
+
+void Snapper::loadSubvolMap() {
+    // Load the subvolume map from settings if present
+    QMap<QString, QString> *settingsSubvolMap = Settings::instance().subvolMap();
+    const auto keys = settingsSubvolMap->keys();
+    for (auto &key : keys) {
+        MapSubvol ms;
+        ms.targetName = settingsSubvolMap->value(key).split(",").at(0);
+        ms.uuid = settingsSubvolMap->value(key).split(",").at(1);
+        m_subvolMap.insert(key, ms);
+    }
+
+    // Check to see if /.snapshots has something mounted on it other than a nested subvolume
+    const QString uuid = System::findUuid(DEFAULT_SNAP_PATH);
+    if (!uuid.isEmpty()) {
+        const SubvolResult subvolResultSnapshot = m_btrfs->subvolumeName(DEFAULT_SNAP_PATH);
+        const SubvolResult subvolResultTarget = m_btrfs->subvolumeName(ROOT_PATH);
+        // Add this to the map if it isn't already there
+        if (subvolResultSnapshot.success && subvolResultTarget.success && m_subvolMap.value(subvolResultSnapshot.name).uuid != uuid) {
+            m_subvolMap.insert(subvolResultSnapshot.name, {uuid, subvolResultTarget.name});
+        }
     }
 }
 
