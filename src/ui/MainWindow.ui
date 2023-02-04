@@ -1213,47 +1213,26 @@
                  </property>
                 </widget>
                </item>
-               <item row="3" column="0">
-                <widget class="QLabel" name="label_snapperWeekly">
-                 <property name="text">
-                  <string>Weekly</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="1">
-                <widget class="QLabel" name="label_snapperSave5">
-                 <property name="text">
-                  <string>Save: </string>
-                 </property>
-                </widget>
-               </item>
                <item row="5" column="2">
                 <widget class="QSpinBox" name="spinBox_snapperYearly"/>
-               </item>
-               <item row="2" column="2">
-                <widget class="QSpinBox" name="spinBox_snapperDaily"/>
-               </item>
-               <item row="1" column="0">
-                <widget class="QLabel" name="label_snapperHourly">
-                 <property name="text">
-                  <string>Hourly</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="5" column="0">
-                <widget class="QLabel" name="label_snapperYearly">
-                 <property name="text">
-                  <string>Yearly</string>
-                 </property>
-                </widget>
                </item>
                <item row="1" column="2">
                 <widget class="QSpinBox" name="spinBox_snapperHourly"/>
                </item>
-               <item row="4" column="0">
-                <widget class="QLabel" name="label_snapperMonthly">
+               <item row="0" column="0" colspan="2">
+                <widget class="QLabel" name="label_snapperEnableTimeline">
+                 <property name="toolTip">
+                  <string>Timeline snapshots are taken hourly, the cleanup job reduces the snapshots in accordance with the below settings</string>
+                 </property>
                  <property name="text">
-                  <string>Monthly</string>
+                  <string>Enable timeline snapshots</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QLabel" name="label_snapperSave3">
+                 <property name="text">
+                  <string>Save: </string>
                  </property>
                 </widget>
                </item>
@@ -1264,9 +1243,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="2">
-                <widget class="QSpinBox" name="spinBox_snapperMonthly"/>
-               </item>
                <item row="2" column="1">
                 <widget class="QLabel" name="label_snapperSave2">
                  <property name="text">
@@ -1274,13 +1250,74 @@
                  </property>
                 </widget>
                </item>
+               <item row="5" column="1">
+                <widget class="QLabel" name="label_snapperSave5">
+                 <property name="text">
+                  <string>Save: </string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="2">
+                <widget class="QCheckBox" name="checkBox_snapperEnableTimeline">
+                 <property name="toolTip">
+                  <string>Timeline snapshots are taken hourly, the cleanup job reduces the snapshots in accordance with the below settings</string>
+                 </property>
+                 <property name="text">
+                  <string/>
+                 </property>
+                </widget>
+               </item>
                <item row="3" column="2">
                 <widget class="QSpinBox" name="spinBox_snapperWeekly"/>
                </item>
-               <item row="3" column="1">
-                <widget class="QLabel" name="label_snapperSave3">
+               <item row="2" column="2">
+                <widget class="QSpinBox" name="spinBox_snapperDaily"/>
+               </item>
+               <item row="4" column="2">
+                <widget class="QSpinBox" name="spinBox_snapperMonthly"/>
+               </item>
+               <item row="5" column="0">
+                <widget class="QLabel" name="label_snapperYearly">
                  <property name="text">
-                  <string>Save: </string>
+                  <string>Yearly</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="0">
+                <widget class="QLabel" name="label_snapperMonthly">
+                 <property name="text">
+                  <string>Monthly</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="2">
+                <widget class="QSpinBox" name="spinBox_snapperNumber"/>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="label_snapperHourly">
+                 <property name="text">
+                  <string>Hourly</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="0">
+                <widget class="QLabel" name="label_snapperWeekly">
+                 <property name="text">
+                  <string>Weekly</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1">
+                <widget class="QLabel" name="label_snapperSave6">
+                 <property name="text">
+                  <string>Save:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="label_snapperNumber">
+                 <property name="text">
+                  <string>Number</string>
                  </property>
                 </widget>
                </item>
@@ -1303,37 +1340,6 @@
                   </size>
                  </property>
                 </spacer>
-               </item>
-               <item row="6" column="0">
-                <widget class="QLabel" name="label_snapperNumber">
-                 <property name="text">
-                  <string>Number</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="1">
-                <widget class="QLabel" name="label_snapperSave6">
-                 <property name="text">
-                  <string>Save:</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="6" column="2">
-                <widget class="QSpinBox" name="spinBox_snapperNumber"/>
-               </item>
-               <item row="0" column="2">
-                <widget class="QCheckBox" name="checkBox_snapperEnableTimeline">
-                 <property name="text">
-                  <string/>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0" colspan="2">
-                <widget class="QLabel" name="label_snapperEnableTimeline">
-                 <property name="text">
-                  <string>Enable timeline snapshots</string>
-                 </property>
-                </widget>
                </item>
               </layout>
              </widget>

@@ -4,6 +4,7 @@
 * Add support for handling snapshots of the root of the btrfs partition
 * Add the ability to autodetect the subvolume mounted at /.snapshots
 * Fix an issue with the default config file using the wrong format
+* Added tooltip about how timeline snapshots work to snapper config settings
 
 1.7 - 2023-01-07
 * Added the ability to directly browse files in a subvolume from the subvolumes tab(Contributed by Austin Horstman)
