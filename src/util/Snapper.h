@@ -16,6 +16,7 @@ struct SnapperSnapshot {
     QDateTime time;
     QString desc;
     QString type;
+    QString cleanup;
 };
 
 struct SnapperSubvolume {

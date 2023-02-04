@@ -119,7 +119,7 @@ void Snapper::load()
 
         // The root needs special handling because we may be booted off a snapshot
         if (name == "root") {
-            listResult = runSnapper("list --columns number,date,description,type");
+            listResult = runSnapper("list --columns number,date,description,type,cleanup");
 
             if (listResult.exitCode != 0) {
                 continue;
@@ -159,7 +159,7 @@ void Snapper::load()
                 }
             }
         } else {
-            listResult = runSnapper("list --columns number,date,description,type", name);
+            listResult = runSnapper("list --columns number,date,description,type,cleanup", name);
             if (listResult.exitCode != 0 || listResult.outputList.isEmpty()) {
                 continue;
             }
@@ -175,7 +175,7 @@ void Snapper::load()
             }
 
             m_snapshots[name].append(
-                {number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(), cols.at(3).trimmed()});
+                {number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(), cols.at(3).trimmed(), cols.at(4).trimmed()});
         }
     }
     loadSubvols();
@@ -329,6 +329,8 @@ SnapperSnapshot Snapper::readSnapperMeta(const QString &filename)
                 snap.desc = xml.readElementText();
             } else if (xml.name() == "type") {
                 snap.type = xml.readElementText();
+            } else if (xml.name() == "cleanup") {
+                snap.cleanup = xml.readElementText();
             } else {
                 xml.readElementText();
             }

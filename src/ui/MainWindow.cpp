@@ -350,11 +350,12 @@ void MainWindow::populateSnapperGrid()
 
     // Clear the table and set the headers
     m_ui->tableWidget_snapperNew->clear();
-    m_ui->tableWidget_snapperNew->setColumnCount(4);
+    m_ui->tableWidget_snapperNew->setColumnCount(5);
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(0, new QTableWidgetItem(tr("Number", "The number associated with a snapshot")));
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(1, new QTableWidgetItem(tr("Date/Time")));
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(2, new QTableWidgetItem(tr("Type")));
-    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Description")));
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Cleanup")));
+    m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
     m_ui->tableWidget_snapperNew->sortByColumn(0, Qt::DescendingOrder);
 
     // Disabling sorting while populating the grid is required or the grid won't repopulate properly
@@ -378,7 +379,8 @@ void MainWindow::populateSnapperGrid()
         m_ui->tableWidget_snapperNew->setItem(i, 0, number);
         m_ui->tableWidget_snapperNew->setItem(i, 1, snapTime);
         m_ui->tableWidget_snapperNew->setItem(i, 2, new QTableWidgetItem(snapshots.at(i).type));
-        m_ui->tableWidget_snapperNew->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).desc));
+        m_ui->tableWidget_snapperNew->setItem(i, 3, new QTableWidgetItem(snapshots.at(i).cleanup));
+        m_ui->tableWidget_snapperNew->setItem(i, 4, new QTableWidgetItem(snapshots.at(i).desc));
     }
 
     // Re-enable sorting and resize the colums to make everything fit

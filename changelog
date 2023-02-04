@@ -3,6 +3,7 @@
 1.8 - TBD
 * Add support for handling snapshots of the root of the btrfs partition
 * Add the ability to autodetect the subvolume mounted at /.snapshots
+* Display the cleanup algorithm on the list of Snapper snapshots
 * Fix an issue with the default config file using the wrong format
 * Added tooltip about how timeline snapshots work to snapper config settings
 
