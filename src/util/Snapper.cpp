@@ -32,8 +32,6 @@ Snapper::Config Snapper::config(const QString &name) { return m_configs.value(na
 
 void Snapper::createSubvolMap()
 {
-    const SubvolResult sr2 = findSnapshotSubvolume(".snapshots");
-    qDebug() << sr2.name;
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
         const SubvolResult sr = findSnapshotSubvolume(subvol.at(0).subvol);
         const QString snapshotSubvol = sr.name;
