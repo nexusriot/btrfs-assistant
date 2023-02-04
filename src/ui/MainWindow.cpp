@@ -20,6 +20,15 @@ enum class SnapperRestoreTableColumn { Number, Subvolume, DateTime, Type, Descri
 
 }
 
+constexpr const char *PARTITION_ROOT_TEXT = "Partition root";
+
+/**
+ * @brief cleanTargetSubvol Clean the PARTITION_ROOT_TEXT from the subvol name
+ * @param subvol The subvol text to clean
+ * @return The cleaned text
+ */
+static const QString cleanTargetSubvol(const QString subvol) { return subvol == PARTITION_ROOT_TEXT ? QString() : subvol; }
+
 /**
  * @brief Selects all rows in @p listWidget that match an item in @p items
  * @param items - A QStringList which contain the strings to select in @p listWidget
@@ -194,9 +203,11 @@ void MainWindow::loadSnapperUI()
     m_ui->comboBox_snapperConfigSettings->setCurrentText(selectedSnapperSettingsConfig);
 
     // Load the subvols in the snapper restore subtab
-    const QStringList subvols = m_snapper->subvolKeys();
-    for (const QString &subvol : subvols) {
+    for (QString &subvol : m_snapper->subvolKeys()) {
         if (m_ui->comboBox_snapperSubvols->findText(subvol) == -1) {
+            if (subvol.isEmpty()) {
+                subvol = PARTITION_ROOT_TEXT;
+            }
             m_ui->comboBox_snapperSubvols->addItem(subvol);
         }
     }
@@ -381,7 +392,7 @@ void MainWindow::populateSnapperRestoreGrid()
     const QLocale locale = QLocale::system();
 
     // Get the name of the subvolume to list in the grid
-    const QString config = m_ui->comboBox_snapperSubvols->currentText();
+    QString config = cleanTargetSubvol(m_ui->comboBox_snapperSubvols->currentText());
 
     // Clear the table and set the headers
     m_ui->tableWidget_snapperRestore->clear();
@@ -579,7 +590,7 @@ void MainWindow::setup()
 
     // Connect the subvolume view
     m_ui->tableView_subvols->setModel(m_subvolumeFilterModel);
-    connect(m_ui->tableView_subvols->selectionModel(), SIGNAL(selectionChanged(QItemSelection,QItemSelection)), this,
+    connect(m_ui->tableView_subvols->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this,
             SLOT(subvolsSelectionChanged()));
     m_ui->tableView_subvols->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -1184,7 +1195,7 @@ void MainWindow::on_toolButton_snapperRestore_clicked()
         return;
     }
 
-    QString config = m_ui->comboBox_snapperSubvols->currentText();
+    QString config = cleanTargetSubvol(m_ui->comboBox_snapperSubvols->currentText());
     QString subvol =
         m_ui->tableWidget_snapperRestore->item(m_ui->tableWidget_snapperRestore->currentRow(), (int)SnapperRestoreTableColumn::Subvolume)
             ->text();
@@ -1217,7 +1228,7 @@ void MainWindow::on_toolButton_snapperBrowse_clicked()
     uint snapshotNumber =
         m_ui->tableWidget_snapperRestore->item(currentRow, (int)SnapperRestoreTableColumn::Number)->data(Qt::DisplayRole).toUInt();
 
-    QString target = m_ui->comboBox_snapperSubvols->currentText();
+    QString target = cleanTargetSubvol(m_ui->comboBox_snapperSubvols->currentText());
     QVector<SnapperSubvolume> snapperSubvols = m_snapper->subvols(target);
 
     // This shouldn't be possible but check anyway
