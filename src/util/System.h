@@ -45,7 +45,7 @@ class System {
      *  @return Returns a QString containing the UUID or an empty string if not found
      *
      */
-    static QString findUuid(const QString path) { return runCmd("findmnt", {"-no", path}, false).output; }
+    static QString findUuid(const QString path) { return runCmd("findmnt", {"-no", "uuid", path}, false).output; }
 
     /**
      * @brief Checks if the system is running systemd
