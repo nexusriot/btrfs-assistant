@@ -32,10 +32,14 @@ Snapper::Config Snapper::config(const QString &name) { return m_configs.value(na
 
 void Snapper::createSubvolMap()
 {
+    const SubvolResult sr2 = findSnapshotSubvolume(".snapshots");
+    qDebug() << sr2.name;
     for (const QVector<SnapperSubvolume> &subvol : qAsConst(m_subvols)) {
-        const QString snapshotSubvol = findSnapshotSubvolume(subvol.at(0).subvol);
+        const SubvolResult sr = findSnapshotSubvolume(subvol.at(0).subvol);
+        const QString snapshotSubvol = sr.name;
         const QString uuid = subvol.at(0).uuid;
-        if (m_subvolMap.value(snapshotSubvol).uuid != uuid) {
+        // Make sure this isn't already in the map from the config
+        if (sr.success == true && m_subvolMap.value(snapshotSubvol).uuid != uuid) {
             const uint64_t snapSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
             const uint64_t targetId = m_btrfs->subvolParent(uuid, snapSubvolId);
             SubvolResult sr = m_btrfs->subvolumeName(uuid, targetId);
@@ -50,16 +54,18 @@ void Snapper::createSubvolMap()
     }
 }
 
-QString Snapper::findSnapshotSubvolume(const QString &subvol)
+SubvolResult Snapper::findSnapshotSubvolume(const QString &subvol)
 {
     static QRegularExpression re("\\/[0-9]*\\/snapshot$");
     QStringList subvolSplit = subvol.split(re);
 
     // If count > 1 than the split worked, otherwise there was no match
     if (subvolSplit.count() > 1) {
-        return subvolSplit.at(0);
+        return {subvolSplit.at(0), true};
+    } else if (subvol == ".snapshots") {
+        return {QString(), true};
     } else {
-        return QString();
+        return {QString(), false};
     }
 }
 
@@ -70,32 +76,26 @@ QString Snapper::findTargetPath(const QString &snapshotPath, const QString &file
         return QString();
     }
 
-    QString snapshotSubvol = findSnapshotSubvolume(snapshotPath);
+    const SubvolResult subvolResultSnapshot = findSnapshotSubvolume(snapshotPath);
 
     // Ensure the root of the partition is mounted and get the mountpoint
     QString mountpoint = m_btrfs->mountRoot(uuid);
 
     QDir mp(mountpoint);
 
-    const QString relSnapshotSubvol = mp.relativeFilePath(snapshotSubvol);
+    const QString relSnapshotSubvol = mp.relativeFilePath(subvolResultSnapshot.name);
 
-    QString targetSubvol;
-    const SubvolResult sr = findTargetSubvol(relSnapshotSubvol, uuid);
-    if (sr.success) {
-        targetSubvol = sr.name;
-    } else {
-        return QString();
-    }
+    const SubvolResult subvolResultTarget = findTargetSubvol(relSnapshotSubvol, uuid);
 
     QDir snapshotDir(snapshotPath);
 
     QString relpath = snapshotDir.relativeFilePath(filePath);
 
-    if (snapshotSubvol.isEmpty() || mountpoint.isEmpty() || relpath.isEmpty()) {
+    if (!subvolResultSnapshot.success || !subvolResultTarget.success || mountpoint.isEmpty() || relpath.isEmpty()) {
         return QString();
     }
 
-    return QDir::cleanPath(mountpoint + QDir::separator() + targetSubvol + QDir::separator() + relpath);
+    return QDir::cleanPath(mountpoint + QDir::separator() + subvolResultTarget.name + QDir::separator() + relpath);
 }
 
 SubvolResult Snapper::findTargetSubvol(const QString &snapshotSubvol, const QString &uuid) const
@@ -266,18 +266,18 @@ void Snapper::loadSubvols()
             snapperSubvol.snapshotNum = snap.number;
             snapperSubvol.type = snap.type;
 
-            const QString snapshotSubvol = findSnapshotSubvolume(snapperSubvol.subvol);
-            if (snapshotSubvol.isEmpty()) {
+            const SubvolResult subvolResultSnapshot = findSnapshotSubvolume(snapperSubvol.subvol);
+            if (!subvolResultSnapshot.success) {
                 continue;
             }
 
             // Check the map for the target subvolume
-            const SubvolResult sr = findTargetSubvol(snapshotSubvol, uuid);
-            QString targetSubvol = sr.name;
+            const SubvolResult subvolResultTarget = findTargetSubvol(subvolResultSnapshot.name, uuid);
+            QString targetSubvol = subvolResultTarget.name;
             // If it failed, it may mean the the map isn't loaded yet for the nested subvolumes
-            if (!sr.success) {
-                if (snapshotSubvol.endsWith(DEFAULT_SNAP_PATH) || snapshotSubvol == DEFAULT_SNAP_SUBVOL) {
-                    const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, snapshotSubvol);
+            if (!subvolResultTarget.success) {
+                if (subvolResultSnapshot.name.endsWith(DEFAULT_SNAP_PATH) || subvolResultSnapshot.name == DEFAULT_SNAP_SUBVOL) {
+                    const uint64_t targetSubvolId = m_btrfs->subvolId(uuid, subvolResultSnapshot.name);
                     const uint64_t parentId = m_btrfs->subvolParent(uuid, targetSubvolId);
                     targetSubvol = m_btrfs->subvolumeName(uuid, parentId).name;
                 } else {

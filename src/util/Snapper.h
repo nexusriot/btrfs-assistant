@@ -131,7 +131,7 @@ class Snapper : public QObject {
      * @param subvol - A Qstring containg the path of the subvolume relative to the filesystem root
      * @return A QString containing the path to the snapshot subvolume relative to the root or an empty string
      */
-    static QString findSnapshotSubvolume(const QString &subvol);
+    static SubvolResult findSnapshotSubvolume(const QString &subvol);
 
     /**
      * @brief Finds the original path where a file in a snapshot should be restored to

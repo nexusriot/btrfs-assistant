@@ -54,14 +54,14 @@ int Cli::restore(Btrfs *btrfs, Snapper *snapper, const QString &restoreTarget)
         displayError(tr("Source snapshot not found"));
     }
 
-    const QString snapshotSubvol = Snapper::findSnapshotSubvolume(subvolume);
-    if (snapshotSubvol.isEmpty()) {
+    const SubvolResult subvolResultSnapshot = Snapper::findSnapshotSubvolume(subvolume);
+    if (!subvolResultSnapshot.success) {
         displayError(tr("Snapshot subvolume not found"));
         return 1;
     }
 
     // Check the map for the target subvolume
-    const SubvolResult sr = snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const SubvolResult sr = snapper->findTargetSubvol(subvolResultSnapshot.name, uuid);
     const uint64_t targetId = btrfs->subvolId(uuid, sr.name);
 
     if (targetId == 0 || !sr.success) {

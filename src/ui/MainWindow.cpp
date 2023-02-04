@@ -511,14 +511,14 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     m_btrfs->loadSubvols(uuid);
 
     const uint64_t subvolId = m_btrfs->subvolId(uuid, subvolume);
-    const QString snapshotSubvol = Snapper::findSnapshotSubvolume(subvolume);
-    if (snapshotSubvol.isEmpty()) {
+    const SubvolResult subvolResultSnapshot = Snapper::findSnapshotSubvolume(subvolume);
+    if (!subvolResultSnapshot.success) {
         displayError(tr("Snapshot subvolume not found"));
         return;
     }
 
     // Check the map for the target subvolume
-    const SubvolResult sr = m_snapper->findTargetSubvol(snapshotSubvol, uuid);
+    const SubvolResult sr = m_snapper->findTargetSubvol(subvolResultSnapshot.name, uuid);
     const QString targetSubvol = sr.name;
     const uint64_t targetId = m_btrfs->subvolId(uuid, targetSubvol);
 
