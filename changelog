@@ -1,5 +1,10 @@
 ### Btrfs Assistant
 
+1.8 - TBD
+* Add support for handling snapshots of the root of the btrfs partition
+* Add the ability to autodetect the subvolume mounted at /.snapshots
+* Fix an issue with the default config file using the wrong format
+
 1.7 - 2023-01-07
 * Added the ability to directly browse files in a subvolume from the subvolumes tab(Contributed by Austin Horstman)
 * Btrfs Assistant backups can now be restored from the context menu on the subvolumes tab(Contributed by Austin Horstman)
