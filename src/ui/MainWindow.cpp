@@ -357,6 +357,7 @@ void MainWindow::populateSnapperGrid()
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(3, new QTableWidgetItem(tr("Cleanup")));
     m_ui->tableWidget_snapperNew->setHorizontalHeaderItem(4, new QTableWidgetItem(tr("Description")));
     m_ui->tableWidget_snapperNew->sortByColumn(0, Qt::DescendingOrder);
+    m_ui->tableWidget_snapperNew->setContextMenuPolicy(Qt::CustomContextMenu);
 
     // Disabling sorting while populating the grid is required or the grid won't repopulate properly
     m_ui->tableWidget_snapperNew->setSortingEnabled(false);
@@ -1011,6 +1012,25 @@ void MainWindow::on_tableView_subvols_customContextMenuRequested(const QPoint &p
     }
 }
 
+void MainWindow::on_tableWidget_snapperNew_customContextMenuRequested(const QPoint &pos)
+{
+    QMenu menu;
+
+    QAction *action = menu.addAction(tr("Set cleanup algorithm to &timeline"));
+    connect(action, &QAction::triggered, this, [=]() { this->setCleanup("timeline"); });
+
+    action = menu.addAction(tr("Set cleanup algorithm to &number"));
+    connect(action, &QAction::triggered, this, [=]() { this->setCleanup("number"); });
+
+    action = menu.addAction(tr("&Remove cleanup algorithm"));
+    connect(action, &QAction::triggered, this, [=]() { this->setCleanup(QString()); });
+
+    action = menu.addAction(tr("&Delete snapshot"));
+    connect(action, &QAction::triggered, this, &MainWindow::on_toolButton_snapperDelete_clicked);
+
+    menu.exec(m_ui->tableView_subvols->mapToGlobal(pos));
+}
+
 void MainWindow::on_toolButton_bmApply_clicked()
 {
     // Read and set the Btrfs maintenance settings
@@ -1440,6 +1460,38 @@ void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
     } else {
         displayError(restoreResult.failureMessage);
     }
+}
+
+void MainWindow::setCleanup(const QString &cleanupArg)
+{
+    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapperNew->selectedItems();
+
+    if (list.count() < 1) {
+        displayError(tr("Nothing selected!"));
+        return;
+    }
+
+    QSet<uint> numbers;
+
+    // Get the snapshot numbers for the selected rows
+    for (const QTableWidgetItem *item : list) {
+        numbers.insert(m_ui->tableWidget_snapperNew->item(item->row(), 0)->text().toUInt());
+    }
+
+    const QString config = m_ui->comboBox_snapperConfigs->currentText();
+
+    for (const uint &number : qAsConst(numbers)) {
+        SnapperResult sr = m_snapper->setCleanupAlgorithm(config, number, cleanupArg);
+        if (sr.exitCode != 0) {
+            displayError(tr("Failed to set cleanup algorithm for snapshot %1").arg(number));
+        }
+    }
+
+    // Reload the data and refresh the UI
+    m_snapper->load();
+    loadSnapperUI();
+    m_ui->comboBox_snapperConfigs->setCurrentText(config);
+    populateSnapperGrid();
 }
 
 void MainWindow::setEnableQuotaButtonStatus()

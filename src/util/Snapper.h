@@ -187,6 +187,13 @@ class Snapper : public QObject {
     bool restoreFile(const QString &sourcePath, const QString &destPath) const;
 
     /**
+     * @brief setCleanupAlgorithm changes the cleanup algorithm for a snapshot
+     * @param cleanupAlg The cleanup algorithm to use
+     * @return The result of the snapper command
+     */
+    SnapperResult setCleanupAlgorithm(const QString &config, const uint number, const QString &cleanupAlg) const;
+
+    /**
      * @brief Updates the settings for a given Snapper config described by @p name
      * @param name - The name of the Snapper config to be updated
      * @param configMap - A QMap of name/value pairs that holds the settings to update

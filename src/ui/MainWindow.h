@@ -98,6 +98,12 @@ class MainWindow : public QMainWindow {
     void populateSnapperConfigSettings();
 
     /**
+     * @brief setCleanup
+     * @param cleanupArg
+     */
+    void setCleanup(const QString &cleanupArg);
+
+    /**
      * @brief Populates the Btrfs Subvolumes tab with all devices subvolumes.
      */
     void refreshSubvolListUi();
@@ -266,6 +272,11 @@ class MainWindow : public QMainWindow {
      * @brief Subvolumes table right click handler.
      */
     void on_tableView_subvols_customContextMenuRequested(const QPoint &pos);
+
+    /**
+     * @brief Snapper table right click handler.
+     */
+    void on_tableWidget_snapperNew_customContextMenuRequested(const QPoint &pos);
 
     /**
      * @brief Mainwindow tab selection change event handler.

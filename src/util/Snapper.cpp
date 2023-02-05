@@ -174,8 +174,8 @@ void Snapper::load()
                 continue;
             }
 
-            m_snapshots[name].append(
-                {number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(), cols.at(3).trimmed(), cols.at(4).trimmed()});
+            m_snapshots[name].append({number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(),
+                                      cols.at(3).trimmed(), cols.at(4).trimmed()});
         }
     }
     loadSubvols();
@@ -212,7 +212,8 @@ void Snapper::loadConfig(const QString &name)
     }
 }
 
-void Snapper::loadSubvolMap() {
+void Snapper::loadSubvolMap()
+{
     // Load the subvolume map from settings if present
     QMap<QString, QString> *settingsSubvolMap = Settings::instance().subvolMap();
     const auto keys = settingsSubvolMap->keys();
@@ -359,6 +360,11 @@ bool Snapper::restoreFile(const QString &sourcePath, const QString &destPath) co
     QFile::setPermissions(destPath, QFile::permissions(sourcePath));
 
     return true;
+}
+
+SnapperResult Snapper::setCleanupAlgorithm(const QString &config, const uint number, const QString &cleanupAlg) const
+{
+    return runSnapper("modify -c \"" + cleanupAlg + "\" " + QString::number(number), config);
 }
 
 SnapperResult Snapper::setConfig(const QString &name, const Config &configMap)
