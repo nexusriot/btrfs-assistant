@@ -1,6 +1,6 @@
 ### Btrfs Assistant
 
-1.8 - TBD
+1.8 - 2023-02-11
 * Add support for handling snapshots of the root of the btrfs partition
 * Add the ability to autodetect the subvolume mounted at /.snapshots
 * Display the cleanup algorithm on the list of Snapper snapshots
