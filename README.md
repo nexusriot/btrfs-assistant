@@ -18,7 +18,7 @@ Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem eas
 	* Manage Snapper systemd units
 * A front-end for Btrfs Maintenance
 	* Manage systemd units
-	* Easily manage configuration for defrag, balance and srub settings
+	* Easily manage configuration for defrag, balance and scrub settings
 
 ### Screenshots
 ![image](/uploads/21da59577c3e8a101347cf0d59569c09/image.png)
