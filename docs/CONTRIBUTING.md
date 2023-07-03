@@ -8,7 +8,7 @@ There is generally a WIP branch created for each new release.  The name is `wip-
 
 Once a the changes are adequately tested, the release is tagged with the version number.
 
-When contributing, unless the MR is for a crtical bug, look for a WIP branch to point the MR at.  Critical bug fixes can be directly merged into `main`
+When contributing, unless the MR is for a critical bug, look for a WIP branch to point the MR at.  Critical bug fixes can be directly merged into `main`
 
 # Coding style
 Most code style guidelines are enforced by running `clang-format` using the included format file.
@@ -78,7 +78,7 @@ Use comments whenever something isn't obvious and in any longer block of code.
 
 Avoid meaningless comments.  "Iterate over the list" is fairly useless.  Instead describe why you are iterating over the list.
 
-All functions should have a comment clock describing the function.  For class methods/functions these should be in the header file.  For free functions they can be in the .cpp file.
+All functions should have a comment block describing the function.  For class methods/functions these should be in the header file.  For free functions they can be in the .cpp file.
 
 Function blocks for new code should use the follow convention
 

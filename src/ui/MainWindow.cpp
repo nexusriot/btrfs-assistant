@@ -989,8 +989,8 @@ void MainWindow::on_tableView_subvols_customContextMenuRequested(const QPoint &p
         connect(browseAction, &QAction::triggered, this, [this, subvol]() { on_toolButton_subvolumeBrowse_clicked(); });
 
         if (m_btrfs->isSubvolumeBackup(subvol.subvolName)) {
-            QAction *browseAction = menu.addAction(tr("Restore backup..."));
-            connect(browseAction, &QAction::triggered, this, [this, subvol]() { on_toolButton_subvolRestoreBackup_clicked(); });
+            QAction *restoreAction = menu.addAction(tr("Restore backup..."));
+            connect(restoreAction, &QAction::triggered, this, [this, subvol]() { on_toolButton_subvolRestoreBackup_clicked(); });
         }
 
         if (!writeableSubvols.isEmpty()) {
