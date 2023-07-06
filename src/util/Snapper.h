@@ -128,6 +128,26 @@ class Snapper : public QObject {
     SnapperResult deleteSnapshot(const QString &name, const int num) const { return runSnapper("delete " + QString::number(num), name); }
 
     /**
+     * @brief Changes the description of a given Snapper snapshot
+     * @param name - The name of the config that contains the snapshot to change
+     * @param num - The number of the snapshot to change
+     * @param desc - The new description for the snapshot
+     */
+    SnapperResult changeSnapshotDescription(const QString &name, const int num, const QString &desc) const
+    {
+        QString asciiDesc = desc.toLatin1(); // Ensure only ASCII chars
+        // Snapper does not recommend using any non ASCII chars (it's ok if you use utf-8 everywhere, but better safe than sorry)
+
+        // Escape Single quotes since they are used to delimit the description
+        asciiDesc.replace("'", "'\\''");
+
+        // TODO: Fix bug with ',' in description to mitigate for now change ',' -> ';'
+        asciiDesc.replace(",", ";");
+
+        return runSnapper("modify --description '" + asciiDesc + "' " + QString::number(num), name);
+    }
+
+    /**
      * @brief Finds the subvolume that is used by snapper to hold the snapshots for @p subvol
      * @param subvol - A Qstring containg the path of the subvolume relative to the filesystem root
      * @return A QString containing the path to the snapshot subvolume relative to the root or an empty string
