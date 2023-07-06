@@ -1028,6 +1028,9 @@ void MainWindow::on_tableWidget_snapperNew_customContextMenuRequested(const QPoi
     action = menu.addAction(tr("&Delete snapshot"));
     connect(action, &QAction::triggered, this, &MainWindow::on_toolButton_snapperDelete_clicked);
 
+    action = menu.addAction(tr("&Change description"));
+    connect(action, &QAction::triggered, this, &MainWindow::on_toolButton_snapperChangeDescription_clicked);
+
     menu.exec(m_ui->tableView_subvols->mapToGlobal(pos));
 }
 
@@ -1358,6 +1361,59 @@ void MainWindow::on_toolButton_snapperDelete_clicked()
     populateSnapperRestoreGrid();
 
     m_ui->toolButton_snapperDelete->clearFocus();
+}
+
+void MainWindow::on_toolButton_snapperChangeDescription_clicked()
+{
+    // Get all the rows that were selected
+    const QList<QTableWidgetItem *> list = m_ui->tableWidget_snapperNew->selectedItems();
+
+    if (list.count() < 1) {
+        displayError(tr("Nothing selected!"));
+        return;
+    }
+
+    QSet<QString> numbers;
+
+    // Get the snapshot numbers for the selected rows
+    for (const QTableWidgetItem *item : list) {
+        numbers.insert(m_ui->tableWidget_snapperNew->item(item->row(), 0)->text());
+    }
+
+    const int snapshotsCount = numbers.count();
+    QString config = m_ui->comboBox_snapperConfigs->currentText();
+
+    // Ask the user for the description (<u><b> is used to make the snapshot number bold and underlined)
+    bool ok;
+    QString snapshotDescription = QInputDialog::getText(
+        this, tr("Change description"),
+        tr("Changing <u><b>%1</b></u> snapshot(s) <br><br>Enter a new description for the snapshot(s):").arg(snapshotsCount),
+        QLineEdit::Normal, "Manual Snapshot", &ok);
+
+    if (!ok) {
+        return;
+    }
+
+    // Change the description of each selected snapshot
+    for (const QString &number : qAsConst(numbers)) {
+        // This shouldn't be possible but we check anyway
+        if (config.isEmpty() || number.isEmpty()) {
+            displayError(tr("Cannot change description of snapshot"));
+            return;
+        }
+
+        // Change the description
+        SnapperResult result = m_snapper->changeSnapshotDescription(config, number.toInt(), snapshotDescription);
+        if (result.exitCode != 0) {
+            displayError(result.outputList.at(0));
+        }
+    }
+
+    // Reload the data and refresh the UI
+    m_snapper->load();
+    loadSnapperUI();
+    m_ui->comboBox_snapperConfigs->setCurrentText(config);
+    populateSnapperGrid();
 }
 
 void MainWindow::subvolsSelectionChanged()
