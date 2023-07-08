@@ -141,9 +141,6 @@ class Snapper : public QObject {
         // Escape Single quotes since they are used to delimit the description
         asciiDesc.replace("'", "'\\''");
 
-        // TODO: Fix bug with ',' in description to mitigate for now change ',' -> ';'
-        asciiDesc.replace(",", ";");
-
         return runSnapper("modify --description '" + asciiDesc + "' " + QString::number(num), name);
     }
 

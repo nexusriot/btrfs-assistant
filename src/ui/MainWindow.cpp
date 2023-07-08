@@ -1383,12 +1383,19 @@ void MainWindow::on_toolButton_snapperChangeDescription_clicked()
     const int snapshotsCount = numbers.count();
     QString config = m_ui->comboBox_snapperConfigs->currentText();
 
+    QString currentDescription = "";
+
+    // only applicable if there is a single snapshot selected
+    if (snapshotsCount == 1) {
+        currentDescription = m_ui->tableWidget_snapperNew->item(list.at(0)->row(), 4)->text();
+    }
+
     // Ask the user for the description (<u><b> is used to make the snapshot number bold and underlined)
     bool ok;
     QString snapshotDescription = QInputDialog::getText(
         this, tr("Change description"),
         tr("Changing <u><b>%1</b></u> snapshot(s) <br><br>Enter a new description for the snapshot(s):").arg(snapshotsCount),
-        QLineEdit::Normal, "Manual Snapshot", &ok);
+        QLineEdit::Normal, currentDescription, &ok);
 
     if (!ok) {
         return;

@@ -6,12 +6,12 @@ include(widgets/CMakeLists.txt)
 set_property(SOURCE main.cpp APPEND PROPERTY COMPILE_DEFINITIONS "VERSION=\"1.5\"")
 
 set(btrfsassistant_SRCS
-        main.cpp
-        ${UI_SRC}
-	${MODEL_SRC}
-        ${UTIL_SRC}
-        ${WIDGETS_SRC}
-        ${PROJECT_SOURCE_DIR}/icons/icons.qrc
+    main.cpp
+    ${UI_SRC}
+    ${MODEL_SRC}
+    ${UTIL_SRC}
+    ${WIDGETS_SRC}
+    ${PROJECT_SOURCE_DIR}/icons/icons.qrc
 )
 
 file(GLOB btrfsassistant_UIFILES ui/*.ui)
