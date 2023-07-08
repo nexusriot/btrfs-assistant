@@ -1,4 +1,5 @@
 #include "util/Snapper.h"
+#include "CsvParser.h"
 #include "util/Settings.h"
 #include "util/System.h"
 
@@ -166,16 +167,16 @@ void Snapper::load()
         }
 
         for (const QString &snap : qAsConst(listResult.outputList)) {
-            const QStringList &cols = snap.split(',');
-            const uint number = cols.at(0).trimmed().toUInt();
+            // Parse `complex` CSV where ',' and '"' in the description are possible
+            QStringList cols = parseCsvLine(snap);
 
+            const uint number = cols.at(0).toUInt();
             // Snapshot 0 is not a real snapshot
             if (number == 0) {
                 continue;
             }
 
-            m_snapshots[name].append({number, QDateTime::fromString(cols.at(1).trimmed(), Qt::ISODate), cols.at(2).trimmed(),
-                                      cols.at(3).trimmed(), cols.at(4).trimmed()});
+            m_snapshots[name].append({number, QDateTime::fromString(cols.at(1), Qt::ISODate), cols.at(2), cols.at(3), cols.at(4)});
         }
     }
     loadSubvols();
