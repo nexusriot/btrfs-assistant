@@ -1,11 +1,28 @@
 #!/usr/bin/env bash
 
-if [[ -z ${SWAYSOCK} && -z ${HYPRLAND_CMD} ]]; then                                                                                                                                                                                                         
-    if [[ -z ${QT_QPA_PLATFORMTHEME} ]]; then                                                                                                                                                                                         
-        pkexec btrfs-assistant --xdg-desktop=$XDG_CURRENT_DESKTOP                                                                                                                                                                     
-    else                                                                                                                                                                                                                              
-        pkexec btrfs-assistant --xdg-desktop=$XDG_CURRENT_DESKTOP --platformtheme="${QT_QPA_PLATFORMTHEME}"                                                                                                                           
-    fi                                                                                                                                                                                                                                
-else                                                                                                                                                                                                                                  
-    pkexec btrfs-assistant --xdg-runtime="${XDG_RUNTIME_DIR}" --platformtheme="${QT_QPA_PLATFORMTHEME}" --platform="${QT_QPA_PLATFORM}" --display="${WAYLAND_DISPLAY}"                                                                
+# Check functions
+usingSwayOrHyprland() {
+  [[ -n ${SWAYSOCK} || -n ${HYPRLAND_CMD} ]]
+}
+
+usingQTPlatformTheme() {
+  [[ -n ${QT_QPA_PLATFORMTHEME} ]]
+}
+
+# Main script
+if usingSwayOrHyprland; then
+  pkexec btrfs-assistant \
+    --xdg-runtime="${XDG_RUNTIME_DIR}" \
+    --platformtheme="${QT_QPA_PLATFORMTHEME}" \
+    --platform="${QT_QPA_PLATFORM}" \
+    --display="${WAYLAND_DISPLAY}"
+else
+  if usingQTPlatformTheme; then
+    pkexec btrfs-assistant \
+      --xdg-desktop="$XDG_CURRENT_DESKTOP" \
+      --platformtheme="${QT_QPA_PLATFORMTHEME}"
+  else
+    pkexec btrfs-assistant \
+      --xdg-desktop="$XDG_CURRENT_DESKTOP"
+  fi
 fi
