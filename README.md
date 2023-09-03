@@ -38,7 +38,10 @@ Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem eas
 #### Arch
 Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 
-#### Debian/Ubuntu
+#### Debian
+There are unofficial Debian packages [here](https://software.opensuse.org/download/package?package=btrfs-assistant&project=home:iDesmI:more) coutesy of @idesmi or you can follow the instructions for Ubuntu to build it yourself.
+
+#### Ubuntu
 1. Install the prerequisites: `sudo apt install git cmake qtbase5-dev qttools5-dev fonts-noto libqt5svg5 libqt5core5a g++ libbtrfs-dev libbtrfsutil-dev`
 1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
 1. Untar the archive and cd into the directory
@@ -48,15 +51,7 @@ Btrfs Assistant can be installed from the AUR as `btrfs-assistant`
 1. Optionally install Snapper - `sudo apt install snapper`
 
 #### Fedora
-1. Install the prerequisites: `sudo dnf install cmake git qt5-qttools qt5-qtbase qt5-qtsvg g++ qt5-qtbase-devel qt5-qttools-devel libbtrfsutil btrfs-progs-devel`
-1. Download the tar.gz from the latest version [here](https://gitlab.com/btrfs-assistant/btrfs-assistant/-/tags)
-1. Untar the archive and cd into the directory
-1. `cmake -B build -S . -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_BUILD_TYPE='Release'`
-1. `make -C build`
-1. `sudo make -C build install`
-1. Optionally install Snapper - `sudo dnf install snapper`
-1. Optionally install Btrfs Maintenance - `sudo dnf install btrfsmaintenance`
-1. Configure Btrfs Maintenance if installed - Edit `/etc/btrfs-assistant.conf` and change `bm_config` to `/etc/sysconfig/btrfsmaintenance`
+Btrfs Assistant is available in the Fedora repos as `btrfs-assistant`
 
 ## Contributing
 Contributions are welcome!
