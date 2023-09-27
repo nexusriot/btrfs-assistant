@@ -1,28 +1,22 @@
 #!/usr/bin/env bash
 
-# Check functions
-usingSwayOrHyprland() {
-  [[ -n ${SWAYSOCK} || -n ${HYPRLAND_CMD} ]]
-}
+# Define the base command with common options
+command="pkexec btrfs-assistant --xdg-runtime=\"${XDG_RUNTIME_DIR}\""
 
-usingQTPlatformTheme() {
-  [[ -n ${QT_QPA_PLATFORMTHEME} ]]
-}
-
-# Main script
-if usingSwayOrHyprland; then
-  pkexec btrfs-assistant \
-    --xdg-runtime="${XDG_RUNTIME_DIR}" \
-    --platformtheme="${QT_QPA_PLATFORMTHEME}" \
-    --platform="${QT_QPA_PLATFORM}" \
-    --display="${WAYLAND_DISPLAY}"
-else
-  if usingQTPlatformTheme; then
-    pkexec btrfs-assistant \
-      --xdg-desktop="$XDG_CURRENT_DESKTOP" \
-      --platformtheme="${QT_QPA_PLATFORMTHEME}"
-  else
-    pkexec btrfs-assistant \
-      --xdg-desktop="$XDG_CURRENT_DESKTOP"
-  fi
+# Add platform and display options when using Sway or Hyprland
+if [[ -n ${SWAYSOCK} || -n ${HYPRLAND_CMD} ]]; then
+    command="${command} --platform=\"${QT_QPA_PLATFORM}\" --display=\"${WAYLAND_DISPLAY}\""
 fi
+
+# Add platformtheme option if QT_QPA_PLATFORMTHEME is set
+if [[ -n ${QT_QPA_PLATFORMTHEME} ]]; then
+    command="${command} --platformtheme=\"${QT_QPA_PLATFORMTHEME}\""
+fi
+
+# Add style-override option if QT_STYLE_OVERRIDE is set
+if [[ -n ${QT_STYLE_OVERRIDE} ]]; then
+    command="${command} --style-override=\"${QT_STYLE_OVERRIDE}\""
+fi
+
+# Execute the constructed command
+eval "$command"

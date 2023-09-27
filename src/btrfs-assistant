@@ -32,6 +32,10 @@ for i in "$@"; do
             export WAYLAND_DISPLAY="${i#*=}"
             shift
         ;;
+        -s=*|--style-override=*)
+            export QT_STYLE_OVERRIDE="${i#*=}"
+            shift
+        ;;        
         *)
             params="${params} ${i}"
             shift
