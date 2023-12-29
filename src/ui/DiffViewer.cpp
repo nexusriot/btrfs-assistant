@@ -39,7 +39,7 @@ void DiffViewer::on_pushButton_restore_clicked()
         return;
     }
 
-    QMessageBox::information(this, tr("Restore File"), tr("The file was succesfully restored"));
+    QMessageBox::information(this, tr("Restore File"), tr("The file was successfully restored"));
 }
 
 #include <QDebug>
