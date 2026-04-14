@@ -4,9 +4,9 @@
 <policyconfig>
 
   <vendor>btrfs-assistant</vendor>
-  <vendor_url>https://gitlab.com/btfrs-assistant/btfrs-assistant</vendor_url>
+  <vendor_url>https://gitlab.com/btrfs-assistant/btrfs-assistant</vendor_url>
 
-  <action id="org.btfrs-assistant.pkexec.policy.run">
+  <action id="org.btrfs-assistant.pkexec.policy.run">
     <description>Run BTRFS Assistant</description>
     <message>Authentication is required to run Btrfs Assistant</message>
     <icon_name>btrfs-assistant</icon_name> 
