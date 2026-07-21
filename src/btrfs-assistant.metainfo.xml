@@ -4,7 +4,9 @@
   <launchable type="desktop-id">btrfs-assistant.desktop</launchable>
 
   <name>Btrfs Assistant</name>
+  <name xml:lang="zh-Hans-CN">Btrfs 助手</name>
   <summary>GUI management tool to make managing a Btrfs filesystem easier</summary>
+  <summary xml:lang="zh-Hans-CN">让 Btrfs 文件系统管理更加简单的图形管理工具</summary>
 
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
@@ -13,14 +15,22 @@
     <p>
       Btrfs Assistant is a GUI management tool to make managing a Btrfs filesystem easier.
     </p>
+    <p xml:lang="zh-Hans-CN">Btrfs 助手是一款图形管理工具，可让 Btrfs 文件系统管理更加简单。</p>
     <p>The primary features it offers are:</p>
+    <p xml:lang="zh-Hans-CN">主要功能包括：</p>
     <ul>
       <li>An easy to read overview of Btrfs metadata</li>
+      <li xml:lang="zh-Hans-CN">清晰易读的 Btrfs 元数据概览</li>
       <li>A simple view of subvolumes with or without Snapper/Timeshift snapshots</li>
+      <li xml:lang="zh-Hans-CN">简明查看子卷以及 Snapper/Timeshift 快照</li>
       <li>Run and monitor scrub and balance operations</li>
+      <li xml:lang="zh-Hans-CN">运行并监控校验（Scrub）和均衡（Balance）操作</li>
       <li>A pushbutton method for removing subvolumes</li>
+      <li xml:lang="zh-Hans-CN">一键删除子卷</li>
       <li>A management front-end for Snapper with enhanced restore functionality</li>
+      <li xml:lang="zh-Hans-CN">提供增强快照恢复功能的 Snapper 管理前端</li>
       <li>A front-end for Btrfs Maintenance</li>
+      <li xml:lang="zh-Hans-CN">Btrfs Maintenance 前端</li>
     </ul>
   </description>
 

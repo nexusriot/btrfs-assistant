@@ -6,6 +6,7 @@
 #include "ui_MainWindow.h"
 #include "util/Btrfs.h"
 #include "util/BtrfsMaintenance.h"
+#include "util/BtrfsStatus.h"
 #include "util/Snapper.h"
 #include "util/System.h"
 
@@ -145,17 +146,17 @@ void MainWindow::btrfsBalanceStatusUpdateUI()
 
     // if balance is running currently, make sure you can stop it and we monitor progress
     if (!balanceStatus.contains("No balance found")) {
-        m_ui->pushButton_btrfsBalance->setText("Stop");
+        m_ui->pushButton_btrfsBalance->setText(tr("Stop"));
         // update status to current balance operation status
-        m_ui->label_btrfsBalanceStatus->setText(balanceStatus);
+        m_ui->label_btrfsBalanceStatus->setText(BtrfsStatus::localizeBalance(balanceStatus));
         // keep updating UI if it isn't already doing so
         if (m_balanceTimer->timerId() == -1) {
             m_balanceTimer->start();
         }
     } else {
         // update status to reflect no balance running and stop timer
-        m_ui->label_btrfsBalanceStatus->setText("No balance running.");
-        m_ui->pushButton_btrfsBalance->setText("Start");
+        m_ui->label_btrfsBalanceStatus->setText(tr("No balance running."));
+        m_ui->pushButton_btrfsBalance->setText(tr("Start"));
         m_balanceTimer->stop();
     }
 }
@@ -166,16 +167,16 @@ void MainWindow::btrfsScrubStatusUpdateUI()
     QString scrubStatus = m_btrfs->scrubStatus(Btrfs::findAnyMountpoint(uuid));
 
     // update status to current scrub operation status
-    m_ui->label_btrfsScrubStatus->setText(scrubStatus);
+    m_ui->label_btrfsScrubStatus->setText(BtrfsStatus::localizeScrub(scrubStatus));
     // if scrub is running currently, make sure you can stop it and we monitor progress
     if (scrubStatus.contains("ETA:")) {
-        m_ui->pushButton_btrfsScrub->setText("Stop");
+        m_ui->pushButton_btrfsScrub->setText(tr("Stop"));
         if (m_scrubTimer->timerId() == -1) {
             m_scrubTimer->start();
         }
     } else {
         m_scrubTimer->stop();
-        m_ui->pushButton_btrfsScrub->setText("Start");
+        m_ui->pushButton_btrfsScrub->setText(tr("Start"));
     }
 }
 
@@ -560,8 +561,8 @@ void MainWindow::restoreSnapshot(const QString &uuid, const QString &subvolume)
     }
 
     // We are out of errors to check for, time to ask for confirmation
-    RestoreConfirmDialog confirmDialog("Confirm", tr("Are you sure you want to restore ") + subvolume + tr(" to ", "as in from/to") +
-                                                      targetSubvol + "?");
+    RestoreConfirmDialog confirmDialog(tr("Confirm"), tr("Are you sure you want to restore ") + subvolume + tr(" to ", "as in from/to") +
+                                                          targetSubvol + "?");
 
     if (confirmDialog.exec() != QDialog::Accepted) {
         return;
@@ -642,7 +643,7 @@ void MainWindow::setSnapperSettingsEditModeEnabled(bool enabled)
 {
 
     m_ui->lineEdit_snapperName->clear();
-    m_ui->pushButton_snapperNewConfig->setText(tr(enabled ? "New Config" : "Cancel New Config"));
+    m_ui->pushButton_snapperNewConfig->setText(enabled ? tr("New Config") : tr("Cancel New Config"));
     m_ui->pushButton_snapperNewConfig->clearFocus();
 
     m_ui->groupBox_snapperConfigCreate->setVisible(!enabled);
@@ -721,7 +722,7 @@ void MainWindow::on_pushButton_btrfsBalance_clicked()
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
 
     // Stop or start balance depending on current operation
-    if (m_ui->pushButton_btrfsBalance->text().contains("Stop")) {
+    if (m_ui->pushButton_btrfsBalance->text().contains(tr("Stop"))) {
         m_btrfs->stopBalanceRoot(uuid);
         btrfsBalanceStatusUpdateUI();
     } else {
@@ -744,7 +745,7 @@ void MainWindow::on_pushButton_btrfsScrub_clicked()
     QString uuid = m_ui->comboBox_btrfsDevice->currentText();
 
     // Stop or start scrub depending on current operation
-    if (m_ui->pushButton_btrfsScrub->text().contains("Stop")) {
+    if (m_ui->pushButton_btrfsScrub->text().contains(tr("Stop"))) {
         m_btrfs->stopScrubRoot(uuid);
         btrfsScrubStatusUpdateUI();
     } else {
@@ -1516,7 +1517,7 @@ void MainWindow::on_toolButton_subvolRestoreBackup_clicked()
     }
 
     // Ask for confirmation
-    RestoreConfirmDialog confirmDialog("Confirm", tr("Are you sure you want to restore the selected backup?"));
+    RestoreConfirmDialog confirmDialog(tr("Confirm"), tr("Are you sure you want to restore the selected backup?"));
 
     if (confirmDialog.exec() != QDialog::Accepted) {
         return;

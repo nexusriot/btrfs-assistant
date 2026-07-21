@@ -8,7 +8,9 @@
 
   <action id="org.btfrs-assistant.pkexec.policy.run">
     <description>Run BTRFS Assistant</description>
+    <description xml:lang="zh-Hans-CN">运行 Btrfs 助手</description>
     <message>Authentication is required to run Btrfs Assistant</message>
+    <message xml:lang="zh-Hans-CN">运行 Btrfs 助手需要身份验证</message>
     <icon_name>btrfs-assistant</icon_name> 
     <defaults>
       <allow_any>no</allow_any>

@@ -14,10 +14,9 @@ set(btrfsassistant_SRCS
     ${PROJECT_SOURCE_DIR}/icons/icons.qrc
 )
 
-file(GLOB btrfsassistant_UIFILES ui/*.ui)
 file(GLOB TS_FILES ${PROJECT_SOURCE_DIR}/translations/*.ts)
 
-qt6_create_translation(FILES_TS ${btrfsassistant_UIFILES} ${TS_FILES})
+qt6_create_translation(FILES_TS ${PROJECT_SOURCE_DIR}/src ${TS_FILES})
 
 add_executable(btrfs-assistant-bin
     ${btrfsassistant_SRCS} ${FILES_TS}
